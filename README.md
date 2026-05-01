@@ -2,6 +2,14 @@
 
 VS Code support for Beskid source (`.bd`) and project (`.proj`) files, powered by the Beskid Language Server Protocol (LSP) server.
 
+## Superrepo and CI
+
+This repository is the canonical home for extension sources. It is wired into the aggregate repo as the **`beskid_vscode` submodule** ([`Cyber-Nomad-Collective/beskid`](https://github.com/Cyber-Nomad-Collective/beskid)).
+
+GitHub Actions and Open VS X publishing run **only from the superrepo** — workflow [`publish-open-vsx.yml`](https://github.com/Cyber-Nomad-Collective/beskid/blob/main/.github/workflows/publish-open-vsx.yml) builds `beskid_lsp`, bundles platform binaries under `server/`, packages the VSIX, and publishes. Avoid adding a second publish pipeline in this repository.
+
+Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local installs place binaries there when packaging.
+
 ## Features
 
 - Activates on `beskid` language files
