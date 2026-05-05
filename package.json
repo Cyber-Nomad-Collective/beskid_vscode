@@ -30,6 +30,13 @@
   ],
   "main": "./out/extension.js",
   "packageManager": "bun@1.2.20",
+  "overrides": {
+    "undici": "^8.2.0",
+    "lodash": "^4.18.1",
+    "picomatch": "^4.0.4",
+    "brace-expansion": "^5.0.5",
+    "uuid": "^14.0.0"
+  },
   "contributes": {
     "commands": [
       {
@@ -265,10 +272,9 @@
     "vscode-languageserver-protocol": "3.17.5"
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.6.2",
-    "@types/node": "^25.3.1",
-    "@types/vscode": "^1.88.0",
-    "typescript": "^5.8.2"
+    "@types/node": "^25.6.0",
+    "@types/vscode": "^1.118.0",
+    "typescript": "^6.0.3"
   },
   "trustedDependencies": [
     "@vscode/vsce-sign"
