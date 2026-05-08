@@ -9,7 +9,7 @@
       },
       "devDependencies": {
         "@types/node": "^25.6.0",
-        "@types/vscode": "^1.118.0",
+        "@types/vscode": "1.88.0",
         "typescript": "^6.0.3",
       },
     },
@@ -24,7 +24,7 @@
   "packages": {
     "@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
 
-    "@types/vscode": ["@types/vscode@1.118.0", "", {}, "sha512-Ah6eTlqDcwIMELEVwQMO++rJAFBRz/oLluLD/vWdYrH1KuI9kfpaM+7pg0OvvascgcJy+ghLCERAYouM4QbzGw=="],
+    "@types/vscode": ["@types/vscode@1.88.0", "", {}, "sha512-rWY+Bs6j/f1lvr8jqZTyp5arRMfovdxolcqGi+//+cPDOh8SBvzXH90e7BiSXct5HJ9HGW6jATchbRTpTJpEkw=="],
 
     "balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
 
