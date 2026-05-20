@@ -17,6 +17,10 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 - Uses bundled platform LSP binaries by default (`server/<platform>-<arch>/`)
 - Supports explicit local binary override via `beskid.lsp.server.path`
 - Supports source/dev launch mode for compiler contributors
+- Cross-module IntelliSense (`use` aliases, `IO.Member` completion) requires the open file to live under a Beskid project with a resolved `Project.proj` / lockfile and materialized dependencies—the same project context the CLI uses for builds
+- Trigger characters `.` and `:` drive member and `use` path completion from the language server
+- Cross-module IntelliSense (`use` aliases, `IO.Member` completion) requires the file to live under a Beskid project with a resolved `Project.proj` / lockfile and materialized dependencies—the same project context the CLI uses for builds
+- Trigger characters `.` and `:` drive member and path completion from the language server
 
 ## Development (Bun)
 
