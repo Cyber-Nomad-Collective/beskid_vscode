@@ -7,6 +7,17 @@ export function readPckgBaseUrl(): string {
   );
 }
 
+export function readCliPath(): string {
+  return vscode.workspace.getConfiguration("beskid").get<string>("cli.path", "beskid") || "beskid";
+}
+
+export function readAutoSelectFromEditor(): boolean {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<boolean>("project.autoSelectFromEditor", true) ??
+    true
+  );
+}
+
 export function readLspLogLevel(): string {
   return (
     vscode.workspace.getConfiguration("beskid.lsp").get<string>("log.level", "info") ?? "info"
@@ -15,4 +26,23 @@ export function readLspLogLevel(): string {
 
 export function readLogServerOutput(): boolean {
   return vscode.workspace.getConfiguration("beskid.lsp").get<boolean>("log.serverOutput", true);
+}
+
+export async function readPckgApiKey(context: vscode.ExtensionContext): Promise<string | undefined> {
+  const configured = vscode.workspace.getConfiguration("beskid").get<string>("pckg.apiKey", "").trim();
+  if (configured.length > 0) {
+    return configured;
+  }
+  return (await context.secrets.get("beskid.pckg.apiKey")) ?? undefined;
+}
+
+export async function storePckgApiKey(
+  context: vscode.ExtensionContext,
+  apiKey: string | undefined,
+): Promise<void> {
+  if (!apiKey?.trim()) {
+    await context.secrets.delete("beskid.pckg.apiKey");
+    return;
+  }
+  await context.secrets.store("beskid.pckg.apiKey", apiKey.trim());
 }

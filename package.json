@@ -44,6 +44,26 @@
         "title": "Beskid: Select Project"
       },
       {
+        "command": "beskid.focusProject",
+        "title": "Beskid: Focus Project"
+      },
+      {
+        "command": "beskid.clearFocus",
+        "title": "Beskid: Clear Project Focus"
+      },
+      {
+        "command": "beskid.refreshWorkspace",
+        "title": "Beskid: Refresh Workspace"
+      },
+      {
+        "command": "beskid.revealInWorkspaceTree",
+        "title": "Beskid: Reveal in Workspaces"
+      },
+      {
+        "command": "beskid.revealInProjectTree",
+        "title": "Beskid: Reveal in Project"
+      },
+      {
         "command": "beskid.lsp.quickActions",
         "title": "Beskid: LSP Quick Actions"
       },
@@ -68,12 +88,120 @@
         "title": "Beskid: Search Packages"
       },
       {
+        "command": "beskid.packages.showDetails",
+        "title": "Beskid: Show Package Details"
+      },
+      {
+        "command": "beskid.packages.addDependency",
+        "title": "Beskid: Add Package Dependency"
+      },
+      {
+        "command": "beskid.packages.fetch",
+        "title": "Beskid: Fetch Packages"
+      },
+      {
+        "command": "beskid.packages.lock",
+        "title": "Beskid: Lock Project"
+      },
+      {
+        "command": "beskid.packages.refresh",
+        "title": "Beskid: Refresh Packages"
+      },
+      {
+        "command": "beskid.packages.configureApiKey",
+        "title": "Beskid: Configure Package Registry API Key"
+      },
+      {
+        "command": "beskid.packages.openManifest",
+        "title": "Beskid: Open Project Manifest"
+      },
+      {
+        "command": "beskid.packages.openMaterializedFolder",
+        "title": "Beskid: Open Materialized Package Folder"
+      },
+      {
+        "command": "beskid.packages.copyDependencyLabel",
+        "title": "Beskid: Copy Dependency Label"
+      },
+      {
         "command": "beskid.packages.openRegistryUri",
         "title": "Beskid: Open registry URL"
       },
       {
+        "command": "beskid.cli.fetch",
+        "title": "Beskid: CLI Fetch"
+      },
+      {
+        "command": "beskid.cli.lock",
+        "title": "Beskid: CLI Lock"
+      },
+      {
+        "command": "beskid.cli.build",
+        "title": "Beskid: CLI Build"
+      },
+      {
+        "command": "beskid.cli.test",
+        "title": "Beskid: CLI Test"
+      },
+      {
+        "command": "beskid.cli.analyze",
+        "title": "Beskid: CLI Analyze"
+      },
+      {
         "command": "beskid.lsp.openLogs",
         "title": "Beskid: Open LSP Logs"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "beskid-fetch",
+        "required": [],
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root or Project.proj path"
+          }
+        }
+      },
+      {
+        "type": "beskid-lock",
+        "required": [],
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root or Project.proj path"
+          }
+        }
+      },
+      {
+        "type": "beskid-build",
+        "required": [],
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root or Project.proj path"
+          }
+        }
+      },
+      {
+        "type": "beskid-test",
+        "required": [],
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root or Project.proj path"
+          }
+        }
+      },
+      {
+        "type": "beskid-analyze",
+        "required": [],
+        "properties": {
+          "projectPath": {
+            "type": "string",
+            "description": "Project root or Project.proj path"
+          }
+        }
       }
     ],
     "menus": {
@@ -107,12 +235,76 @@
         {
           "command": "beskid.packages.search",
           "when": "view == beskidPackagesView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "beskid.packages.refresh",
+          "when": "view == beskidPackagesView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "beskid.packages.fetch",
+          "when": "view == beskidPackagesView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "beskid.packages.lock",
+          "when": "view == beskidPackagesView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "beskid.refreshWorkspace",
+          "when": "view == beskidWorkspaceView",
           "group": "navigation"
         },
         {
           "command": "beskid.selectProject",
-          "when": "view == beskidProjectOutlineView",
+          "when": "view == beskidProjectView || view == beskidProjectOutlineView",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "beskid.packages.showDetails",
+          "when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
+          "group": "inline"
+        },
+        {
+          "command": "beskid.packages.addDependency",
+          "when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
+          "group": "1_packages"
+        },
+        {
+          "command": "beskid.packages.openManifest",
+          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+          "group": "1_packages@1"
+        },
+        {
+          "command": "beskid.packages.openMaterializedFolder",
+          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+          "group": "1_packages@2"
+        },
+        {
+          "command": "beskid.packages.copyDependencyLabel",
+          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+          "group": "1_packages@3"
+        },
+        {
+          "command": "beskid.focusProject",
+          "when": "view == beskidWorkspaceView && viewItem == beskidWorkspaceMember",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "beskid.revealInProjectTree",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "group": "navigation@1"
+        },
+        {
+          "command": "beskid.revealInWorkspaceTree",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "group": "navigation@2"
         }
       ]
     },
@@ -128,15 +320,29 @@
     "views": {
       "beskidViews": [
         {
-          "id": "beskidPackagesView",
-          "name": "Beskid Packages"
+          "id": "beskidWorkspaceView",
+          "name": "Workspaces"
+        },
+        {
+          "id": "beskidProjectView",
+          "name": "Project"
         },
         {
           "id": "beskidProjectOutlineView",
-          "name": "Selected Project Outline"
+          "name": "Outline"
+        },
+        {
+          "id": "beskidPackagesView",
+          "name": "Packages"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "beskidPackagesView",
+        "contents": "Search the Beskid package registry.\n[Search packages](command:beskid.packages.search)"
+      }
+    ],
     "languages": [
       {
         "id": "beskid",
@@ -246,6 +452,21 @@
           "type": "string",
           "default": "http://localhost:5000",
           "description": "Base URL of the pckg server used by the package manager pane."
+        },
+        "beskid.pckg.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional API key for private registry access. Prefer storing via command palette when available; falls back to SecretStorage when empty."
+        },
+        "beskid.cli.path": {
+          "type": "string",
+          "default": "beskid",
+          "description": "Path to the Beskid CLI binary for fetch, lock, build, and other tasks."
+        },
+        "beskid.project.autoSelectFromEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically focus the Beskid project manifest for the active editor file."
         }
       }
     },
@@ -263,6 +484,8 @@
     "build": "bunx tsc -p .",
     "watch": "bunx tsc -w -p .",
     "lint": "bunx tsc -p . --noEmit",
+    "test": "bun test",
+    "test:e2e": "bun test test/e2e",
     "test:smoke:formatter": "node scripts/smoke-formatter.mjs",
     "package": "bunx @vscode/vsce package",
     "vscode:prepublish": "bun run build"

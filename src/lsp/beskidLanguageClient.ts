@@ -58,10 +58,11 @@ export function buildBeskidClientOptions(
       { scheme: "file", language: "beskid-proj", pattern: "**/*.proj" },
     ],
     synchronize: {
-      configurationSection: "beskid.lsp",
+      configurationSection: ["beskid.lsp", "beskid"],
     },
     outputChannel,
     initializationOptions: {
+      focusedProjectUri: selectedProjectUri?.toString(),
       selectedProjectUri: selectedProjectUri?.toString(),
       logLevel: readLspLogLevel(),
       logServerOutput: readLogServerOutput(),
@@ -72,14 +73,33 @@ export function buildBeskidClientOptions(
 export function createBeskidLanguageClient(
   context: vscode.ExtensionContext,
   outputChannel: vscode.OutputChannel,
-  selectedProjectUri: vscode.Uri | undefined,
+  focusedProjectUri: vscode.Uri | undefined,
 ): LanguageClient {
   return new LanguageClient(
     "beskidLanguageServer",
     "Beskid Language Server",
-    buildBeskidServerOptions(context, selectedProjectUri),
-    buildBeskidClientOptions(outputChannel, selectedProjectUri),
+    buildBeskidServerOptions(context, focusedProjectUri),
+    buildBeskidClientOptions(outputChannel, focusedProjectUri),
   );
+}
+
+export async function sendFocusedProjectConfiguration(
+  client: LanguageClient,
+  focusedProjectUri: vscode.Uri | undefined,
+): Promise<void> {
+  try {
+    await client.sendNotification("workspace/didChangeConfiguration", {
+      settings: {
+        beskid: {
+          project: {
+            focusedProjectUri: focusedProjectUri?.toString() ?? null,
+          },
+        },
+      },
+    });
+  } catch {
+    // server may not be ready
+  }
 }
 
 export async function requestWorkspaceRefresh(client: LanguageClient | undefined): Promise<void> {

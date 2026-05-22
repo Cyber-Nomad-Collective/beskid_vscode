@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
 import type { BeskidStatusParams } from "./beskidStatusTypes.js";
 
 type LspScanState = {
@@ -10,8 +11,8 @@ type LspScanState = {
 
 export class BeskidStatusController {
   private lspScan: LspScanState = { active: false };
-  private pckgSearchActive = false;
-  private pckgDetailsActive = false;
+  private pckgPhase: BeskidActivityPhase | undefined;
+  private pckgActive = false;
   private pckgMessage: string | undefined;
   private lspClientRunning = false;
   /** After the first successful start, show "Stopped" when the client is not running. */
@@ -44,20 +45,28 @@ export class BeskidStatusController {
     this.render();
   }
 
-  setPckgSearchActive(active: boolean, detail?: string): void {
-    this.pckgSearchActive = active;
-    if (detail) {
-      this.pckgMessage = detail;
+  setPckgActivity(phase: BeskidActivityPhase, active: boolean, detail?: string): void {
+    if (active) {
+      this.pckgPhase = phase;
+      this.pckgActive = true;
+      if (detail) {
+        this.pckgMessage = detail;
+      }
+    } else if (this.pckgPhase === phase) {
+      this.pckgActive = false;
+      this.pckgPhase = undefined;
     }
     this.render();
   }
 
+  /** @deprecated Use setPckgActivity */
+  setPckgSearchActive(active: boolean, detail?: string): void {
+    this.setPckgActivity("search", active, detail);
+  }
+
+  /** @deprecated Use setPckgActivity */
   setPckgDetailsActive(active: boolean, detail?: string): void {
-    this.pckgDetailsActive = active;
-    if (detail) {
-      this.pckgMessage = detail;
-    }
-    this.render();
+    this.setPckgActivity("details", active, detail);
   }
 
   private render(): void {
@@ -70,8 +79,19 @@ export class BeskidStatusController {
           : "";
       const tail = [count, this.lspScan.message].filter(Boolean).join(" ");
       parts.push(`$(sync~spin) Scan${tail ? ` ${tail}` : ""}`);
-    } else if (this.pckgDetailsActive || this.pckgSearchActive) {
-      parts.push(`$(package) ${this.pckgMessage ?? "Packages…"}`);
+    } else if (this.pckgActive && this.pckgPhase) {
+      const label =
+        this.pckgMessage ??
+        ({
+          search: "Searching packages…",
+          details: "Loading package details…",
+          fetch: "Running fetch…",
+          lock: "Running lock…",
+          build: "Running build…",
+          test: "Running test…",
+          analyze: "Running analyze…",
+        }[this.pckgPhase] ?? "Packages…");
+      parts.push(`$(package) ${label}`);
     }
 
     if (this.lspClientRunning) {
@@ -91,8 +111,8 @@ export class BeskidStatusController {
     if (this.lspScan.active) {
       tooltipLines.push(`Workspace scan: ${this.lspScan.current ?? "?"}/${this.lspScan.total ?? "?"}`);
     }
-    if (this.pckgSearchActive || this.pckgDetailsActive) {
-      tooltipLines.push(this.pckgMessage ?? "Package manager activity");
+    if (this.pckgActive) {
+      tooltipLines.push(this.pckgMessage ?? "Package / CLI activity");
     }
     this.statusBar.tooltip = tooltipLines.join("\n");
   }

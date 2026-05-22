@@ -1,16 +1,16 @@
 import type { ExtensionContext } from "vscode";
-import { BeskidExtensionRuntime } from "./runtime/BeskidExtensionRuntime.js";
+import { ExtensionServices } from "./core/ExtensionServices.js";
 
-let runtime: BeskidExtensionRuntime | undefined;
+let services: ExtensionServices | undefined;
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  runtime = new BeskidExtensionRuntime(context);
-  await runtime.activate();
+  services = ExtensionServices.create(context);
+  await services.activate();
 }
 
 export async function deactivate(): Promise<void> {
-  if (runtime) {
-    await runtime.deactivate();
-    runtime = undefined;
+  if (services) {
+    await services.deactivate();
+    services = undefined;
   }
 }
