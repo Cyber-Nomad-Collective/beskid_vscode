@@ -1,8 +1,10 @@
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
+import type { ToolchainBootstrapProgress } from "./cliBootstrap.js";
 import { bootstrapBeskidToolchain } from "./cliBootstrap.js";
 import { installBeskidCli } from "./cliInstall.js";
+import { installBeskidLsp } from "./lspInstall.js";
 import {
   type BeskidCliSubcommand,
   focusedProjectCwd,
@@ -33,6 +35,7 @@ export class CliService {
 
     this.options.context.subscriptions.push(
       vscode.commands.registerCommand("beskid.cli.install", () => this.install()),
+      vscode.commands.registerCommand("beskid.lsp.install", () => this.installLsp()),
       vscode.commands.registerCommand("beskid.cli.bootstrap", () => this.bootstrap(true)),
       vscode.commands.registerCommand("beskid.cli.fetch", run("fetch")),
       vscode.commands.registerCommand("beskid.cli.lock", run("lock")),
@@ -46,6 +49,33 @@ export class CliService {
 
   focusedCwd(): string | undefined {
     return focusedProjectCwd(this.options.getFocusedProjectUri());
+  }
+
+  async installLsp(): Promise<void> {
+    try {
+      const result = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Installing Beskid LSP",
+          cancellable: false,
+        },
+        async (progress) => {
+          progress.report({ message: "Downloading latest LSP release…" });
+          return installBeskidLsp(this.options.outputChannel);
+        },
+      );
+      void vscode.window.showInformationMessage(
+        `Beskid LSP ${result.version} installed to ${result.path}.`,
+        "Restart LSP",
+      ).then((choice) => {
+        if (choice === "Restart LSP") {
+          void vscode.commands.executeCommand("beskid.lsp.restart");
+        }
+      });
+    } catch (error) {
+      void vscode.window.showErrorMessage(`Failed to install Beskid LSP. See Beskid LSP output.`);
+      throw error;
+    }
   }
 
   async install(): Promise<void> {
@@ -71,11 +101,12 @@ export class CliService {
     }
   }
 
-  /** Download CLI (if needed), verify `beskid lsp`, and fetch workspace deps on first launch. */
-  async ensureInstalled(): Promise<string> {
+  /** Download CLI and LSP (if needed), verify toolchain, and fetch workspace deps on first launch. */
+  async ensureInstalled(progress?: ToolchainBootstrapProgress): Promise<string> {
     const result = await bootstrapBeskidToolchain(
       this.options.context,
       this.options.outputChannel,
+      progress,
     );
     return result.cliPath;
   }

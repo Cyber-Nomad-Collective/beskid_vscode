@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import pkg from "../../package.json";
 
 const VIEW_IDS = [
+  "beskidDashboardView",
+  "beskidDebugView",
   "beskidWorkspaceView",
   "beskidProjectView",
   "beskidProjectOutlineView",
@@ -9,9 +11,11 @@ const VIEW_IDS = [
 ];
 
 describe("extension manifest smoke", () => {
-  test("contributes four Beskid tree views", () => {
-    const views = pkg.contributes.views.beskidViews as { id: string }[];
+  test("contributes Beskid sidebar views including dashboard and debug", () => {
+    const views = pkg.contributes.views.beskidViews as { id: string; type?: string }[];
     expect(views.map((v) => v.id)).toEqual(VIEW_IDS);
+    const dashboard = views.find((v) => v.id === "beskidDashboardView");
+    expect(dashboard?.type).toBe("webview");
   });
 
   test("declares package panel and explorer commands", () => {

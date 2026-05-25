@@ -31,6 +31,7 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
   private searchResults: PackageSearchRow[] | undefined;
   private searchError: string | undefined;
   private searchNeedsApiKey = false;
+  private connectionStatusLabel: string | undefined;
   private detailsCache = new Map<string, PackageDetails>();
 
   constructor(private readonly deps: PackageManagerDeps) {}
@@ -50,6 +51,7 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
     this.searchResults = undefined;
     this.searchError = undefined;
     this.searchNeedsApiKey = false;
+    this.connectionStatusLabel = undefined;
   }
 
   refresh(): void {
@@ -57,6 +59,21 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
   }
 
   async refreshProjectSection(): Promise<void> {
+    void this.refreshConnectionStatus();
+    this.refresh();
+  }
+
+  private async refreshConnectionStatus(): Promise<void> {
+    const status = await this.deps.pckg.getConnectionStatus(true);
+    const url = status.baseUrl || status.workspaceDefaultRegistryUrl || "not configured";
+    const auth = status.authConfigured ? "auth configured" : "no API key";
+    if (status.connected) {
+      this.connectionStatusLabel = `Connected · ${url} · ${auth}`;
+    } else if (status.validation.status === "error" && status.validation.message) {
+      this.connectionStatusLabel = `Not connected · ${url} · ${status.validation.message}`;
+    } else {
+      this.connectionStatusLabel = `Not connected · ${url} · ${auth}`;
+    }
     this.refresh();
   }
 
@@ -247,11 +264,28 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
   }
 
   private getRegistrySearchChildren(): PackageTreeItem[] {
+    const items: PackageTreeItem[] = [];
+    if (this.connectionStatusLabel) {
+      const statusItem = new PackageTreeItem(
+        "info",
+        "RegistrySearch",
+        this.connectionStatusLabel,
+        vscode.TreeItemCollapsibleState.None,
+      );
+      statusItem.iconPath = themeIcon(
+        this.connectionStatusLabel.startsWith("Connected") ? "pass" : "warning",
+      );
+      items.push(statusItem);
+    } else {
+      void this.refreshConnectionStatus();
+    }
+
     const q = this.searchQuery.trim();
     if (!q) {
       const hint = new PackageTreeItem("searchAction", "RegistrySearch", "Search…", vscode.TreeItemCollapsibleState.None);
       hint.command = { command: "beskid.packages.search", title: "Search" };
-      return [hint];
+      items.push(hint);
+      return items;
     }
     if (this.searchError) {
       const err = new PackageTreeItem("info", "RegistrySearch", this.searchError, vscode.TreeItemCollapsibleState.None);
@@ -260,15 +294,23 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
       } else {
         err.command = { command: "beskid.packages.refresh", title: "Retry" };
       }
-      return [err];
+      items.push(err);
+      return items;
     }
     if (!this.searchResults) {
-      return [new PackageTreeItem("info", "RegistrySearch", `Searching “${q}”…`, vscode.TreeItemCollapsibleState.None)];
+      items.push(
+        new PackageTreeItem("info", "RegistrySearch", `Searching “${q}”…`, vscode.TreeItemCollapsibleState.None),
+      );
+      return items;
     }
     if (this.searchResults.length === 0) {
-      return [new PackageTreeItem("info", "RegistrySearch", "No matches.", vscode.TreeItemCollapsibleState.None)];
+      items.push(
+        new PackageTreeItem("info", "RegistrySearch", "No matches.", vscode.TreeItemCollapsibleState.None),
+      );
+      return items;
     }
-    return this.searchResults.map((hit) => {
+    items.push(
+      ...this.searchResults.map((hit) => {
       const name = hit.package.name;
       const item = new PackageTreeItem(
         "package",
@@ -281,7 +323,9 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
       item.tooltip = hit.package.description?.trim() || name;
       item.contextValue = ContextValue.registryPackage;
       return item;
-    });
+      }),
+    );
+    return items;
   }
 
   private async getRegistryPackageChildren(packageName: string): Promise<PackageTreeItem[]> {

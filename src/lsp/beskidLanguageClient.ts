@@ -6,8 +6,15 @@ import {
   LanguageClientOptions,
 } from "vscode-languageclient/node";
 import { readLogServerOutput, readLspLogLevel } from "../config/workspaceSettings.js";
+import type { LspRuntimeState } from "../runtime/LspRuntimeState.js";
+import { launchSnapshotFromExecutable } from "./launchSnapshot.js";
+import { lspExecuteCommand } from "./lspExecuteCommand.js";
 import { type BeskidClientHooks, buildExecuteCommandMiddleware } from "./clientHooks.js";
-import { resolveLspServerLaunch, type LspInstallCli } from "./resolveLspServerLaunch.js";
+import {
+  resolveLspServerLaunch,
+  type LspInstallCli,
+  type LspLaunchProgress,
+} from "./resolveLspServerLaunch.js";
 
 export function buildBeskidClientOptions(
   outputChannel: vscode.OutputChannel,
@@ -38,9 +45,17 @@ export async function createBeskidLanguageClient(
   outputChannel: vscode.OutputChannel,
   focusedProjectUri: vscode.Uri | undefined,
   installCli: LspInstallCli,
+  launchProgress: LspLaunchProgress | undefined,
+  runtime: LspRuntimeState,
   hooks?: BeskidClientHooks,
 ): Promise<LanguageClient> {
-  const serverOptions = await resolveLspServerLaunch(context, focusedProjectUri, installCli);
+  const serverOptions = await resolveLspServerLaunch(
+    context,
+    focusedProjectUri,
+    installCli,
+    launchProgress,
+  );
+  runtime.setLaunch(launchSnapshotFromExecutable(serverOptions.run));
   return new LanguageClient(
     "beskidLanguageServer",
     "Beskid Language Server",
@@ -69,15 +84,5 @@ export async function sendFocusedProjectConfiguration(
 }
 
 export async function requestWorkspaceRefresh(client: LanguageClient | undefined): Promise<void> {
-  if (!client) {
-    return;
-  }
-  try {
-    await client.sendRequest("workspace/executeCommand", {
-      command: "beskid.refreshWorkspace",
-      arguments: [],
-    });
-  } catch {
-    // ignore if server isn't ready
-  }
+  await lspExecuteCommand(client, "beskid.refreshWorkspace", []);
 }

@@ -10,6 +10,7 @@ export function registerCommands(context: ExtensionContext, services: ExtensionS
   );
   registerPackageCommands(context, {
     packageProvider: services.packageProvider,
+    pckg: services.pckg,
     refresh: services.refresh,
   });
   registerExplorerCommands(context, {

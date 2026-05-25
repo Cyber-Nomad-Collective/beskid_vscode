@@ -1,4 +1,5 @@
 import type { LanguageClient } from "vscode-languageclient/node";
+import { lspExecuteCommand } from "../lsp/lspExecuteCommand.js";
 import type {
   ListWorkspacesResult,
   ProjectDependenciesResult,
@@ -6,54 +7,13 @@ import type {
   WorkspaceListEntry,
   WorkspaceSummaryResult,
 } from "./lspProjectTypes.js";
-
-async function execute<T>(
-  client: LanguageClient | undefined,
-  command: string,
-  args: unknown[],
-): Promise<T | undefined> {
-  if (!client) {
-    return undefined;
-  }
-  try {
-    return (await client.sendRequest("workspace/executeCommand", { command, arguments: args })) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function mapDependencies(raw: {
-  declared?: Array<Record<string, unknown>>;
-  locked?: Array<Record<string, unknown>>;
-  unresolved?: Array<Record<string, unknown> | string>;
-}): ProjectDependenciesResult {
-  const declared = (raw.declared ?? []).map((d) => ({
-    name: String(d.name ?? ""),
-    version: (d.version as string | undefined) ?? undefined,
-    source: (d.source as string | undefined) ?? undefined,
-    registry: (d.registry as string | undefined) ?? undefined,
-  }));
-  const locked = (raw.locked ?? []).map((d) => ({
-    name: String(d.name ?? ""),
-    version:
-      (d.resolvedVersion as string | undefined) ?? (d.version as string | undefined) ?? undefined,
-    source: (d.source as string | undefined) ?? undefined,
-    registry: (d.registry as string | undefined) ?? undefined,
-    materializedPath:
-      (d.materializedRoot as string | undefined) ??
-      (d.materializedPath as string | undefined),
-  }));
-  const unresolved = (raw.unresolved ?? []).map((u) =>
-    typeof u === "string" ? u : String((u as { dependencyName?: string }).dependencyName ?? u),
-  );
-  return { declared, locked, unresolved };
-}
+import { mapLspProjectDependencies } from "./lspProjectMapping.js";
 
 export class LspProjectApi {
   constructor(private readonly getClient: () => LanguageClient | undefined) {}
 
   async listWorkspaces(): Promise<WorkspaceListEntry[]> {
-    const result = await execute<ListWorkspacesResult>(
+    const result = await lspExecuteCommand<ListWorkspacesResult>(
       this.getClient(),
       "beskid.listWorkspaces",
       [],
@@ -72,7 +32,7 @@ export class LspProjectApi {
   }
 
   async getWorkspaceSummary(workspaceUri: string): Promise<WorkspaceSummaryResult | undefined> {
-    const raw = await execute<{
+    const raw = await lspExecuteCommand<{
       workspaceUri: string;
       members?: Array<{ name: string; path: string; uri?: string }>;
       registries?: Array<{ name: string; url: string; alias?: string }>;
@@ -98,7 +58,7 @@ export class LspProjectApi {
   }
 
   async getProjectGraph(projectUri: string): Promise<ProjectGraphResult | undefined> {
-    const raw = await execute<{
+    const raw = await lspExecuteCommand<{
       nodes?: Array<Record<string, unknown>>;
       edges?: Array<{ from: string; to: string }>;
       unresolved?: Array<{ dependencyName: string; descriptor?: string }>;
@@ -130,7 +90,7 @@ export class LspProjectApi {
   }
 
   async getProjectDependencies(projectUri: string): Promise<ProjectDependenciesResult | undefined> {
-    const raw = await execute<Record<string, unknown>>(
+    const raw = await lspExecuteCommand<Record<string, unknown>>(
       this.getClient(),
       "beskid.getProjectDependencies",
       [projectUri],
@@ -138,7 +98,7 @@ export class LspProjectApi {
     if (!raw) {
       return undefined;
     }
-    return mapDependencies(raw);
+    return mapLspProjectDependencies(raw);
   }
 }
 

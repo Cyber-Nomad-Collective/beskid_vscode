@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { Executable } from "vscode-languageclient/node";
+import { defaultLspInstallPath } from "../cli/lspPlatform.js";
 import { resolveCliExecutablePath } from "../config/workspaceSettings.js";
 import {
   bundledPlatformArchKeys,
@@ -12,7 +13,12 @@ import {
   resolveCompilerWorkspaceRoot,
 } from "./serverBinary.js";
 
-export type LspInstallCli = () => Promise<string>;
+export type LspLaunchProgress = {
+  onDownloading?: () => void;
+  onBootstrapping?: () => void;
+};
+
+export type LspInstallCli = (progress?: LspLaunchProgress) => Promise<string>;
 
 function resolveExplicitServerPath(): string | undefined {
   const explicitPath = vscode.workspace
@@ -20,6 +26,11 @@ function resolveExplicitServerPath(): string | undefined {
     .get<string>("server.path", "")
     .trim();
   return explicitPath.length > 0 ? explicitPath : undefined;
+}
+
+function resolveManagedServerBinary(): string | undefined {
+  const managed = defaultLspInstallPath();
+  return existsSync(managed) ? managed : undefined;
 }
 
 function resolveBundledServerBinary(context: ExtensionContext): string | undefined {
@@ -66,6 +77,7 @@ export async function resolveLspServerLaunch(
   context: ExtensionContext,
   selectedProjectUri: vscode.Uri | undefined,
   installCli: LspInstallCli,
+  launchProgress?: LspLaunchProgress,
 ): Promise<{ run: Executable; debug: Executable }> {
   const config = vscode.workspace.getConfiguration("beskid.lsp");
   const options = serverCwd(selectedProjectUri);
@@ -77,8 +89,19 @@ export async function resolveLspServerLaunch(
     return sameLaunch(executable(explicitPath, [], options));
   }
 
+  const managedBinary = resolveManagedServerBinary();
+  if (managedBinary) {
+    return sameLaunch(executable(managedBinary, [], options));
+  }
+
+  const bundledBinary = resolveBundledServerBinary(context);
+  if (bundledBinary) {
+    return sameLaunch(executable(bundledBinary, [], options));
+  }
+
   let cliPath = resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
   if (!cliPath && !devMode && !compilerRoot) {
+    launchProgress?.onDownloading?.();
     cliPath = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -86,19 +109,15 @@ export async function resolveLspServerLaunch(
         cancellable: false,
       },
       async (progress) => {
-        progress.report({ message: "Downloading CLI release and preparing workspace…" });
-        return installCli();
+        progress.report({ message: "Downloading toolchain and preparing workspace…" });
+        launchProgress?.onBootstrapping?.();
+        return installCli(launchProgress);
       },
     );
   }
 
   if (cliPath) {
     return sameLaunch(executable(cliPath, ["lsp"], options));
-  }
-
-  const bundledBinary = resolveBundledServerBinary(context);
-  if (bundledBinary) {
-    return sameLaunch(executable(bundledBinary, [], options));
   }
 
   const releaseBinary = compilerRoot ? resolveCompilerReleaseBinary(compilerRoot) : undefined;
@@ -111,7 +130,8 @@ export async function resolveLspServerLaunch(
     const platformKey = platformArchKey() ?? `${process.platform}-${process.arch}`;
     const message =
       `Beskid language server could not be started for ${platformKey}. ` +
-      "Run **Beskid: Install CLI**, set `beskid.lsp.server.path`, or enable `beskid.lsp.server.devMode`.";
+      "Run **Beskid: Install LSP** or **Beskid: Setup toolchain**, set `beskid.lsp.server.path`, " +
+      "or enable `beskid.lsp.server.devMode`.";
     void vscode.window.showErrorMessage(message);
     throw new Error(message);
   }

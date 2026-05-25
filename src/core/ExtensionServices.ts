@@ -1,6 +1,7 @@
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import { registerViews, type RegisteredViews } from "../activation/registerViews.js";
+import { registerRuntimeUi, type RuntimeUiHandles } from "../activation/registerRuntimeUi.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
 import { registerCommands } from "../commands/registerCommands.js";
@@ -10,20 +11,25 @@ import { SelectedProjectOutlineProvider } from "../outline/SelectedProjectOutlin
 import { BeskidStatusController } from "../status/beskidStatusController.js";
 import { FocusCoordinator } from "../runtime/FocusCoordinator.js";
 import { BeskidLspSession } from "../runtime/BeskidLspSession.js";
+import { LspRuntimeState } from "../runtime/LspRuntimeState.js";
 import { registerExtensionWatchers } from "../runtime/extensionWatchers.js";
 import { registerRuntimeConfiguration } from "../runtime/runtimeConfiguration.js";
 import { ProjectTreeProvider } from "../workspace/ProjectTreeProvider.js";
 import { WorkspaceTreeProvider } from "../workspace/WorkspaceTreeProvider.js";
+import { LspPckgApi } from "../packages/lspPckgApi.js";
 import { LspProjectApi } from "../workspace/lspProjectApi.js";
 import { RefreshCoordinator } from "./RefreshCoordinator.js";
+import { readDashboardOpenOnActivate } from "../config/workspaceSettings.js";
 
 export class ExtensionServices {
   readonly outputChannel: vscode.OutputChannel;
   readonly statusBar: vscode.StatusBarItem;
+  readonly runtime: LspRuntimeState;
   readonly status: BeskidStatusController;
   readonly focus: FocusCoordinator;
   readonly session: BeskidLspSession;
   readonly lspApi: LspProjectApi;
+  readonly lspPckg: LspPckgApi;
   readonly refresh: RefreshCoordinator;
   readonly cli: CliService;
   readonly pckg: PckgService;
@@ -32,24 +38,27 @@ export class ExtensionServices {
   readonly workspaceTree: WorkspaceTreeProvider;
   readonly projectTree: ProjectTreeProvider;
   readonly views: RegisteredViews;
+  readonly runtimeUi: RuntimeUiHandles;
 
   private workspaceProjUri: string | undefined;
 
   constructor(private readonly context: ExtensionContext) {
     this.outputChannel = vscode.window.createOutputChannel("Beskid LSP");
+    this.runtime = new LspRuntimeState();
     this.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    this.statusBar.command = "beskid.lsp.quickActions";
+    this.statusBar.command = "beskid.dashboard.focus";
     this.statusBar.show();
-    this.status = new BeskidStatusController(this.statusBar);
-    this.status.setLspClientRunning(false);
+    this.status = new BeskidStatusController(this.statusBar, this.runtime);
 
     this.focus = new FocusCoordinator(context);
+    this.runtime.setFocusedProject(this.focus.getFocusedProject());
+
     this.session = new BeskidLspSession(
       context,
       this.outputChannel,
-      this.status,
+      this.runtime,
       () => this.focus.getFocusedProject(),
-      () => this.cli.ensureInstalled(),
+      (progress) => this.cli.ensureInstalled(progress),
       {
         onRefreshWorkspaceUi: async () => {
           this.packageProvider.clearCaches();
@@ -59,6 +68,7 @@ export class ExtensionServices {
       },
     );
     this.lspApi = new LspProjectApi(() => this.session.getClient());
+    this.lspPckg = new LspPckgApi(() => this.session.getClient());
 
     this.outlineProvider = new SelectedProjectOutlineProvider();
     this.workspaceTree = new WorkspaceTreeProvider(
@@ -78,13 +88,13 @@ export class ExtensionServices {
       projectTree: this.projectTree,
     });
 
-    this.pckg = new PckgService(context, this.lspApi, () => this.workspaceProjUri);
+    this.pckg = new PckgService(context, this.lspApi, this.lspPckg, () => this.workspaceProjUri);
 
     const reportActivity = (
-      phase: Parameters<BeskidStatusController["setPckgActivity"]>[0],
+      phase: Parameters<LspRuntimeState["setPckgActivity"]>[0],
       active: boolean,
       detail?: string,
-    ) => this.status.setPckgActivity(phase, active, detail);
+    ) => this.runtime.setPckgActivity(phase, active, detail);
 
     this.cli = new CliService({
       context,
@@ -106,6 +116,9 @@ export class ExtensionServices {
       },
     });
 
+    const extensionVersion = context.extension.packageJSON.version ?? "0.0.0";
+    this.runtimeUi = registerRuntimeUi(context, this.runtime, extensionVersion);
+
     this.views = registerViews(context, {
       workspaceTree: this.workspaceTree,
       projectTree: this.projectTree,
@@ -114,6 +127,7 @@ export class ExtensionServices {
     });
 
     this.focus.onDidChangeFocus(({ projectUri }) => {
+      this.runtime.setFocusedProject(projectUri);
       this.outlineProvider.setProject(projectUri);
       this.refresh.scheduleFocusUi();
       void this.packageProvider.refreshProjectSection();
@@ -126,7 +140,12 @@ export class ExtensionServices {
   }
 
   async activate(): Promise<void> {
-    this.context.subscriptions.push(this.outputChannel, this.statusBar);
+    this.context.subscriptions.push(
+      this.outputChannel,
+      this.statusBar,
+      this.runtime,
+      { dispose: () => this.status.dispose() },
+    );
     registerCommands(this.context, this);
     registerBeskidTaskProvider(this.context);
     this.cli.registerCommands();
@@ -136,6 +155,7 @@ export class ExtensionServices {
     registerRuntimeConfiguration(this.context, {
       session: this.session,
       packageProvider: this.packageProvider,
+      runtime: this.runtime,
     });
     this.context.subscriptions.push(
       this.focus.registerAutoSelect(() => this.session.getClient(), this.refresh),
@@ -146,6 +166,10 @@ export class ExtensionServices {
     this.workspaceTree.refresh();
     this.packageProvider.refresh();
     await this.focus.autoSelectFromActiveEditor(this.session.getClient(), this.refresh);
+
+    if (readDashboardOpenOnActivate()) {
+      void this.runtimeUi.dashboard.focus();
+    }
   }
 
   async deactivate(): Promise<void> {
@@ -155,8 +179,10 @@ export class ExtensionServices {
   async showQuickActions(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
       [
+        { label: "Open dashboard", command: "beskid.dashboard.focus" },
         { label: "Setup toolchain", command: "beskid.cli.bootstrap" },
         { label: "Install CLI", command: "beskid.cli.install" },
+        { label: "Install LSP", command: "beskid.lsp.install" },
         { label: "Start LSP", command: "beskid.lsp.start" },
         { label: "Stop LSP", command: "beskid.lsp.stop" },
         { label: "Restart LSP", command: "beskid.lsp.restart" },

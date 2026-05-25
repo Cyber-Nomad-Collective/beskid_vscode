@@ -2,19 +2,30 @@ import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
-import { readCliReleaseTag, resolveCliExecutablePath } from "../config/workspaceSettings.js";
+import { readCliReleaseTag, readLspReleaseTag, resolveCliExecutablePath } from "../config/workspaceSettings.js";
 import { appendToolchainFailure, formatToolchainError } from "./cliErrors.js";
 import { installBeskidCli, type CliInstallResult } from "./cliInstall.js";
 import { resolveCliPlatformAsset } from "./cliPlatform.js";
+import { defaultLspInstallPath } from "./lspPlatform.js";
+import { installBeskidLsp, type LspInstallResult } from "./lspInstall.js";
 import { appendCliProcessLog, runCliProcess } from "./cliProcess.js";
 import { discoverBootstrapProjects } from "./discoverBootstrapProjects.js";
+import { resolveLspPlatformAsset } from "./lspPlatform.js";
 
 const BOOTSTRAP_STATE_KEY = "beskid.toolchain.bootstrapped";
+
+export type ToolchainBootstrapProgress = {
+  onDownloading?: () => void;
+  onBootstrapping?: () => void;
+};
 
 export type CliBootstrapResult = {
   cliPath: string;
   installed: boolean;
   install?: CliInstallResult;
+  lspPath?: string;
+  lspInstalled: boolean;
+  lspInstall?: LspInstallResult;
   fetchAttempted: boolean;
   fetchFailures: { project: string; exitCode: number }[];
 };
@@ -36,7 +47,7 @@ async function verifyCliSupportsLsp(
   if (result.exitCode !== 0) {
     throw new Error(
       `Installed CLI does not support 'beskid lsp' (exit ${result.exitCode}). ` +
-        "Download a current release (default tag: cli-latest) or point beskid.cli.path at a local build.",
+        "Download a current CLI release (default tag: cli-latest) or point beskid.cli.path at a local build.",
     );
   }
 }
@@ -91,22 +102,43 @@ async function installManagedCli(
   return installBeskidCli(outputChannel, releaseTag);
 }
 
+async function installManagedLsp(
+  outputChannel: vscode.OutputChannel,
+  releaseTag: string,
+): Promise<LspInstallResult> {
+  const asset = resolveLspPlatformAsset();
+  outputChannel.appendLine("[Beskid toolchain] Installing LSP from GitHub release…");
+  outputChannel.appendLine(`  release tag: ${releaseTag}`);
+  outputChannel.appendLine(`  platform: ${process.platform}-${process.arch}`);
+  if (asset) {
+    outputChannel.appendLine(`  asset: ${asset.releaseAsset}`);
+  }
+  outputChannel.show(true);
+  return installBeskidLsp(outputChannel, releaseTag);
+}
+
 /**
- * Ensures a managed CLI is present (downloads cli-latest by default), optionally fetches
- * workspace dependencies once, and verifies `beskid lsp` before the language server starts.
+ * Ensures managed CLI and LSP binaries (GitHub `cli-latest` / `lsp-latest` by default),
+ * optionally fetches workspace dependencies once, and verifies the toolchain before LSP starts.
  */
 export async function bootstrapBeskidToolchain(
   context: ExtensionContext,
   outputChannel: vscode.OutputChannel,
+  progress?: ToolchainBootstrapProgress,
 ): Promise<CliBootstrapResult> {
-  const releaseTag = readCliReleaseTag();
+  const cliReleaseTag = readCliReleaseTag();
+  const lspReleaseTag = readLspReleaseTag();
   let cliPath = resolveCliExecutablePath();
   let installed = false;
   let install: CliInstallResult | undefined;
+  let lspInstalled = false;
+  let lspInstall: LspInstallResult | undefined;
+  const lspPath = defaultLspInstallPath();
 
   try {
     if (!cliPath) {
-      install = await installManagedCli(outputChannel, releaseTag);
+      progress?.onDownloading?.();
+      install = await installManagedCli(outputChannel, cliReleaseTag);
       cliPath = install.path;
       installed = true;
       outputChannel.appendLine(
@@ -120,10 +152,24 @@ export async function bootstrapBeskidToolchain(
       throw new Error(`CLI path does not exist: ${cliPath}`);
     }
 
+    if (!existsSync(lspPath)) {
+      progress?.onDownloading?.();
+      lspInstall = await installManagedLsp(outputChannel, lspReleaseTag);
+      lspInstalled = true;
+      outputChannel.appendLine(
+        `[Beskid toolchain] Installed Beskid LSP ${lspInstall.version} → ${lspInstall.path}`,
+      );
+    } else {
+      outputChannel.appendLine(`[Beskid toolchain] Using LSP at ${lspPath}`);
+    }
+
     const verifiedCliPath = context.globalState.get<string>("beskid.toolchain.verifiedCliPath");
-    if (verifiedCliPath !== cliPath) {
+    const hasManagedLsp = existsSync(lspPath);
+    if (!hasManagedLsp && verifiedCliPath !== cliPath) {
       await verifyCliSupportsLsp(cliPath, outputChannel);
       await context.globalState.update("beskid.toolchain.verifiedCliPath", cliPath);
+    } else if (hasManagedLsp) {
+      outputChannel.appendLine("[Beskid toolchain] Managed LSP present; skipping CLI 'lsp' probe.");
     }
 
     let fetchAttempted = false;
@@ -132,6 +178,7 @@ export async function bootstrapBeskidToolchain(
     const autoFetch = readAutoFetchDependencies();
 
     if (autoFetch && !alreadyBootstrapped) {
+      progress?.onBootstrapping?.();
       const fetchResult = await fetchWorkspaceDependencies(cliPath, outputChannel);
       fetchAttempted = fetchResult.attempted;
       fetchFailures.push(...fetchResult.failures);
@@ -143,7 +190,8 @@ export async function bootstrapBeskidToolchain(
           .map((f) => `${f.project} (exit ${f.exitCode})`)
           .join("; ");
         const detail = formatToolchainError("Dependency fetch", new Error(summary), {
-          "release tag": releaseTag,
+          "CLI release tag": cliReleaseTag,
+          "LSP release tag": lspReleaseTag,
           cli: cliPath,
         });
         outputChannel.appendLine(detail);
@@ -162,13 +210,25 @@ export async function bootstrapBeskidToolchain(
       outputChannel.appendLine("[Beskid toolchain] Dependencies already bootstrapped; skipping fetch.");
     }
 
-    return { cliPath, installed, install, fetchAttempted, fetchFailures };
+    return {
+      cliPath,
+      installed,
+      install,
+      lspPath: existsSync(lspPath) ? lspPath : lspInstall?.path,
+      lspInstalled,
+      lspInstall,
+      fetchAttempted,
+      fetchFailures,
+    };
   } catch (error) {
-    const asset = resolveCliPlatformAsset();
+    const cliAsset = resolveCliPlatformAsset();
+    const lspAsset = resolveLspPlatformAsset();
     const detail = appendToolchainFailure(outputChannel, "Toolchain bootstrap", error, {
-      "release tag": releaseTag,
+      "CLI release tag": cliReleaseTag,
+      "LSP release tag": lspReleaseTag,
       platform: `${process.platform}-${process.arch}`,
-      asset: asset?.releaseAsset,
+      "CLI asset": cliAsset?.releaseAsset,
+      "LSP asset": lspAsset?.releaseAsset,
     });
     void vscode.window.showErrorMessage(
       "Beskid toolchain setup failed. See the Beskid LSP output for details.",

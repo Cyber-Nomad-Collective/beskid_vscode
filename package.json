@@ -132,8 +132,12 @@
         "title": "Beskid: Install CLI"
       },
       {
+        "command": "beskid.lsp.install",
+        "title": "Beskid: Install LSP"
+      },
+      {
         "command": "beskid.cli.bootstrap",
-        "title": "Beskid: Setup Toolchain (CLI + Dependencies)"
+        "title": "Beskid: Setup Toolchain (CLI + LSP + Dependencies)"
       },
       {
         "command": "beskid.cli.fetch",
@@ -158,6 +162,10 @@
       {
         "command": "beskid.lsp.openLogs",
         "title": "Beskid: Open LSP Logs"
+      },
+      {
+        "command": "beskid.dashboard.focus",
+        "title": "Beskid: Open Dashboard"
       }
     ],
     "taskDefinitions": [
@@ -216,6 +224,9 @@
       "commandPalette": [
         {
           "command": "beskid.selectProject"
+        },
+        {
+          "command": "beskid.dashboard.focus"
         },
         {
           "command": "beskid.lsp.quickActions"
@@ -328,6 +339,15 @@
     "views": {
       "beskidViews": [
         {
+          "id": "beskidDashboardView",
+          "name": "Dashboard",
+          "type": "webview"
+        },
+        {
+          "id": "beskidDebugView",
+          "name": "Debug"
+        },
+        {
           "id": "beskidWorkspaceView",
           "name": "Workspaces"
         },
@@ -387,107 +407,134 @@
         "path": "./syntaxes/beskid-proj.tmLanguage.json"
       }
     ],
-    "configuration": {
-      "title": "Beskid LSP",
-      "properties": {
-        "beskid.lsp.server.command": {
-          "type": "string",
-          "default": "cargo",
-          "description": "LSP launch command used in dev mode (requires `beskid.lsp.server.devMode=true`)."
-        },
-        "beskid.lsp.server.args": {
-          "type": "array",
-          "items": {
-            "type": "string"
+    "configuration": [
+      {
+        "title": "Beskid",
+        "properties": {
+          "beskid.dashboard.openOnActivate": {
+            "type": "boolean",
+            "default": false,
+            "description": "Open the Beskid Dashboard sidebar view when the extension activates."
           },
-          "default": [
-            "run",
-            "-p",
-            "beskid_lsp"
-          ],
-          "description": "LSP launch args used in dev mode (requires `beskid.lsp.server.devMode=true`)."
-        },
-        "beskid.lsp.server.preferBundled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Use the VSIX-bundled `beskid_lsp` binary under `server/<platform>-<arch>/` instead of the managed CLI (`beskid lsp`)."
-        },
-        "beskid.lsp.server.devMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Launch LSP from the compiler workspace via `cargo run -p beskid_lsp` when no CLI release is available."
-        },
-        "beskid.lsp.server.path": {
-          "type": "string",
-          "default": "",
-          "description": "Absolute path to a Beskid LSP binary. Overrides the managed CLI (`beskid lsp`) and bundled server."
-        },
-        "beskid.lsp.server.cwd": {
-          "type": "string",
-          "default": "",
-          "description": "Optional working directory for the language server process. Empty means current workspace root."
-        },
-        "beskid.lsp.server.debugArgs": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "beskid.project.autoSelectFromEditor": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically focus the Beskid project manifest for the active editor file."
+          }
+        }
+      },
+      {
+        "title": "Beskid › LSP",
+        "properties": {
+          "beskid.lsp.server.command": {
+            "type": "string",
+            "default": "cargo",
+            "description": "Launch command when `beskid.lsp.server.devMode` is enabled (typically `cargo run -p beskid_lsp`)."
           },
-          "default": [
-            "run",
-            "-p",
-            "beskid_lsp"
-          ],
-          "description": "Arguments used when VS Code launches the extension in debug mode (dev mode)."
-        },
-        "beskid.lsp.log.level": {
-          "type": "string",
-          "enum": [
-            "error",
-            "warning",
-            "info",
-            "log",
-            "debug"
-          ],
-          "default": "info",
-          "description": "Language server log level routed to VS Code output."
-        },
-        "beskid.lsp.log.serverOutput": {
-          "type": "boolean",
-          "default": true,
-          "description": "Mirror server output to the Beskid LSP output channel."
-        },
-        "beskid.pckg.baseUrl": {
-          "type": "string",
-          "default": "http://localhost:5000",
-          "description": "Base URL of the pckg server used by the package manager pane."
-        },
-        "beskid.pckg.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "Optional API key for private registry access. Prefer storing via command palette when available; falls back to SecretStorage when empty."
-        },
-        "beskid.cli.path": {
-          "type": "string",
-          "default": "beskid",
-          "description": "Path to the Beskid CLI binary. When `beskid`, uses `~/.beskid/bin/beskid` from **Beskid: Install CLI** (also used to run `beskid lsp` for the language server)."
-        },
-        "beskid.cli.releaseTag": {
-          "type": "string",
-          "default": "cli-latest",
-          "description": "GitHub release tag for CLI download (default rolling `cli-latest`; use `cli-vX.Y.Z` to pin)."
-        },
-        "beskid.toolchain.autoFetchDependencies": {
-          "type": "boolean",
-          "default": true,
-          "description": "On first extension launch with an open Beskid project, run `beskid fetch` after installing the CLI release."
-        },
-        "beskid.project.autoSelectFromEditor": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically focus the Beskid project manifest for the active editor file."
+          "beskid.lsp.server.args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "run",
+              "-p",
+              "beskid_lsp"
+            ],
+            "description": "Arguments paired with `beskid.lsp.server.command` in dev mode."
+          },
+          "beskid.lsp.releaseTag": {
+            "type": "string",
+            "default": "lsp-latest",
+            "description": "GitHub release tag for LSP download (`lsp-latest` rolling tag or `lsp-vX.Y.Z` to pin)."
+          },
+          "beskid.lsp.server.preferBundled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Prefer the VSIX-bundled `beskid_lsp` under `server/<platform>-<arch>/` when no managed binary exists at `~/.beskid/bin/beskid_lsp`."
+          },
+          "beskid.lsp.server.devMode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Build and run the language server from a local compiler workspace via Cargo when no CLI/binary override is available."
+          },
+          "beskid.lsp.server.path": {
+            "type": "string",
+            "default": "",
+            "description": "Absolute path to a Beskid LSP binary. Overrides managed, bundled, and dev-mode launch."
+          },
+          "beskid.lsp.server.cwd": {
+            "type": "string",
+            "default": "",
+            "description": "Working directory for the language server. Empty uses the focused project or first workspace folder."
+          },
+          "beskid.lsp.server.debugArgs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "run",
+              "-p",
+              "beskid_lsp"
+            ],
+            "description": "Dev-mode arguments when the extension runs under a VS Code debug session."
+          },
+          "beskid.lsp.log.level": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "log",
+              "debug"
+            ],
+            "default": "info",
+            "description": "Language server log level in the Beskid LSP output channel."
+          },
+          "beskid.lsp.log.serverOutput": {
+            "type": "boolean",
+            "default": true,
+            "description": "Mirror raw language server stdout/stderr to the Beskid LSP output channel."
+          }
+        }
+      },
+      {
+        "title": "Beskid › Toolchain",
+        "properties": {
+          "beskid.cli.path": {
+            "type": "string",
+            "default": "beskid",
+            "description": "Path to the Beskid CLI. `beskid` resolves to `~/.beskid/bin/beskid` after **Install CLI**."
+          },
+          "beskid.cli.releaseTag": {
+            "type": "string",
+            "default": "cli-latest",
+            "description": "GitHub release tag for CLI download (`cli-latest` or `cli-vX.Y.Z`)."
+          },
+          "beskid.toolchain.autoFetchDependencies": {
+            "type": "boolean",
+            "default": true,
+            "description": "On first toolchain bootstrap, run `beskid fetch` for discovered project manifests."
+          }
+        }
+      },
+      {
+        "title": "Beskid › Packages",
+        "properties": {
+          "beskid.pckg.baseUrl": {
+            "type": "string",
+            "default": "http://localhost:5000",
+            "description": "Package registry (pckg) base URL for the Packages tree and dashboard."
+          },
+          "beskid.pckg.apiKey": {
+            "type": "string",
+            "default": "",
+            "description": "Optional registry API key. Prefer **Configure Package Registry API Key**; empty uses SecretStorage."
+          }
         }
       }
-    },
+    ],
     "configurationDefaults": {
       "[beskid]": {
         "editor.defaultFormatter": "beskid.beskid-vscode"

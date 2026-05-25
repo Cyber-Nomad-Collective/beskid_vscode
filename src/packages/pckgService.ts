@@ -1,7 +1,9 @@
 import type { ExtensionContext } from "vscode";
-import { readPckgBaseUrl } from "../config/workspaceSettings.js";
+import { readPckgBaseUrl, readPckgApiKey } from "../config/workspaceSettings.js";
 import { registryErrorMessage } from "../core/pckgErrors.js";
 import type { LspProjectApi } from "../workspace/lspProjectApi.js";
+import type { LspPckgApi } from "./lspPckgApi.js";
+import type { PckgConnectionStatus, PckgValidateConnectionResult } from "./pckgConnectionTypes.js";
 import {
   buildRegistryPackageUrl,
   clearPckgCaches,
@@ -13,17 +15,74 @@ import {
 import type { PackageDetails } from "./pckgTypes.js";
 
 export class PckgService {
+  private connectionStatusCache: PckgConnectionStatus | undefined;
+
   constructor(
     private readonly context: ExtensionContext,
     private readonly lspApi: LspProjectApi,
+    private readonly lspPckg: LspPckgApi,
     private readonly getWorkspaceProjUri: () => string | undefined,
   ) {}
 
   clearCaches(): void {
     clearPckgCaches();
+    this.connectionStatusCache = undefined;
+  }
+
+  async getConnectionStatus(forceRefresh = false): Promise<PckgConnectionStatus> {
+    if (!forceRefresh && this.connectionStatusCache) {
+      return this.connectionStatusCache;
+    }
+    const authConfigured = Boolean(await readPckgApiKey(this.context));
+    const workspaceUri = this.getWorkspaceProjUri();
+    const fromLsp = await this.lspPckg.getConnectionStatus({ workspaceUri, authConfigured });
+    if (fromLsp?.baseUrl) {
+      this.connectionStatusCache = fromLsp;
+      return fromLsp;
+    }
+
+    const fallbackUrl = await this.resolveRegistryBaseUrlFromManifest();
+    const status: PckgConnectionStatus = {
+      baseUrl: fallbackUrl,
+      registryName: null,
+      workspaceDefaultRegistryUrl: fallbackUrl || null,
+      workspaceDefaultRegistryName: fallbackUrl ? "default" : null,
+      authConfigured,
+      validation: { status: "unknown", message: null },
+      connected: false,
+    };
+    this.connectionStatusCache = status;
+    return status;
+  }
+
+  async validateConnection(apiKey?: string): Promise<PckgValidateConnectionResult> {
+    const workspaceUri = this.getWorkspaceProjUri();
+    const baseUrl = (await this.getConnectionStatus()).baseUrl || undefined;
+    const result = await this.lspPckg.validateConnection({
+      workspaceUri,
+      baseUrl,
+      apiKey,
+    });
+    this.connectionStatusCache = undefined;
+    if (result) {
+      return result;
+    }
+    return {
+      ok: false,
+      error: "Language server unavailable.",
+      validation: { status: "error", message: "Language server unavailable." },
+    };
   }
 
   async resolveRegistryBaseUrl(): Promise<string> {
+    const status = await this.getConnectionStatus();
+    if (status.baseUrl) {
+      return status.baseUrl.replace(/\/$/, "");
+    }
+    return readPckgBaseUrl().replace(/\/$/, "");
+  }
+
+  private async resolveRegistryBaseUrlFromManifest(): Promise<string> {
     const workspaceUri = this.getWorkspaceProjUri();
     if (workspaceUri) {
       const summary = await this.lspApi.getWorkspaceSummary(workspaceUri);

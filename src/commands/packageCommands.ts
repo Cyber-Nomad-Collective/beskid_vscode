@@ -1,8 +1,10 @@
 import * as vscode from "vscode";
 import type { ExtensionContext } from "vscode";
-import { writePckgApiKey } from "../packages/pckgClient.js";
+import { openBeskidViewsContainer } from "../activation/focusBeskidViews.js";
+import { storePckgApiKey } from "../config/workspaceSettings.js";
 import type { PackageTreeItem } from "../packages/PackageTreeItem.js";
 import type { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
+import type { PckgService } from "../packages/pckgService.js";
 import type { RefreshCoordinator } from "../core/RefreshCoordinator.js";
 
 function payloadFromItem(item: unknown): Record<string, unknown> | undefined {
@@ -16,13 +18,12 @@ export function registerPackageCommands(
   context: ExtensionContext,
   deps: {
     packageProvider: PackageManagerProvider;
+    pckg: PckgService;
     refresh: RefreshCoordinator;
   },
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand("beskid.packages.open", async () => {
-      await vscode.commands.executeCommand("workbench.view.extension.beskidViews");
-    }),
+    vscode.commands.registerCommand("beskid.packages.open", () => openBeskidViewsContainer()),
     vscode.commands.registerCommand("beskid.packages.search", async () => {
       const query = await vscode.window.showInputBox({
         prompt: "Search packages",
@@ -55,9 +56,20 @@ export function registerPackageCommands(
       if (key === undefined) {
         return;
       }
-      await writePckgApiKey(context, key.length > 0 ? key : undefined);
+      const trimmed = key.trim();
+      await storePckgApiKey(context, trimmed.length > 0 ? trimmed : undefined);
       deps.packageProvider.clearCaches();
-      deps.packageProvider.refresh();
+      if (trimmed.length > 0) {
+        const validation = await deps.pckg.validateConnection(trimmed);
+        if (validation.ok) {
+          void vscode.window.showInformationMessage("Registry connection validated.");
+        } else {
+          void vscode.window.showWarningMessage(
+            validation.error ?? validation.validation.message ?? "Registry validation failed.",
+          );
+        }
+      }
+      await deps.packageProvider.refreshProjectSection();
     }),
     vscode.commands.registerCommand("beskid.packages.openManifest", async (item?: unknown) => {
       const payload = payloadFromItem(item);

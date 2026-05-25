@@ -30,6 +30,13 @@ export function readCliReleaseTag(): string {
   );
 }
 
+export function readLspReleaseTag(): string {
+  return (
+    vscode.workspace.getConfiguration("beskid.lsp").get<string>("releaseTag", "lsp-latest") ||
+    "lsp-latest"
+  );
+}
+
 export function readAutoSelectFromEditor(): boolean {
   return (
     vscode.workspace.getConfiguration("beskid").get<boolean>("project.autoSelectFromEditor", true) ??
@@ -45,6 +52,13 @@ export function readLspLogLevel(): string {
 
 export function readLogServerOutput(): boolean {
   return vscode.workspace.getConfiguration("beskid.lsp").get<boolean>("log.serverOutput", true);
+}
+
+export function readDashboardOpenOnActivate(): boolean {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<boolean>("dashboard.openOnActivate", false) ??
+    false
+  );
 }
 
 export async function readPckgApiKey(context: vscode.ExtensionContext): Promise<string | undefined> {
