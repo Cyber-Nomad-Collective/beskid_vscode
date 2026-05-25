@@ -1,6 +1,9 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import * as vscode from "vscode";
+import { dirname, join } from "node:path";
+
+export interface WorkspaceFolderRef {
+  uri: { fsPath: string };
+}
 
 export function platformArchKey(): string | undefined {
   const platform = process.platform;
@@ -19,23 +22,72 @@ export function platformArchKey(): string | undefined {
   return `${normalizedPlatform}-${normalizedArch}`;
 }
 
-export function resolveBundledServerBinary(context: vscode.ExtensionContext): string | undefined {
-  const config = vscode.workspace.getConfiguration("beskid.lsp");
-  const explicitPath = config.get<string>("server.path", "").trim();
-  if (explicitPath.length > 0) {
-    return explicitPath;
+/** Platform keys to probe for a bundled binary (includes macOS cross-arch fallback). */
+export function bundledPlatformArchKeys(): string[] {
+  const primary = platformArchKey();
+  if (!primary) {
+    return [];
   }
 
-  if (!config.get<boolean>("server.preferBundled", true)) {
-    return undefined;
+  const keys = [primary];
+  if (primary.startsWith("darwin-")) {
+    const alternate = primary === "darwin-arm64" ? "darwin-x64" : "darwin-arm64";
+    keys.push(alternate);
+  }
+  return keys;
+}
+
+export function compilerBinaryName(): string {
+  return process.platform === "win32" ? "beskid_lsp.exe" : "beskid_lsp";
+}
+
+export function resolveBundledServerBinaryAt(
+  extensionPath: string,
+  keys: readonly string[],
+): string | undefined {
+  const binaryName = compilerBinaryName();
+  for (const key of keys) {
+    const bundledPath = join(extensionPath, "server", key, binaryName);
+    if (existsSync(bundledPath)) {
+      return bundledPath;
+    }
+  }
+  return undefined;
+}
+
+export function resolveCompilerWorkspaceRoot(
+  extensionPath: string,
+  workspaceFolders: readonly WorkspaceFolderRef[] | undefined,
+): string | undefined {
+  const candidates: string[] = [join(extensionPath, "..", "compiler")];
+
+  for (const folder of workspaceFolders ?? []) {
+    let dir = folder.uri.fsPath;
+    for (let depth = 0; depth < 6; depth += 1) {
+      candidates.push(join(dir, "compiler"));
+      const parent = dirname(dir);
+      if (parent === dir) {
+        break;
+      }
+      dir = parent;
+    }
   }
 
-  const key = platformArchKey();
-  if (!key) {
-    return undefined;
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    if (seen.has(candidate)) {
+      continue;
+    }
+    seen.add(candidate);
+    if (existsSync(join(candidate, "Cargo.toml"))) {
+      return candidate;
+    }
   }
 
-  const binaryName = process.platform === "win32" ? "beskid_lsp.exe" : "beskid_lsp";
-  const bundledPath = join(context.extensionPath, "server", key, binaryName);
-  return existsSync(bundledPath) ? bundledPath : undefined;
+  return undefined;
+}
+
+export function resolveCompilerReleaseBinary(compilerRoot: string): string | undefined {
+  const releasePath = join(compilerRoot, "target", "release", compilerBinaryName());
+  return existsSync(releasePath) ? releasePath : undefined;
 }

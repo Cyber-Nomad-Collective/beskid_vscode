@@ -53,7 +53,20 @@ export async function runBeskidCli(
       options.onPhase?.(options.subcommand, false);
       const exitCode = code ?? 1;
       if (exitCode !== 0) {
-        void vscode.window.showErrorMessage(`Beskid ${options.subcommand} failed (exit ${exitCode}).`);
+        outputChannel.appendLine(
+          `[Beskid CLI] ${options.subcommand} failed with exit code ${exitCode}. See output above.`,
+        );
+        outputChannel.show(true);
+        void vscode.window
+          .showErrorMessage(
+            `Beskid ${options.subcommand} failed (exit ${exitCode}). See Beskid LSP output for details.`,
+            "Open Output",
+          )
+          .then((choice) => {
+            if (choice === "Open Output") {
+              outputChannel.show(true);
+            }
+          });
       } else {
         void vscode.window.showInformationMessage(`Beskid ${options.subcommand} completed.`);
       }
@@ -62,7 +75,27 @@ export async function runBeskidCli(
     child.on("error", (err) => {
       options.onPhase?.(options.subcommand, false);
       outputChannel.appendLine(String(err));
-      void vscode.window.showErrorMessage(`Failed to run Beskid CLI: ${err.message}`);
+      const errno = err as NodeJS.ErrnoException;
+      if (errno.code === "ENOENT") {
+        void vscode.window
+          .showErrorMessage(
+            "Beskid CLI not found on PATH. Download the latest release?",
+            "Download CLI",
+            "Open settings",
+          )
+          .then((choice) => {
+            if (choice === "Download CLI") {
+              void vscode.commands.executeCommand("beskid.cli.install");
+            } else if (choice === "Open settings") {
+              void vscode.commands.executeCommand(
+                "workbench.action.openSettings",
+                "beskid.cli.path",
+              );
+            }
+          });
+      } else {
+        void vscode.window.showErrorMessage(`Failed to run Beskid CLI: ${err.message}`);
+      }
       resolve(1);
     });
   });

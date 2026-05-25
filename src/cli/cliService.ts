@@ -1,6 +1,8 @@
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
+import { bootstrapBeskidToolchain } from "./cliBootstrap.js";
+import { installBeskidCli } from "./cliInstall.js";
 import {
   type BeskidCliSubcommand,
   focusedProjectCwd,
@@ -30,6 +32,8 @@ export class CliService {
     const run = (subcommand: BeskidCliSubcommand) => () => this.run(subcommand);
 
     this.options.context.subscriptions.push(
+      vscode.commands.registerCommand("beskid.cli.install", () => this.install()),
+      vscode.commands.registerCommand("beskid.cli.bootstrap", () => this.bootstrap(true)),
       vscode.commands.registerCommand("beskid.cli.fetch", run("fetch")),
       vscode.commands.registerCommand("beskid.cli.lock", run("lock")),
       vscode.commands.registerCommand("beskid.cli.build", run("build")),
@@ -42,5 +46,59 @@ export class CliService {
 
   focusedCwd(): string | undefined {
     return focusedProjectCwd(this.options.getFocusedProjectUri());
+  }
+
+  async install(): Promise<void> {
+    try {
+      const result = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Installing Beskid CLI",
+          cancellable: false,
+        },
+        async (progress) => {
+          progress.report({ message: "Downloading latest release…" });
+          return installBeskidCli(this.options.outputChannel);
+        },
+      );
+      void vscode.window.showInformationMessage(
+        `Beskid CLI ${result.version} installed to ${result.path}.`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      void vscode.window.showErrorMessage(`Failed to install Beskid CLI. See Beskid LSP output.`);
+      throw error;
+    }
+  }
+
+  /** Download CLI (if needed), verify `beskid lsp`, and fetch workspace deps on first launch. */
+  async ensureInstalled(): Promise<string> {
+    const result = await bootstrapBeskidToolchain(
+      this.options.context,
+      this.options.outputChannel,
+    );
+    return result.cliPath;
+  }
+
+  async bootstrap(force = false): Promise<void> {
+    if (force) {
+      await this.options.context.globalState.update("beskid.toolchain.bootstrapped", false);
+    }
+    try {
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Beskid toolchain",
+          cancellable: false,
+        },
+        async (progress) => {
+          progress.report({ message: "Setting up CLI and dependencies…" });
+          await bootstrapBeskidToolchain(this.options.context, this.options.outputChannel);
+        },
+      );
+      void vscode.window.showInformationMessage("Beskid toolchain setup completed.");
+    } catch {
+      // bootstrapBeskidToolchain already logged and notified
+    }
   }
 }

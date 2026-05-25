@@ -2,8 +2,14 @@ import * as vscode from "vscode";
 import type { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
 import type { BeskidLspSession } from "./BeskidLspSession.js";
 
-/** Full LSP process restart only when the server binary or launch mode changes. */
-const LSP_RESTART_KEYS = ["beskid.lsp.server.path", "beskid.lsp.server.devMode"] as const;
+/** Full LSP process restart when the server binary or launch mode changes. */
+const LSP_RESTART_KEYS = [
+  "beskid.lsp.server.path",
+  "beskid.lsp.server.devMode",
+  "beskid.lsp.server.preferBundled",
+  "beskid.cli.path",
+  "beskid.cli.releaseTag",
+] as const;
 
 export function registerRuntimeConfiguration(
   context: vscode.ExtensionContext,

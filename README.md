@@ -14,7 +14,8 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 
 - Activates on `beskid` language files
 - Associates both `.bd` and `.proj` with Beskid
-- Uses bundled platform LSP binaries by default (`server/<platform>-<arch>/`)
+- Uses GitHub CLI releases for the language server (`beskid lsp`) and project commands (fetch, lock, build, …)
+- Optional VSIX-bundled LSP binaries when `beskid.lsp.server.preferBundled` is enabled
 - Supports explicit local binary override via `beskid.lsp.server.path`
 - Supports source/dev launch mode for compiler contributors
 - Cross-module IntelliSense (`use` aliases, `IO.Member` completion) requires the open file to live under a Beskid project with a resolved `Project.proj` / lockfile and materialized dependencies—the same project context the CLI uses for builds
@@ -36,7 +37,8 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `Project.proj` for the active editor |
-| `beskid.cli.path` | `beskid` | Beskid CLI binary for fetch, lock, build, and tasks |
+| `beskid.cli.path` | `beskid` | Beskid CLI binary for fetch, lock, build, and tasks (uses `~/.beskid/bin/beskid` when installed via the extension) |
+| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Beskid: Install CLI** |
 | `beskid.pckg.baseUrl` | `http://localhost:5000` | pckg registry base URL |
 | `beskid.pckg.apiKey` | *(empty)* | Optional API key for private registry access (also stored in SecretStorage) |
 
@@ -49,7 +51,9 @@ bun run lint
 bun test
 ```
 
-Press `F5` in VS Code to run the extension in an Extension Development Host.
+Press `F5` in VS Code to run the extension in an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first (`bun run bundle:lsp` + `bun run build`).
+
+If the bundled binary is missing, the extension also tries a local `compiler/target/release/beskid_lsp` build and auto-launches via `cargo run -p beskid_lsp` when a sibling `compiler/` workspace is present (superrepo checkout).
 
 ```bash
 bun run test:e2e
@@ -63,19 +67,31 @@ bun run test:e2e
 4. In **Packages**, run **Search packages** for `corelib`; open details, then **Add Package Dependency** and confirm `Project.proj` gains a `dependency` block.
 5. Run **Beskid: Fetch Packages** (or **CLI Fetch**); refresh and confirm locked rows appear; if the registry requires auth, use **Configure Package Registry API Key** and retry search.
 
-## Default server command
+## Default language server
 
-By default the extension runs the bundled LSP binary for your platform.
+On first launch the extension:
 
-If the bundled binary is unavailable, either:
-- set `beskid.lsp.server.path` to a local `beskid_lsp` binary, or
-- enable `beskid.lsp.server.devMode` and use source mode:
+1. Downloads the **latest CLI release** from GitHub (tag `cli-latest` by default; see `beskid.cli.releaseTag`)
+2. Verifies the binary supports `beskid lsp`
+3. Runs **`beskid fetch`** for each open `Workspace.proj` / `Project.proj` (once; disable with `beskid.toolchain.autoFetchDependencies`)
+4. Starts the language server via `beskid lsp`
+
+All steps log to the **Beskid LSP** output channel. Failures include URLs, platform, and exit codes. Use **Beskid: Setup Toolchain (CLI + Dependencies)** to retry.
+
+Resolution order after bootstrap:
+
+1. `beskid.lsp.server.path` — explicit LSP binary
+2. Managed CLI — `beskid lsp` from `beskid.cli.path` or `~/.beskid/bin/beskid`
+3. VSIX-bundled `server/<platform>-<arch>/beskid_lsp` when `beskid.lsp.server.preferBundled` is true
+4. Local `compiler/target/release/beskid_lsp` or `cargo run -p beskid_lsp` when developing in the superrepo
+
+## Default server command (contributors)
+
+For compiler work in a cloned superrepo, enable `beskid.lsp.server.devMode` or rely on the auto-detected `compiler/` workspace:
 
 ```bash
 cargo run -p beskid_lsp
 ```
-
-with CWD = workspace root.
 
 You can override in VS Code settings:
 

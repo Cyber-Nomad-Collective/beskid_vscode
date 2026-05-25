@@ -2,7 +2,7 @@
   "name": "beskid-vscode",
   "displayName": "Beskid",
   "description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
-  "version": "0.1.0",
+  "version": "0.1.123",
   "publisher": "beskid",
   "license": "MIT",
   "icon": "icon.png",
@@ -126,6 +126,14 @@
       {
         "command": "beskid.packages.openRegistryUri",
         "title": "Beskid: Open registry URL"
+      },
+      {
+        "command": "beskid.cli.install",
+        "title": "Beskid: Install CLI"
+      },
+      {
+        "command": "beskid.cli.bootstrap",
+        "title": "Beskid: Setup Toolchain (CLI + Dependencies)"
       },
       {
         "command": "beskid.cli.fetch",
@@ -401,18 +409,18 @@
         },
         "beskid.lsp.server.preferBundled": {
           "type": "boolean",
-          "default": true,
-          "description": "Use bundled platform server binary under extension `server/<platform>-<arch>/`."
+          "default": false,
+          "description": "Use the VSIX-bundled `beskid_lsp` binary under `server/<platform>-<arch>/` instead of the managed CLI (`beskid lsp`)."
         },
         "beskid.lsp.server.devMode": {
           "type": "boolean",
           "default": false,
-          "description": "Launch LSP from source (requires repo cloned locally). When false, extension expects bundled binary or explicit `server.path`."
+          "description": "Launch LSP from the compiler workspace via `cargo run -p beskid_lsp` when no CLI release is available."
         },
         "beskid.lsp.server.path": {
           "type": "string",
           "default": "",
-          "description": "Absolute path to a Beskid LSP binary. Overrides bundled and fallback command settings."
+          "description": "Absolute path to a Beskid LSP binary. Overrides the managed CLI (`beskid lsp`) and bundled server."
         },
         "beskid.lsp.server.cwd": {
           "type": "string",
@@ -461,7 +469,17 @@
         "beskid.cli.path": {
           "type": "string",
           "default": "beskid",
-          "description": "Path to the Beskid CLI binary for fetch, lock, build, and other tasks."
+          "description": "Path to the Beskid CLI binary. When `beskid`, uses `~/.beskid/bin/beskid` from **Beskid: Install CLI** (also used to run `beskid lsp` for the language server)."
+        },
+        "beskid.cli.releaseTag": {
+          "type": "string",
+          "default": "cli-latest",
+          "description": "GitHub release tag for CLI download (default rolling `cli-latest`; use `cli-vX.Y.Z` to pin)."
+        },
+        "beskid.toolchain.autoFetchDependencies": {
+          "type": "boolean",
+          "default": true,
+          "description": "On first extension launch with an open Beskid project, run `beskid fetch` after installing the CLI release."
         },
         "beskid.project.autoSelectFromEditor": {
           "type": "boolean",
@@ -482,13 +500,14 @@
   "scripts": {
     "sync:keywords": "bun scripts/sync-keywords.mjs",
     "build": "bunx tsc -p .",
+    "bundle:lsp": "node scripts/bundle-lsp-host.mjs",
     "watch": "bunx tsc -w -p .",
     "lint": "bunx tsc -p . --noEmit",
     "test": "bun test",
     "test:e2e": "bun test test/e2e",
     "test:smoke:formatter": "node scripts/smoke-formatter.mjs",
-    "package": "bunx @vscode/vsce package",
-    "vscode:prepublish": "bun run build"
+    "package": "node scripts/package-vsix.mjs",
+    "vscode:prepublish": "node scripts/vscode-prepublish.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",

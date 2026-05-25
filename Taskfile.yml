@@ -4,7 +4,7 @@ silent: true
 
 vars:
   EXT_DIR: '{{.TASKFILE_DIR}}'
-  REPO_ROOT: '{{.TASKFILE_DIR}}/..'
+  COMPILER_ROOT: '{{.TASKFILE_DIR}}/../compiler'
 
 tasks:
   default:
@@ -39,46 +39,9 @@ tasks:
 
   bundle:lsp:host:
     desc: Build and copy host-platform Beskid LSP binary into extension/server
-    dir: '{{.REPO_ROOT}}'
+    dir: '{{.EXT_DIR}}'
     cmds:
-      - |
-        set -euo pipefail
-
-        case "$(uname -s)" in
-          Linux) PLATFORM="linux" ;;
-          Darwin) PLATFORM="darwin" ;;
-          MINGW*|MSYS*|CYGWIN*) PLATFORM="win32" ;;
-          *)
-            echo "Unsupported platform: $(uname -s)"
-            exit 1
-            ;;
-        esac
-
-        case "$(uname -m)" in
-          x86_64|amd64) ARCH="x64" ;;
-          aarch64|arm64) ARCH="arm64" ;;
-          *)
-            echo "Unsupported architecture: $(uname -m)"
-            exit 1
-            ;;
-        esac
-
-        BIN="beskid_lsp"
-        if [ "$PLATFORM" = "win32" ]; then
-          BIN="beskid_lsp.exe"
-        fi
-
-        cargo build -p beskid_lsp --release
-
-        DEST_DIR="{{.EXT_DIR}}/server/$PLATFORM-$ARCH"
-        mkdir -p "$DEST_DIR"
-        cp "{{.REPO_ROOT}}/target/release/$BIN" "$DEST_DIR/$BIN"
-
-        if [ "$PLATFORM" != "win32" ]; then
-          chmod +x "$DEST_DIR/$BIN"
-        fi
-
-        echo "Bundled $BIN to $DEST_DIR"
+      - node scripts/bundle-lsp-host.mjs
 
   bundle:
     desc: Install deps, bundle host LSP binary, and build extension
@@ -89,8 +52,6 @@ tasks:
   package:vsix:
     desc: Build + package VSIX into dist/
     dir: '{{.EXT_DIR}}'
-    deps: [bundle]
     cmds:
-      - mkdir -p dist
-      - bunx @vscode/vsce package --out dist/beskid.vsix
+      - node scripts/package-vsix.mjs
       - echo "Created dist/beskid.vsix"

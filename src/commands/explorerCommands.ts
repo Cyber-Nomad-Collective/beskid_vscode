@@ -42,11 +42,6 @@ export function registerExplorerCommands(
       }
     }),
     vscode.commands.registerCommand("beskid.clearFocus", () => deps.focus.clearFocus(client(), deps.refresh)),
-    vscode.commands.registerCommand("beskid.refreshWorkspace", async () => {
-      deps.packageProvider.clearCaches();
-      await deps.refresh.scheduleFull();
-      deps.packageProvider.refresh();
-    }),
     vscode.commands.registerCommand("beskid.revealInWorkspaceTree", async () => {
       await vscode.commands.executeCommand("beskidWorkspaceView.focus");
       const uri = deps.focus.getFocusedProject();

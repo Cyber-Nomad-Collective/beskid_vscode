@@ -49,6 +49,14 @@ export class ExtensionServices {
       this.outputChannel,
       this.status,
       () => this.focus.getFocusedProject(),
+      () => this.cli.ensureInstalled(),
+      {
+        onRefreshWorkspaceUi: async () => {
+          this.packageProvider.clearCaches();
+          await this.refresh.run({ workspaceTree: true, projectTree: true });
+          this.packageProvider.refresh();
+        },
+      },
     );
     this.lspApi = new LspProjectApi(() => this.session.getClient());
 
@@ -147,6 +155,8 @@ export class ExtensionServices {
   async showQuickActions(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
       [
+        { label: "Setup toolchain", command: "beskid.cli.bootstrap" },
+        { label: "Install CLI", command: "beskid.cli.install" },
         { label: "Start LSP", command: "beskid.lsp.start" },
         { label: "Stop LSP", command: "beskid.lsp.stop" },
         { label: "Restart LSP", command: "beskid.lsp.restart" },

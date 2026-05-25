@@ -1,4 +1,20 @@
+import { existsSync } from "node:fs";
 import * as vscode from "vscode";
+import { defaultCliInstallPath } from "../cli/cliPlatform.js";
+
+export function resolveCliExecutablePath(): string | undefined {
+  const configured =
+    vscode.workspace.getConfiguration("beskid").get<string>("cli.path", "beskid") || "beskid";
+  if (configured !== "beskid") {
+    return existsSync(configured) ? configured : undefined;
+  }
+  const managed = defaultCliInstallPath();
+  return existsSync(managed) ? managed : undefined;
+}
+
+export function readCliPath(): string {
+  return resolveCliExecutablePath() ?? "beskid";
+}
 
 export function readPckgBaseUrl(): string {
   return (
@@ -7,8 +23,11 @@ export function readPckgBaseUrl(): string {
   );
 }
 
-export function readCliPath(): string {
-  return vscode.workspace.getConfiguration("beskid").get<string>("cli.path", "beskid") || "beskid";
+export function readCliReleaseTag(): string {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<string>("cli.releaseTag", "cli-latest") ||
+    "cli-latest"
+  );
 }
 
 export function readAutoSelectFromEditor(): boolean {
