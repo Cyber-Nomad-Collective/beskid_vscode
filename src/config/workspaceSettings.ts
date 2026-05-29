@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import * as vscode from "vscode";
 import { defaultCliInstallPath } from "../cli/cliPlatform.js";
+import { normalizeCliReleaseTag, normalizeLspReleaseTag } from "../cli/releaseTags.js";
 
 export function resolveCliExecutablePath(): string | undefined {
   const configured =
@@ -24,17 +25,17 @@ export function readPckgBaseUrl(): string {
 }
 
 export function readCliReleaseTag(): string {
-  return (
+  const configured =
     vscode.workspace.getConfiguration("beskid").get<string>("cli.releaseTag", "cli-latest") ||
-    "cli-latest"
-  );
+    "cli-latest";
+  return normalizeCliReleaseTag(configured);
 }
 
 export function readLspReleaseTag(): string {
-  return (
+  const configured =
     vscode.workspace.getConfiguration("beskid.lsp").get<string>("releaseTag", "lsp-latest") ||
-    "lsp-latest"
-  );
+    "lsp-latest";
+  return normalizeLspReleaseTag(configured);
 }
 
 export function readAutoSelectFromEditor(): boolean {
@@ -58,6 +59,20 @@ export function readDashboardOpenOnActivate(): boolean {
   return (
     vscode.workspace.getConfiguration("beskid").get<boolean>("dashboard.openOnActivate", false) ??
     false
+  );
+}
+
+export function readAutoInstallOnLaunch(): boolean {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<boolean>("toolchain.autoInstallOnLaunch", true) ??
+    true
+  );
+}
+
+export function readAutoFetchDependencies(): boolean {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<boolean>("toolchain.autoFetchDependencies", true) ??
+    true
   );
 }
 

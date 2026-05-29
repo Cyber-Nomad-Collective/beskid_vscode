@@ -64,6 +64,7 @@ export type LspSettingsFlags = {
   configuredCliPath: string;
   cliReleaseTag: string;
   autoFetchDependencies: boolean;
+  autoInstallOnLaunch: boolean;
   autoSelectFromEditor: boolean;
   logLevel: string;
   logServerOutput: boolean;

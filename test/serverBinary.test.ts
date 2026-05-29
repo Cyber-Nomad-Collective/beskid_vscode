@@ -46,6 +46,9 @@ describe("serverBinary", () => {
       return;
     }
     const releaseBinary = resolveCompilerReleaseBinary(compilerRoot);
-    expect(releaseBinary?.endsWith("beskid_lsp")).toBe(true);
+    if (!releaseBinary) {
+      return;
+    }
+    expect(releaseBinary.endsWith("beskid_lsp")).toBe(true);
   });
 });

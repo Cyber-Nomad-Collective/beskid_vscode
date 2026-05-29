@@ -25,6 +25,7 @@ function readSettingsFlags(): LspSettingsFlags {
     configuredCliPath: beskid.get<string>("cli.path", "beskid"),
     cliReleaseTag: beskid.get<string>("cli.releaseTag", "cli-latest"),
     autoFetchDependencies: beskid.get<boolean>("toolchain.autoFetchDependencies", true),
+    autoInstallOnLaunch: beskid.get<boolean>("toolchain.autoInstallOnLaunch", true),
     autoSelectFromEditor: beskid.get<boolean>("project.autoSelectFromEditor", true),
     logLevel: lsp.get<string>("log.level", "info"),
     logServerOutput: lsp.get<boolean>("log.serverOutput", true),

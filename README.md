@@ -38,7 +38,10 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `Project.proj` for the active editor |
 | `beskid.cli.path` | `beskid` | Beskid CLI binary for fetch, lock, build, and tasks (uses `~/.beskid/bin/beskid` when installed via the extension) |
-| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Beskid: Install CLI** |
+| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Beskid: Install CLI** (`cli-latest`, `cli-vX.Y.Z`, or bare semver) |
+| `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Beskid: Install LSP** (`lsp-latest`, `lsp-vX.Y.Z`, or bare semver) |
+| `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP from GitHub on activate when missing or outdated |
+| `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once on first successful bootstrap |
 | `beskid.pckg.baseUrl` | `http://localhost:5000` | pckg registry base URL |
 | `beskid.pckg.apiKey` | *(empty)* | Optional API key for private registry access (also stored in SecretStorage) |
 
@@ -48,16 +51,24 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 bun install
 bun run build
 bun run lint
-bun test
+bun run test:unit
+bun run test:integration   # first run downloads VS Code into .vscode-test/
+bun run test:all
 ```
 
 Press `F5` in VS Code to run the extension in an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first (`bun run bundle:lsp` + `bun run build`).
 
 If the bundled binary is missing, the extension also tries a local `compiler/target/release/beskid_lsp` build and auto-launches via `cargo run -p beskid_lsp` when a sibling `compiler/` workspace is present (superrepo checkout).
 
-```bash
-bun run test:e2e
-```
+### Test layout
+
+| Layer | Runner | Scope |
+|-------|--------|--------|
+| Unit | Bun (`test/**/*.test.ts`, not `test/integration/`) | Pure helpers, manifest contracts, mocked view registration |
+| Integration | [@vscode/test-electron](https://www.npmjs.com/package/@vscode/test-electron) + Mocha | Extension activation, sidebar view focus commands, command palette entries |
+| Smoke | Bun (`test/e2e/`) | `package.json` contribution checks |
+
+Integration tests launch a real VS Code build with `--disable-extensions` and verify that every sidebar view (including **Debug**) registers a `.focus` command.
 
 ### Manual smoke (corelib workspace)
 
@@ -69,21 +80,22 @@ bun run test:e2e
 
 ## Default language server
 
-On first launch the extension:
+On activate the extension **automatically** prepares the toolchain (unless `beskid.toolchain.autoInstallOnLaunch` is false, `beskid.lsp.server.devMode` is enabled, or `beskid.lsp.server.path` is set):
 
-1. Downloads the **latest CLI release** from GitHub (tag `cli-latest` by default; see `beskid.cli.releaseTag`)
-2. Verifies the binary supports `beskid lsp`
-3. Runs **`beskid fetch`** for each open `Workspace.proj` / `Project.proj` (once; disable with `beskid.toolchain.autoFetchDependencies`)
-4. Starts the language server via `beskid lsp`
+1. Checks for managed CLI at `~/.beskid/bin/beskid` — downloads from GitHub (`cli-latest` by default) when missing or too old for `beskid lsp`
+2. Checks for managed LSP at `~/.beskid/bin/beskid_lsp` — downloads from GitHub (`lsp-latest` by default) when missing
+3. Runs **`beskid fetch`** for each open `Workspace.proj` / `Project.proj` on first launch (disable with `beskid.toolchain.autoFetchDependencies`)
+4. Starts the language server
 
-All steps log to the **Beskid LSP** output channel. Failures include URLs, platform, and exit codes. Use **Beskid: Setup Toolchain (CLI + Dependencies)** to retry.
+Progress appears in the status bar and a short notification while downloads run. Details log to the **Beskid LSP** output channel. Use **Beskid: Setup Toolchain** to retry after a failure.
 
-Resolution order after bootstrap:
+Resolution order when starting the LSP:
 
 1. `beskid.lsp.server.path` — explicit LSP binary
-2. Managed CLI — `beskid lsp` from `beskid.cli.path` or `~/.beskid/bin/beskid`
+2. Managed LSP — `~/.beskid/bin/beskid_lsp` (installed from GitHub `lsp-latest` / `lsp-vX.Y.Z`)
 3. VSIX-bundled `server/<platform>-<arch>/beskid_lsp` when `beskid.lsp.server.preferBundled` is true
-4. Local `compiler/target/release/beskid_lsp` or `cargo run -p beskid_lsp` when developing in the superrepo
+4. Managed CLI — `beskid lsp` from an up-to-date `beskid.cli.path` or `~/.beskid/bin/beskid`
+5. Local `compiler/target/release/beskid_lsp` or `cargo run -p beskid_lsp` when developing in the superrepo
 
 ## Default server command (contributors)
 

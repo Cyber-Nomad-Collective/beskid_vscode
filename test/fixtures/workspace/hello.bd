@@ -1,0 +1,4 @@
+// Minimal workspace opened by VS Code integration tests.
+module main() {
+  io.println("beskid vscode integration fixture")
+}

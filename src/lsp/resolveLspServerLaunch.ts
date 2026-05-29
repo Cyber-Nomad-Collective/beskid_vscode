@@ -3,6 +3,8 @@ import { dirname, join } from "node:path";
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { Executable } from "vscode-languageclient/node";
+import { cliSupportsLsp } from "../cli/cliCapabilities.js";
+import { shouldAutoInstallToolchainOnLaunch } from "../cli/ensureToolchainOnLaunch.js";
 import { defaultLspInstallPath } from "../cli/lspPlatform.js";
 import { resolveCliExecutablePath } from "../config/workspaceSettings.js";
 import {
@@ -99,25 +101,22 @@ export async function resolveLspServerLaunch(
     return sameLaunch(executable(bundledBinary, [], options));
   }
 
-  let cliPath = resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
-  if (!cliPath && !devMode && !compilerRoot) {
-    launchProgress?.onDownloading?.();
-    cliPath = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "Beskid",
-        cancellable: false,
-      },
-      async (progress) => {
-        progress.report({ message: "Downloading toolchain and preparing workspace…" });
-        launchProgress?.onBootstrapping?.();
-        return installCli(launchProgress);
-      },
-    );
+  const cliPath = resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
+  if (cliPath && (await cliSupportsLsp(cliPath))) {
+    return sameLaunch(executable(cliPath, ["lsp"], options));
   }
 
-  if (cliPath) {
-    return sameLaunch(executable(cliPath, ["lsp"], options));
+  if (!devMode && shouldAutoInstallToolchainOnLaunch()) {
+    launchProgress?.onDownloading?.();
+    await installCli(launchProgress);
+    const managedAfterBootstrap = resolveManagedServerBinary();
+    if (managedAfterBootstrap) {
+      return sameLaunch(executable(managedAfterBootstrap, [], options));
+    }
+    const cliAfterBootstrap = resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
+    if (cliAfterBootstrap && (await cliSupportsLsp(cliAfterBootstrap))) {
+      return sameLaunch(executable(cliAfterBootstrap, ["lsp"], options));
+    }
   }
 
   const releaseBinary = compilerRoot ? resolveCompilerReleaseBinary(compilerRoot) : undefined;

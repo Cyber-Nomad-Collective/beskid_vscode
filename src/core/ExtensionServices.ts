@@ -2,6 +2,7 @@ import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import { registerViews, type RegisteredViews } from "../activation/registerViews.js";
 import { registerRuntimeUi, type RuntimeUiHandles } from "../activation/registerRuntimeUi.js";
+import { BeskidDebugTreeProvider } from "../debug/BeskidDebugTreeProvider.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
 import { registerCommands } from "../commands/registerCommands.js";
@@ -19,6 +20,11 @@ import { WorkspaceTreeProvider } from "../workspace/WorkspaceTreeProvider.js";
 import { LspPckgApi } from "../packages/lspPckgApi.js";
 import { LspProjectApi } from "../workspace/lspProjectApi.js";
 import { RefreshCoordinator } from "./RefreshCoordinator.js";
+import {
+  assessToolchainNeeds,
+  onboardingProgressMessage,
+  shouldAutoInstallToolchainOnLaunch,
+} from "../cli/ensureToolchainOnLaunch.js";
 import { readDashboardOpenOnActivate } from "../config/workspaceSettings.js";
 
 export class ExtensionServices {
@@ -37,6 +43,7 @@ export class ExtensionServices {
   readonly outlineProvider: SelectedProjectOutlineProvider;
   readonly workspaceTree: WorkspaceTreeProvider;
   readonly projectTree: ProjectTreeProvider;
+  readonly debugProvider: BeskidDebugTreeProvider;
   readonly views: RegisteredViews;
   readonly runtimeUi: RuntimeUiHandles;
 
@@ -117,6 +124,7 @@ export class ExtensionServices {
     });
 
     const extensionVersion = context.extension.packageJSON.version ?? "0.0.0";
+    this.debugProvider = new BeskidDebugTreeProvider(this.runtime);
     this.runtimeUi = registerRuntimeUi(context, this.runtime, extensionVersion);
 
     this.views = registerViews(context, {
@@ -124,6 +132,7 @@ export class ExtensionServices {
       projectTree: this.projectTree,
       packageProvider: this.packageProvider,
       outlineProvider: this.outlineProvider,
+      debugProvider: this.debugProvider,
     });
 
     this.focus.onDidChangeFocus(({ projectUri }) => {
@@ -160,6 +169,7 @@ export class ExtensionServices {
     this.context.subscriptions.push(
       this.focus.registerAutoSelect(() => this.session.getClient(), this.refresh),
     );
+    await this.ensureToolchainForLaunch();
     await this.session.start();
     const workspaces = await this.lspApi.listWorkspaces();
     this.workspaceProjUri = workspaces[0]?.uri;
@@ -176,10 +186,42 @@ export class ExtensionServices {
     await this.session.stop();
   }
 
+  private async ensureToolchainForLaunch(): Promise<void> {
+    if (!shouldAutoInstallToolchainOnLaunch()) {
+      this.outputChannel.appendLine(
+        "[Beskid] Automatic toolchain install skipped (dev mode, explicit server path, or setting disabled).",
+      );
+      return;
+    }
+
+    const assessment = await assessToolchainNeeds(this.context);
+    if (!assessment.requiresBootstrap) {
+      this.outputChannel.appendLine("[Beskid] Toolchain ready.");
+      return;
+    }
+
+    this.runtime.setPhase(assessment.downloading ? "downloading" : "bootstrapping");
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Beskid",
+        cancellable: false,
+      },
+      async (progress) => {
+        progress.report({ message: onboardingProgressMessage(assessment) });
+        await this.cli.ensureInstalled({
+          onDownloading: () => this.runtime.setPhase("downloading"),
+          onBootstrapping: () => this.runtime.setPhase("bootstrapping"),
+        });
+      },
+    );
+  }
+
   async showQuickActions(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
       [
         { label: "Open dashboard", command: "beskid.dashboard.focus" },
+        { label: "Open debug view", command: "beskid.debug.focus" },
         { label: "Setup toolchain", command: "beskid.cli.bootstrap" },
         { label: "Install CLI", command: "beskid.cli.install" },
         { label: "Install LSP", command: "beskid.lsp.install" },

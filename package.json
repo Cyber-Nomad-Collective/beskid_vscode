@@ -2,7 +2,7 @@
   "name": "beskid-vscode",
   "displayName": "Beskid",
   "description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
-  "version": "0.1.123",
+  "version": "0.1.181",
   "publisher": "beskid",
   "license": "MIT",
   "icon": "icon.png",
@@ -29,6 +29,9 @@
     "Linters"
   ],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "packageManager": "bun@1.2.20",
   "overrides": {
     "undici": "^8.2.0",
@@ -166,6 +169,10 @@
       {
         "command": "beskid.dashboard.focus",
         "title": "Beskid: Open Dashboard"
+      },
+      {
+        "command": "beskid.debug.focus",
+        "title": "Beskid: Open Debug View"
       }
     ],
     "taskDefinitions": [
@@ -446,7 +453,7 @@
           "beskid.lsp.releaseTag": {
             "type": "string",
             "default": "lsp-latest",
-            "description": "GitHub release tag for LSP download (`lsp-latest` rolling tag or `lsp-vX.Y.Z` to pin)."
+            "description": "GitHub release tag for LSP download (`lsp-latest` rolling tag, `lsp-vX.Y.Z` pinned release, or bare `X.Y.Y` / `vX.Y.Z` semver)."
           },
           "beskid.lsp.server.preferBundled": {
             "type": "boolean",
@@ -510,12 +517,17 @@
           "beskid.cli.releaseTag": {
             "type": "string",
             "default": "cli-latest",
-            "description": "GitHub release tag for CLI download (`cli-latest` or `cli-vX.Y.Z`)."
+            "description": "GitHub release tag for CLI download (`cli-latest`, `cli-vX.Y.Z`, or bare `X.Y.Z` / `vX.Y.Z` semver)."
           },
           "beskid.toolchain.autoFetchDependencies": {
             "type": "boolean",
             "default": true,
             "description": "On first toolchain bootstrap, run `beskid fetch` for discovered project manifests."
+          },
+          "beskid.toolchain.autoInstallOnLaunch": {
+            "type": "boolean",
+            "default": true,
+            "description": "On extension activate, automatically download the latest Beskid CLI and language server from GitHub when missing or outdated, then start the LSP."
           }
         }
       },
@@ -546,11 +558,15 @@
   },
   "scripts": {
     "sync:keywords": "bun scripts/sync-keywords.mjs",
-    "build": "bunx tsc -p .",
+    "build": "bunx tsc -p . && bunx tsc -p tsconfig.integration.json",
+    "build:ext": "bunx tsc -p .",
     "bundle:lsp": "node scripts/bundle-lsp-host.mjs",
     "watch": "bunx tsc -w -p .",
-    "lint": "bunx tsc -p . --noEmit",
-    "test": "bun test",
+    "lint": "bunx tsc -p . --noEmit && bunx tsc -p tsconfig.integration.json --noEmit",
+    "test": "bun run test:unit",
+    "test:unit": "bun test $(find test -name '*.test.ts' ! -path 'test/integration/*')",
+    "test:integration": "node out/test/integration/runTest.js",
+    "test:all": "bun run lint && bun run test:unit && bun run test:integration",
     "test:e2e": "bun test test/e2e",
     "test:smoke:formatter": "node scripts/smoke-formatter.mjs",
     "package": "node scripts/package-vsix.mjs",
@@ -561,8 +577,12 @@
     "vscode-languageserver-protocol": "3.17.5"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^25.6.0",
     "@types/vscode": "1.88.0",
+    "@vscode/test-electron": "^2.5.2",
+    "glob": "^13.0.0",
+    "mocha": "^11.7.5",
     "typescript": "^6.0.3"
   },
   "trustedDependencies": [

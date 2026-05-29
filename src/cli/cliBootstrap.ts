@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import { readCliReleaseTag, readLspReleaseTag, resolveCliExecutablePath } from "../config/workspaceSettings.js";
+import { cliSupportsLsp } from "./cliCapabilities.js";
 import { appendToolchainFailure, formatToolchainError } from "./cliErrors.js";
 import { installBeskidCli, type CliInstallResult } from "./cliInstall.js";
 import { resolveCliPlatformAsset } from "./cliPlatform.js";
@@ -30,12 +31,7 @@ export type CliBootstrapResult = {
   fetchFailures: { project: string; exitCode: number }[];
 };
 
-function readAutoFetchDependencies(): boolean {
-  return (
-    vscode.workspace.getConfiguration("beskid").get<boolean>("toolchain.autoFetchDependencies", true) ??
-    true
-  );
-}
+import { readAutoFetchDependencies } from "../config/workspaceSettings.js";
 
 async function verifyCliSupportsLsp(
   cliPath: string,
@@ -44,7 +40,7 @@ async function verifyCliSupportsLsp(
   outputChannel.appendLine(`[Beskid toolchain] Verifying ${cliPath} supports 'lsp'…`);
   const result = await runCliProcess(cliPath, ["lsp", "--help"]);
   appendCliProcessLog(outputChannel, cliPath, ["lsp", "--help"], undefined, result);
-  if (result.exitCode !== 0) {
+  if (!(await cliSupportsLsp(cliPath))) {
     throw new Error(
       `Installed CLI does not support 'beskid lsp' (exit ${result.exitCode}). ` +
         "Download a current CLI release (default tag: cli-latest) or point beskid.cli.path at a local build.",
@@ -143,6 +139,17 @@ export async function bootstrapBeskidToolchain(
       installed = true;
       outputChannel.appendLine(
         `[Beskid toolchain] Installed Beskid CLI ${install.version} → ${install.path}`,
+      );
+    } else if (!(await cliSupportsLsp(cliPath))) {
+      progress?.onDownloading?.();
+      outputChannel.appendLine(
+        `[Beskid toolchain] CLI at ${cliPath} is too old for 'beskid lsp'; upgrading from ${cliReleaseTag}…`,
+      );
+      install = await installManagedCli(outputChannel, cliReleaseTag);
+      cliPath = install.path;
+      installed = true;
+      outputChannel.appendLine(
+        `[Beskid toolchain] Upgraded Beskid CLI to ${install.version} → ${install.path}`,
       );
     } else {
       outputChannel.appendLine(`[Beskid toolchain] Using CLI at ${cliPath}`);

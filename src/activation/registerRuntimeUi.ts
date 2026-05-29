@@ -1,12 +1,11 @@
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
+import { focusBeskidTreeView } from "../activation/focusBeskidViews.js";
 import { BeskidDashboardProvider } from "../dashboard/BeskidDashboardProvider.js";
-import { BeskidDebugTreeProvider } from "../debug/BeskidDebugTreeProvider.js";
 import type { LspRuntimeState } from "../runtime/LspRuntimeState.js";
 
 export type RuntimeUiHandles = {
   dashboard: BeskidDashboardProvider;
-  debugProvider: BeskidDebugTreeProvider;
 };
 
 export function registerRuntimeUi(
@@ -15,16 +14,15 @@ export function registerRuntimeUi(
   extensionVersion: string,
 ): RuntimeUiHandles {
   const dashboard = new BeskidDashboardProvider(runtime, extensionVersion);
-  const debugProvider = new BeskidDebugTreeProvider(runtime);
 
   context.subscriptions.push(
     runtime.onDidChange(() => dashboard.refresh()),
     vscode.window.registerWebviewViewProvider(BeskidDashboardProvider.viewType, dashboard, {
       webviewOptions: { retainContextWhenHidden: true },
     }),
-    vscode.window.registerTreeDataProvider("beskidDebugView", debugProvider),
     vscode.commands.registerCommand("beskid.dashboard.focus", () => dashboard.focus()),
+    vscode.commands.registerCommand("beskid.debug.focus", () => focusBeskidTreeView("beskidDebugView")),
   );
 
-  return { dashboard, debugProvider };
+  return { dashboard };
 }
