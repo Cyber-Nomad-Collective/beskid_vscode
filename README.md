@@ -42,7 +42,7 @@ Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local
 | `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Beskid: Install LSP** (`lsp-latest`, `lsp-vX.Y.Z`, or bare semver) |
 | `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP from GitHub on activate when missing or outdated |
 | `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once on first successful bootstrap |
-| `beskid.pckg.baseUrl` | `http://localhost:5000` | pckg registry base URL |
+| `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | pckg registry base URL |
 | `beskid.pckg.apiKey` | *(empty)* | Optional API key for private registry access (also stored in SecretStorage) |
 
 ## Development (Bun)

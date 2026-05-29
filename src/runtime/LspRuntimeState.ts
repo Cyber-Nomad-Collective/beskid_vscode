@@ -29,7 +29,7 @@ function readSettingsFlags(): LspSettingsFlags {
     autoSelectFromEditor: beskid.get<boolean>("project.autoSelectFromEditor", true),
     logLevel: lsp.get<string>("log.level", "info"),
     logServerOutput: lsp.get<boolean>("log.serverOutput", true),
-    pckgBaseUrl: beskid.get<string>("pckg.baseUrl", "http://localhost:5000"),
+    pckgBaseUrl: beskid.get<string>("pckg.baseUrl", "https://pckg.beskid-lang.org"),
   };
 }
 

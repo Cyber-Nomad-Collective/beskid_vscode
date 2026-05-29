@@ -20,7 +20,7 @@ export function readCliPath(): string {
 export function readPckgBaseUrl(): string {
   return (
     vscode.workspace.getConfiguration("beskid").get<string>("pckg.baseUrl") ??
-    "http://localhost:5000"
+    "https://pckg.beskid-lang.org"
   );
 }
 

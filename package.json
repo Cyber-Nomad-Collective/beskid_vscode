@@ -536,7 +536,7 @@
         "properties": {
           "beskid.pckg.baseUrl": {
             "type": "string",
-            "default": "http://localhost:5000",
+            "default": "https://pckg.beskid-lang.org",
             "description": "Package registry (pckg) base URL for the Packages tree and dashboard."
           },
           "beskid.pckg.apiKey": {
