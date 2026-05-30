@@ -1,8 +1,8 @@
-import type { ExtensionContext } from "vscode";
 import { registryErrorMessage } from "../core/pckgErrors.js";
 import type {
   PackageDetails,
   PackageSearchRow,
+  PackageSummary,
   PckgFetchOptions,
 } from "./pckgTypes.js";
 
@@ -16,71 +16,8 @@ export type PckgSearchResult =
 
 export const PCKG_API_KEY_SECRET = "beskid.pckg.apiKey";
 
-export async function readPckgApiKey(context: ExtensionContext): Promise<string | undefined> {
-  const stored = await context.secrets.get(PCKG_API_KEY_SECRET);
-  return stored?.trim() || undefined;
-}
-
-export async function writePckgApiKey(
-  context: ExtensionContext,
-  apiKey: string | undefined,
-): Promise<void> {
-  if (!apiKey?.trim()) {
-    await context.secrets.delete(PCKG_API_KEY_SECRET);
-    return;
-  }
-  await context.secrets.store(PCKG_API_KEY_SECRET, apiKey.trim());
-}
-
-export async function createPckgFetchFromContext(
-  context: ExtensionContext,
-  baseUrl: string,
-): Promise<typeof fetch> {
-  const apiKey = await readPckgApiKey(context);
-  return createPckgFetch({ baseUrl, apiKey });
-}
-
-/** Cached registry client bound to extension SecretStorage. */
-export class PckgClient {
-  constructor(private readonly context: ExtensionContext) {}
-
-  clearCache(): void {
-    clearPckgCaches();
-  }
-
-  async searchPackages(
-    baseUrl: string,
-    query: string,
-    limit = 50,
-  ): Promise<PckgSearchResult> {
-    const fetchFn = await createPckgFetchFromContext(this.context, baseUrl);
-    return searchPackages(fetchFn, baseUrl, query, limit);
-  }
-
-  async getPackageDetails(
-    baseUrl: string,
-    packageName: string,
-  ): Promise<
-    | { ok: true; data: PackageDetails }
-    | { ok: false; error: string; needsApiKey?: boolean }
-  > {
-    const fetchFn = await createPckgFetchFromContext(this.context, baseUrl);
-    const result = await getPackageDetails(fetchFn, baseUrl, packageName);
-    if (!result.ok) {
-      return {
-        ok: false,
-        error: registryErrorMessage(result.status),
-        needsApiKey: result.status === 401 || result.status === 403,
-      };
-    }
-    if (!result.data?.package?.name) {
-      return { ok: false, error: "Package not found." };
-    }
-    return { ok: true, data: result.data };
-  }
-}
-
 const SEARCH_TTL_MS = 30_000;
+const LIST_TTL_MS = 30_000;
 const DETAILS_TTL_MS = 60_000;
 
 type CacheEntry<T> = {
@@ -89,6 +26,7 @@ type CacheEntry<T> = {
 };
 
 const searchCache = new Map<string, CacheEntry<PackageSearchRow[]>>();
+const listCache = new Map<string, CacheEntry<PackageSearchRow[]>>();
 const detailsCache = new Map<string, CacheEntry<PackageDetails>>();
 
 function cacheKey(baseUrl: string, suffix: string): string {
@@ -113,7 +51,50 @@ function writeCache<T>(map: Map<string, CacheEntry<T>>, key: string, value: T, t
 
 export function clearPckgCaches(): void {
   searchCache.clear();
+  listCache.clear();
   detailsCache.clear();
+}
+
+function rowsFromPackageSummaries(packages: PackageSummary[]): PackageSearchRow[] {
+  return packages.map((pkg) => ({ package: pkg }));
+}
+
+export async function listPackages(
+  fetchFn: typeof fetch,
+  baseUrl: string,
+  limit = 50,
+): Promise<PckgSearchResult> {
+  const key = cacheKey(baseUrl, `list:${limit}`);
+  const cached = readCache(listCache, key);
+  if (cached) {
+    return { ok: true, rows: cached };
+  }
+
+  const listResult = await fetchPckgJson<PackageSummary[]>(fetchFn, baseUrl, "/api/packages", {});
+  if (listResult.ok && Array.isArray(listResult.data)) {
+    const rows = rowsFromPackageSummaries(listResult.data.slice(0, limit));
+    writeCache(listCache, key, rows, LIST_TTL_MS);
+    return { ok: true, rows };
+  }
+
+  const searchResult = await fetchPckgJson<PackageSearchRow[]>(
+    fetchFn,
+    baseUrl,
+    "/api/search",
+    { limit: String(limit) },
+  );
+  if (!searchResult.ok) {
+    return {
+      ok: false,
+      error: searchResult.error,
+      needsApiKey: searchResult.status === 401 || searchResult.status === 403,
+    };
+  }
+  if (!Array.isArray(searchResult.data)) {
+    return { ok: false, error: "Unexpected registry response." };
+  }
+  writeCache(listCache, key, searchResult.data, LIST_TTL_MS);
+  return { ok: true, rows: searchResult.data };
 }
 
 export function buildRegistryPackageUrl(baseUrl: string, packageName: string): string {

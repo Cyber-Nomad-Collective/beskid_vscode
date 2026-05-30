@@ -90,7 +90,7 @@ export function deriveBeskidStatusPresentation(snapshot: BeskidStatusSnapshot): 
         : "$(debug-stop) Beskid LSP: Stopped";
   }
 
-  const tooltipLines = ["Beskid LSP quick actions (click)"];
+  const tooltipLines = ["Open Beskid quick panel (click)"];
   if (snapshot.lspScan.active) {
     tooltipLines.push(
       `Workspace scan: ${snapshot.lspScan.current ?? "?"}/${snapshot.lspScan.total ?? "?"}`,

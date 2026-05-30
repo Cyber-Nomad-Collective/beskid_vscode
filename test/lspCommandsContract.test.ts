@@ -5,11 +5,12 @@ const PROJECT_EXPLORER_COMMANDS = [
   "beskid.refreshWorkspace",
   "beskid.listWorkspaces",
   "beskid.getWorkspaceSummary",
-  "beskid.getProjectGraph",
+  "beskid.getGraph",
   "beskid.getProjectDependencies",
   "beskid.pckg.getConnectionStatus",
   "beskid.pckg.setRegistry",
   "beskid.pckg.validateConnection",
+  "beskid.symbol.getDocumentationUri",
 ] as const;
 
 /** Planned pckg execute commands (see `beskid_lsp::pckg_connection_contract`). */

@@ -1,13 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import pkg from "../../package.json";
-import { BESKID_SIDEBAR_VIEW_IDS } from "../../src/views/beskidViewIds.js";
+import { BESKID_SIDEBAR_VIEW_IDS, BESKID_TREE_VIEW_IDS } from "../../src/views/beskidViewIds.js";
 
 describe("extension manifest smoke", () => {
-  test("contributes Beskid sidebar views including dashboard and debug", () => {
+  test("contributes Beskid sidebar tree views without dashboard webview", () => {
     const views = pkg.contributes.views.beskidViews as { id: string; type?: string }[];
     expect(views.map((view) => view.id)).toEqual([...BESKID_SIDEBAR_VIEW_IDS]);
-    const dashboard = views.find((view) => view.id === "beskidDashboardView");
-    expect(dashboard?.type).toBe("webview");
+    expect(views.some((view) => view.type === "webview")).toBe(false);
+    for (const viewId of BESKID_TREE_VIEW_IDS) {
+      expect(views.some((view) => view.id === viewId)).toBe(true);
+    }
   });
 
   test("declares package panel and explorer commands", () => {
@@ -17,7 +19,9 @@ describe("extension manifest smoke", () => {
     expect(ids).toContain("beskid.revealInProjectTree");
     expect(ids).toContain("beskid.packages.fetch");
     expect(ids).toContain("beskid.cli.fetch");
-    expect(ids).toContain("beskid.debug.focus");
+    expect(ids).toContain("beskid.modal.open");
+    expect(ids).toContain("beskid.openSymbolDocumentation");
+    expect(ids).toContain("beskid.showGraph");
   });
 
   test("local dependency context menu entries", () => {

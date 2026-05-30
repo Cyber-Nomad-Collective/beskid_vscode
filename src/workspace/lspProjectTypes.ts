@@ -1,5 +1,7 @@
 /** Normative LSP executeCommand payloads (workspace/project explorer). */
 
+export type { GraphKindId, GraphPayload, GraphNodeSummary } from "../graphs/lspGraphTypes.js";
+
 export type WorkspaceMember = {
   name: string;
   path?: string;
@@ -28,21 +30,7 @@ export type ProjectGraphNode = {
   label: string;
   kind?: string;
   uri?: string;
-  dependencyName?: string;
-  projectName?: string;
-  sourceRoot?: string;
   unresolved?: boolean;
-};
-
-export type ProjectGraphEdge = {
-  from: string;
-  to: string;
-};
-
-export type ProjectGraphResult = {
-  nodes: ProjectGraphNode[];
-  edges: ProjectGraphEdge[];
-  unresolved: string[];
 };
 
 export type ProjectDependencyEntry = {

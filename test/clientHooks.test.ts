@@ -35,7 +35,7 @@ describe("buildExecuteCommandMiddleware", () => {
         uiCalls += 1;
       },
     });
-    await middleware.executeCommand!("beskid.getProjectGraph", ["file:///x"], async () => null);
+    await middleware.executeCommand!("beskid.getGraph", [{ projectUri: "file:///x" }], async () => null);
     expect(uiCalls).toBe(0);
   });
 });

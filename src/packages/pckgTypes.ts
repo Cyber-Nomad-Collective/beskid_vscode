@@ -1,3 +1,5 @@
+export type PackageKind = "library" | "template" | "tool";
+
 /** Mirrors `PackageSummaryResponse` in pckg `Contracts.cs` (subset used by the extension). */
 export type PackageSummary = {
   id?: string;
@@ -9,6 +11,8 @@ export type PackageSummary = {
   tags?: string[];
   isPublic?: boolean;
   iconUrl?: string | null;
+  packageKind?: PackageKind;
+  shortName?: string | null;
 };
 
 export type PackageSummaryResponse = PackageSummary;

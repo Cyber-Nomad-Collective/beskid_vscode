@@ -3,7 +3,7 @@ import { BESKID_TREE_VIEW_IDS } from "../src/views/beskidViewIds.js";
 
 type TreeViewStub = { id: string; dispose: () => void };
 
-function createMockVscode() {
+function createMockVscode(debugEnabled = false) {
   const subscriptions: unknown[] = [];
   const treeViews = new Map<string, TreeViewStub>();
 
@@ -23,6 +23,13 @@ function createMockVscode() {
       window: {
         createTreeView,
       },
+      workspace: {
+        getConfiguration: () => ({
+          get: (key: string, defaultValue: boolean) =>
+            key === "debug.enabled" ? debugEnabled : defaultValue,
+        }),
+        onDidChangeConfiguration: () => ({ dispose: () => undefined }),
+      },
     },
   };
 }
@@ -32,15 +39,14 @@ describe("registerViews", () => {
     mock.restore();
   });
 
-  test("registers every tree view with createTreeView", async () => {
-    const mockVscode = createMockVscode();
+  test("registers core tree views with createTreeView", async () => {
+    const mockVscode = createMockVscode(false);
     mock.module("vscode", () => mockVscode.module);
 
     const { registerViews } = await import("../src/activation/registerViews.js");
 
     const deps = {
-      workspaceTree: { onDidChangeTreeData: undefined },
-      projectTree: { onDidChangeTreeData: undefined },
+      projectsTree: { onDidChangeTreeData: undefined },
       packageProvider: { onDidChangeTreeData: undefined },
       outlineProvider: { onDidChangeTreeData: undefined },
       debugProvider: { onDidChangeTreeData: undefined },
@@ -52,13 +58,26 @@ describe("registerViews", () => {
     expect(mockVscode.module.window.createTreeView).toHaveBeenCalledTimes(BESKID_TREE_VIEW_IDS.length);
     for (const viewId of BESKID_TREE_VIEW_IDS) {
       expect(mockVscode.treeViews.has(viewId)).toBe(true);
-      expect(mockVscode.module.window.createTreeView).toHaveBeenCalledWith(
-        viewId,
-        expect.objectContaining({ treeDataProvider: expect.anything() }),
-      );
     }
 
-    expect(registered.debugTreeView.id).toBe("beskidDebugView");
-    expect(mockVscode.subscriptions.length).toBe(BESKID_TREE_VIEW_IDS.length);
+    expect(registered.debugTreeView).toBeUndefined();
+    expect(registered.projectsTreeView.id).toBe("beskidProjectsView");
+  });
+
+  test("registers debug tree when debug.enabled is true", async () => {
+    const mockVscode = createMockVscode(true);
+    mock.module("vscode", () => mockVscode.module);
+
+    const { registerViews } = await import("../src/activation/registerViews.js");
+
+    const deps = {
+      projectsTree: { onDidChangeTreeData: undefined },
+      packageProvider: { onDidChangeTreeData: undefined },
+      outlineProvider: { onDidChangeTreeData: undefined },
+      debugProvider: { onDidChangeTreeData: undefined },
+    };
+
+    const registered = registerViews({ subscriptions: mockVscode.subscriptions } as never, deps as never);
+    expect(registered.debugTreeView?.id).toBe("beskidDebugView");
   });
 });

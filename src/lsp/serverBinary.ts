@@ -62,7 +62,11 @@ export function resolveCompilerWorkspaceRoot(
   const candidates: string[] = [join(extensionPath, "..", "compiler")];
 
   for (const folder of workspaceFolders ?? []) {
-    let dir = folder.uri.fsPath;
+    const fsPath = folder.uri.fsPath;
+    if (!fsPath) {
+      continue;
+    }
+    let dir = fsPath;
     for (let depth = 0; depth < 6; depth += 1) {
       candidates.push(join(dir, "compiler"));
       const parent = dirname(dir);

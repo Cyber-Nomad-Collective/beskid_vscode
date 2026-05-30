@@ -1,9 +1,9 @@
 import type { LanguageClient } from "vscode-languageclient/node";
 import { lspExecuteCommand } from "../lsp/lspExecuteCommand.js";
+import type { GraphKindId, GraphPayload } from "../graphs/lspGraphTypes.js";
 import type {
   ListWorkspacesResult,
   ProjectDependenciesResult,
-  ProjectGraphResult,
   WorkspaceListEntry,
   WorkspaceSummaryResult,
 } from "./lspProjectTypes.js";
@@ -57,36 +57,20 @@ export class LspProjectApi {
     };
   }
 
-  async getProjectGraph(projectUri: string): Promise<ProjectGraphResult | undefined> {
-    const raw = await lspExecuteCommand<{
-      nodes?: Array<Record<string, unknown>>;
-      edges?: Array<{ from: string; to: string }>;
-      unresolved?: Array<{ dependencyName: string; descriptor?: string }>;
-    }>(this.getClient(), "beskid.getProjectGraph", [projectUri]);
-    if (!raw) {
-      return undefined;
-    }
-    return {
-      nodes: (raw.nodes ?? []).map((n, i) => {
-        const kind = String(n.kind ?? "");
-        const dependencyName = n.dependencyName as string | undefined;
-        const projectName = n.projectName as string | undefined;
-        return {
-          id: String(n.id ?? i),
-          label: dependencyName ?? projectName ?? kind,
-          kind,
-          uri: (n.manifestUri as string | undefined) ?? undefined,
-          dependencyName,
-          projectName,
-          sourceRoot: n.sourceRoot as string | undefined,
-          unresolved: kind === "registry" || kind === "git",
-        };
-      }),
-      edges: raw.edges ?? [],
-      unresolved: (raw.unresolved ?? []).map(
-        (u) => u.descriptor ?? u.dependencyName ?? "unresolved",
-      ),
-    };
+  async getGraph(
+    projectUri: string,
+    kind: GraphKindId = "projectDeps",
+    options?: { entryUri?: string; workspaceUri?: string },
+  ): Promise<GraphPayload | undefined> {
+    const raw = await lspExecuteCommand<GraphPayload>(this.getClient(), "beskid.getGraph", [
+      {
+        projectUri,
+        kind,
+        entryUri: options?.entryUri,
+        workspaceUri: options?.workspaceUri,
+      },
+    ]);
+    return raw ?? undefined;
   }
 
   async getProjectDependencies(projectUri: string): Promise<ProjectDependenciesResult | undefined> {

@@ -7,12 +7,21 @@ import type { PckgConnectionStatus, PckgValidateConnectionResult } from "./pckgC
 import {
   buildRegistryPackageUrl,
   clearPckgCaches,
-  createPckgFetchFromContext,
+  createPckgFetch,
   getPackageDetails,
+  listPackages,
   searchPackages,
   type PckgSearchResult,
 } from "./pckgClient.js";
 import type { PackageDetails } from "./pckgTypes.js";
+
+async function createPckgFetchFromContext(
+  context: ExtensionContext,
+  baseUrl: string,
+): Promise<typeof fetch> {
+  const apiKey = await readPckgApiKey(context);
+  return createPckgFetch({ baseUrl, apiKey });
+}
 
 export class PckgService {
   private connectionStatusCache: PckgConnectionStatus | undefined;
@@ -53,6 +62,10 @@ export class PckgService {
     };
     this.connectionStatusCache = status;
     return status;
+  }
+
+  async probePublicCatalog(): Promise<void> {
+    await this.validateConnection();
   }
 
   async validateConnection(apiKey?: string): Promise<PckgValidateConnectionResult> {
@@ -96,6 +109,12 @@ export class PckgService {
 
   buildPackageUrl(baseUrl: string, packageName: string): string {
     return buildRegistryPackageUrl(baseUrl, packageName);
+  }
+
+  async list(limit = 50): Promise<PckgSearchResult> {
+    const base = await this.resolveRegistryBaseUrl();
+    const fetchFn = await createPckgFetchFromContext(this.context, base);
+    return listPackages(fetchFn, base, limit);
   }
 
   async search(query: string, limit = 50): Promise<PckgSearchResult> {

@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export const ContextValue = {
   workspace: "beskidWorkspace",
   workspaceMember: "beskidWorkspaceMember",
+  standaloneProject: "beskidStandaloneProject",
   localDependency: "beskidLocalDependency",
   unresolvedDependency: "beskidUnresolvedDependency",
   registryPackage: "beskidRegistryPackage",

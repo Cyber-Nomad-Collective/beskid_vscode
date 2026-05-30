@@ -18,7 +18,7 @@ export class SelectedProjectOutlineProvider implements vscode.TreeDataProvider<O
   }
 
   async getChildren(element?: OutlineTreeItem): Promise<OutlineTreeItem[]> {
-    if (!this.selectedProjectUri) {
+    if (!this.selectedProjectUri?.fsPath) {
       return [
         new OutlineTreeItem(
           "info",

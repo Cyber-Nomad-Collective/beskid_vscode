@@ -6,7 +6,6 @@ import {
   BESKID_SIDEBAR_VIEW_IDS,
   BESKID_TREE_VIEW_IDS,
   BESKID_VIEWS_CONTAINER_ID,
-  BESKID_WEBVIEW_VIEW_IDS,
 } from "../src/views/beskidViewIds.js";
 
 describe("views manifest contract", () => {
@@ -20,21 +19,15 @@ describe("views manifest contract", () => {
     expect(views.map((view) => view.id)).toEqual([...BESKID_SIDEBAR_VIEW_IDS]);
   });
 
-  test("tree and webview ids partition sidebar views", () => {
-    expect([...BESKID_WEBVIEW_VIEW_IDS, ...BESKID_TREE_VIEW_IDS]).toEqual([
-      ...BESKID_SIDEBAR_VIEW_IDS,
-    ]);
-  });
-
-  test("dashboard is the only webview view", () => {
+  test("no sidebar webview views", () => {
     const views = pkg.contributes.views[BESKID_VIEWS_CONTAINER_ID] as { id: string; type?: string }[];
     const webviews = views.filter((view) => view.type === "webview");
-    expect(webviews.map((view) => view.id)).toEqual([...BESKID_WEBVIEW_VIEW_IDS]);
+    expect(webviews).toEqual([]);
   });
 });
 
 describe("view registration source contract", () => {
-  test("registerViews uses createTreeView for every tree id", () => {
+  test("registerViews uses createTreeView for core tree ids", () => {
     const source = readFileSync(join(import.meta.dir, "../src/activation/registerViews.ts"), "utf8");
     expect(source).toContain("createTreeView");
     expect(source).not.toContain("registerTreeDataProvider");
@@ -43,9 +36,9 @@ describe("view registration source contract", () => {
     }
   });
 
-  test("registerRuntimeUi does not register tree views", () => {
+  test("registerRuntimeUi registers modal panel", () => {
     const source = readFileSync(join(import.meta.dir, "../src/activation/registerRuntimeUi.ts"), "utf8");
-    expect(source).not.toContain("registerTreeDataProvider");
+    expect(source).toContain("BeskidModalPanel");
     expect(source).not.toContain("createTreeView");
   });
 });
@@ -53,5 +46,12 @@ describe("view registration source contract", () => {
 describe("activation events", () => {
   test("activates on startup for automated onboarding", () => {
     expect(pkg.activationEvents).toContain("onStartupFinished");
+  });
+});
+
+describe("modal command", () => {
+  test("registers beskid.modal.open", () => {
+    const commands = pkg.contributes.commands as { command: string }[];
+    expect(commands.some((c) => c.command === "beskid.modal.open")).toBe(true);
   });
 });

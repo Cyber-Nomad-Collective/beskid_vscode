@@ -7,6 +7,7 @@ import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
 import { registerCommands } from "../commands/registerCommands.js";
 import { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
+import { PackageRegistryPanel } from "../packages/PackageRegistryPanel.js";
 import { PckgService } from "../packages/pckgService.js";
 import { SelectedProjectOutlineProvider } from "../outline/SelectedProjectOutlineProvider.js";
 import { BeskidStatusController } from "../status/beskidStatusController.js";
@@ -15,10 +16,10 @@ import { BeskidLspSession } from "../runtime/BeskidLspSession.js";
 import { LspRuntimeState } from "../runtime/LspRuntimeState.js";
 import { registerExtensionWatchers } from "../runtime/extensionWatchers.js";
 import { registerRuntimeConfiguration } from "../runtime/runtimeConfiguration.js";
-import { ProjectTreeProvider } from "../workspace/ProjectTreeProvider.js";
-import { WorkspaceTreeProvider } from "../workspace/WorkspaceTreeProvider.js";
+import { ProjectsTreeProvider } from "../workspace/ProjectsTreeProvider.js";
 import { LspPckgApi } from "../packages/lspPckgApi.js";
 import { LspProjectApi } from "../workspace/lspProjectApi.js";
+import { GraphExplorerPanel } from "../graphs/GraphExplorerPanel.js";
 import { RefreshCoordinator } from "./RefreshCoordinator.js";
 import {
   assessToolchainNeeds,
@@ -35,14 +36,15 @@ export class ExtensionServices {
   readonly focus: FocusCoordinator;
   readonly session: BeskidLspSession;
   readonly lspApi: LspProjectApi;
+  readonly graphPanel: GraphExplorerPanel;
   readonly lspPckg: LspPckgApi;
   readonly refresh: RefreshCoordinator;
   readonly cli: CliService;
   readonly pckg: PckgService;
   readonly packageProvider: PackageManagerProvider;
+  readonly registryPanel: PackageRegistryPanel;
   readonly outlineProvider: SelectedProjectOutlineProvider;
-  readonly workspaceTree: WorkspaceTreeProvider;
-  readonly projectTree: ProjectTreeProvider;
+  readonly projectsTree: ProjectsTreeProvider;
   readonly debugProvider: BeskidDebugTreeProvider;
   readonly views: RegisteredViews;
   readonly runtimeUi: RuntimeUiHandles;
@@ -53,7 +55,7 @@ export class ExtensionServices {
     this.outputChannel = vscode.window.createOutputChannel("Beskid LSP");
     this.runtime = new LspRuntimeState();
     this.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    this.statusBar.command = "beskid.dashboard.focus";
+    this.statusBar.command = "beskid.modal.open";
     this.statusBar.show();
     this.status = new BeskidStatusController(this.statusBar, this.runtime);
 
@@ -69,8 +71,9 @@ export class ExtensionServices {
       {
         onRefreshWorkspaceUi: async () => {
           this.packageProvider.clearCaches();
-          await this.refresh.run({ workspaceTree: true, projectTree: true });
+          await this.refresh.run({ projectsTree: true });
           this.packageProvider.refresh();
+          void this.graphPanel.refresh();
         },
       },
     );
@@ -78,12 +81,7 @@ export class ExtensionServices {
     this.lspPckg = new LspPckgApi(() => this.session.getClient());
 
     this.outlineProvider = new SelectedProjectOutlineProvider();
-    this.workspaceTree = new WorkspaceTreeProvider(
-      () => this.session.getClient(),
-      async (uri) => this.focus.setFocusedProject(uri, this.session.getClient(), this.refresh),
-      this.lspApi,
-    );
-    this.projectTree = new ProjectTreeProvider(
+    this.projectsTree = new ProjectsTreeProvider(
       () => this.session.getClient(),
       () => this.focus.getFocusedProject(),
       this.lspApi,
@@ -91,8 +89,7 @@ export class ExtensionServices {
 
     this.refresh = new RefreshCoordinator({
       getClient: () => this.session.getClient(),
-      workspaceTree: this.workspaceTree,
-      projectTree: this.projectTree,
+      projectsTree: this.projectsTree,
     });
 
     this.pckg = new PckgService(context, this.lspApi, this.lspPckg, () => this.workspaceProjUri);
@@ -123,13 +120,21 @@ export class ExtensionServices {
       },
     });
 
+    this.registryPanel = new PackageRegistryPanel(this.pckg, reportActivity);
+    this.registryPanel.register(context);
+
+    this.graphPanel = new GraphExplorerPanel(
+      context.extensionUri,
+      this.lspApi,
+      () => this.focus.getFocusedProject(),
+    );
+
     const extensionVersion = context.extension.packageJSON.version ?? "0.0.0";
     this.debugProvider = new BeskidDebugTreeProvider(this.runtime);
     this.runtimeUi = registerRuntimeUi(context, this.runtime, extensionVersion);
 
     this.views = registerViews(context, {
-      workspaceTree: this.workspaceTree,
-      projectTree: this.projectTree,
+      projectsTree: this.projectsTree,
       packageProvider: this.packageProvider,
       outlineProvider: this.outlineProvider,
       debugProvider: this.debugProvider,
@@ -173,12 +178,13 @@ export class ExtensionServices {
     await this.session.start();
     const workspaces = await this.lspApi.listWorkspaces();
     this.workspaceProjUri = workspaces[0]?.uri;
-    this.workspaceTree.refresh();
+    this.projectsTree.refresh();
     this.packageProvider.refresh();
+    void this.pckg.probePublicCatalog();
     await this.focus.autoSelectFromActiveEditor(this.session.getClient(), this.refresh);
 
     if (readDashboardOpenOnActivate()) {
-      void this.runtimeUi.dashboard.focus();
+      void this.runtimeUi.modal.open();
     }
   }
 
@@ -220,8 +226,9 @@ export class ExtensionServices {
   async showQuickActions(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
       [
-        { label: "Open dashboard", command: "beskid.dashboard.focus" },
-        { label: "Open debug view", command: "beskid.debug.focus" },
+        { label: "Show project graph", command: "beskid.showGraph" },
+        { label: "Open quick panel", command: "beskid.modal.open" },
+        { label: "Browse packages", command: "beskid.packages.open" },
         { label: "Setup toolchain", command: "beskid.cli.bootstrap" },
         { label: "Install CLI", command: "beskid.cli.install" },
         { label: "Install LSP", command: "beskid.lsp.install" },

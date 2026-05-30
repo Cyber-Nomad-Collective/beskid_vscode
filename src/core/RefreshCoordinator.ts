@@ -1,26 +1,22 @@
 import type { LanguageClient } from "vscode-languageclient/node";
 import { WATCH_REFRESH_DEBOUNCE_MS } from "../constants.js";
 import { requestWorkspaceRefresh } from "../lsp/beskidLanguageClient.js";
-import type { ProjectTreeProvider } from "../workspace/ProjectTreeProvider.js";
-import type { WorkspaceTreeProvider } from "../workspace/WorkspaceTreeProvider.js";
+import type { ProjectsTreeProvider } from "../workspace/ProjectsTreeProvider.js";
 import { debounce } from "./debounce.js";
 
 export type RefreshScope = {
   lsp?: boolean;
-  workspaceTree?: boolean;
-  projectTree?: boolean;
+  projectsTree?: boolean;
 };
 
 export type RefreshCoordinatorDeps = {
   getClient: () => LanguageClient | undefined;
-  workspaceTree: WorkspaceTreeProvider;
-  projectTree: ProjectTreeProvider;
+  projectsTree: ProjectsTreeProvider;
 };
 
 const FULL_REFRESH: RefreshScope = {
   lsp: true,
-  workspaceTree: true,
-  projectTree: true,
+  projectsTree: true,
 };
 
 export class RefreshCoordinator {
@@ -37,7 +33,7 @@ export class RefreshCoordinator {
   }
 
   scheduleFocusUi(): void {
-    void this.run({ projectTree: true });
+    void this.run({ projectsTree: true });
   }
 
   async scheduleFull(): Promise<void> {
@@ -48,11 +44,8 @@ export class RefreshCoordinator {
     if (scope.lsp) {
       await requestWorkspaceRefresh(this.deps.getClient());
     }
-    if (scope.workspaceTree) {
-      this.deps.workspaceTree.refresh();
-    }
-    if (scope.projectTree) {
-      this.deps.projectTree.refresh();
+    if (scope.projectsTree) {
+      this.deps.projectsTree.refresh();
     }
   }
 }

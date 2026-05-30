@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import type { ExtensionContext } from "vscode";
-import { openBeskidViewsContainer } from "../activation/focusBeskidViews.js";
 import { storePckgApiKey } from "../config/workspaceSettings.js";
 import type { PackageTreeItem } from "../packages/PackageTreeItem.js";
 import type { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
@@ -14,29 +13,42 @@ function payloadFromItem(item: unknown): Record<string, unknown> | undefined {
   return undefined;
 }
 
+function packageNameFromArg(item: unknown): string | undefined {
+  if (typeof item === "string") {
+    return item;
+  }
+  if (item && typeof item === "object" && "packageName" in item) {
+    const name = (item as PackageTreeItem).packageName;
+    return typeof name === "string" ? name : undefined;
+  }
+  return undefined;
+}
+
 export function registerPackageCommands(
   context: ExtensionContext,
   deps: {
     packageProvider: PackageManagerProvider;
     pckg: PckgService;
     refresh: RefreshCoordinator;
+    openRegistryPanel?: () => void | Promise<void>;
   },
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand("beskid.packages.open", () => openBeskidViewsContainer()),
+    vscode.commands.registerCommand("beskid.packages.open", () => deps.openRegistryPanel?.()),
     vscode.commands.registerCommand("beskid.packages.search", async () => {
+      await deps.openRegistryPanel?.();
       const query = await vscode.window.showInputBox({
         prompt: "Search packages",
         placeHolder: "package name or category…",
       });
-      if (query !== undefined) {
-        deps.packageProvider.setQuery(query);
+      if (query !== undefined && query.trim().length > 0) {
+        await vscode.commands.executeCommand("beskid.packages.registrySearch", query.trim());
       }
     }),
-    vscode.commands.registerCommand("beskid.packages.showDetails", (name?: unknown) => {
-      const pkg = typeof name === "string" ? name : undefined;
+    vscode.commands.registerCommand("beskid.packages.showDetails", (item?: unknown) => {
+      const pkg = packageNameFromArg(item);
       if (pkg) {
-        return deps.packageProvider.showDetailsForPackage(pkg);
+        void vscode.commands.executeCommand("beskid.packages.registrySelect", pkg);
       }
     }),
     vscode.commands.registerCommand("beskid.packages.addDependency", () =>
@@ -74,24 +86,26 @@ export function registerPackageCommands(
     vscode.commands.registerCommand("beskid.packages.openManifest", async (item?: unknown) => {
       const payload = payloadFromItem(item);
       const uri = payload?.projectUri as string | undefined;
-      if (uri) {
-        await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(uri));
+      if (!uri) {
+        void vscode.window.showWarningMessage("No project manifest path for this dependency.");
+        return;
       }
+      await vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(uri));
     }),
     vscode.commands.registerCommand(
       "beskid.packages.openMaterializedFolder",
       async (item?: unknown) => {
         const payload = payloadFromItem(item);
         const p = (payload?.materializedPath as string | undefined)?.trim();
-        if (p) {
-          const folder = vscode.Uri.file(p);
-          if (typeof vscode.commands.executeCommand === "function") {
-            try {
-              await vscode.commands.executeCommand("revealInExplorer", folder);
-            } catch {
-              await vscode.commands.executeCommand("vscode.open", folder);
-            }
-          }
+        if (!p) {
+          void vscode.window.showWarningMessage("No materialized folder path for this dependency.");
+          return;
+        }
+        const folder = vscode.Uri.file(p);
+        try {
+          await vscode.commands.executeCommand("revealInExplorer", folder);
+        } catch {
+          await vscode.commands.executeCommand("vscode.open", folder);
         }
       },
     ),

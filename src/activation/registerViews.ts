@@ -4,26 +4,26 @@ import type { SelectedProjectOutlineProvider } from "../outline/SelectedProjectO
 import type { OutlineTreeItem } from "../outline/OutlineTreeItem.js";
 import type { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
 import type { PackageTreeItem } from "../packages/PackageTreeItem.js";
-import type { ProjectTreeItem } from "../workspace/ProjectTreeProvider.js";
-import type { ProjectTreeProvider } from "../workspace/ProjectTreeProvider.js";
-import type { WorkspaceTreeItem } from "../workspace/WorkspaceTreeProvider.js";
-import type { WorkspaceTreeProvider } from "../workspace/WorkspaceTreeProvider.js";
+import type { ProjectsTreeItem } from "../workspace/ProjectsTreeItem.js";
+import type { ProjectsTreeProvider } from "../workspace/ProjectsTreeProvider.js";
 import {
   BESKID_TREE_VIEW_IDS,
   type BeskidTreeViewId,
 } from "../views/beskidViewIds.js";
 
+function readDebugViewEnabled(): boolean {
+  return vscode.workspace.getConfiguration("beskid").get<boolean>("debug.enabled", false) ?? false;
+}
+
 export type RegisteredViews = {
-  workspaceTreeView: vscode.TreeView<WorkspaceTreeItem>;
-  projectTreeView: vscode.TreeView<ProjectTreeItem>;
-  debugTreeView: vscode.TreeView<DebugTreeItem>;
+  projectsTreeView: vscode.TreeView<ProjectsTreeItem>;
+  debugTreeView?: vscode.TreeView<DebugTreeItem>;
   packagesTreeView: vscode.TreeView<PackageTreeItem>;
   outlineTreeView: vscode.TreeView<OutlineTreeItem>;
 };
 
 export type RegisterViewsDeps = {
-  workspaceTree: WorkspaceTreeProvider;
-  projectTree: ProjectTreeProvider;
+  projectsTree: ProjectsTreeProvider;
   packageProvider: PackageManagerProvider;
   outlineProvider: SelectedProjectOutlineProvider;
   debugProvider: BeskidDebugTreeProvider;
@@ -34,17 +34,9 @@ export function registerViews(
   context: vscode.ExtensionContext,
   deps: RegisterViewsDeps,
 ): RegisteredViews {
-  const views = {
-    beskidWorkspaceView: vscode.window.createTreeView("beskidWorkspaceView", {
-      treeDataProvider: deps.workspaceTree,
-      showCollapseAll: true,
-    }),
-    beskidProjectView: vscode.window.createTreeView("beskidProjectView", {
-      treeDataProvider: deps.projectTree,
-      showCollapseAll: true,
-    }),
-    beskidDebugView: vscode.window.createTreeView("beskidDebugView", {
-      treeDataProvider: deps.debugProvider,
+  const views: Partial<Record<BeskidTreeViewId, vscode.TreeView<unknown>>> = {
+    beskidProjectsView: vscode.window.createTreeView("beskidProjectsView", {
+      treeDataProvider: deps.projectsTree,
       showCollapseAll: true,
     }),
     beskidPackagesView: vscode.window.createTreeView("beskidPackagesView", {
@@ -53,17 +45,45 @@ export function registerViews(
     beskidProjectOutlineView: vscode.window.createTreeView("beskidProjectOutlineView", {
       treeDataProvider: deps.outlineProvider,
     }),
-  } satisfies Record<BeskidTreeViewId, vscode.TreeView<unknown>>;
+  };
 
-  for (const id of BESKID_TREE_VIEW_IDS) {
-    context.subscriptions.push(views[id]);
+  let debugTreeView: vscode.TreeView<DebugTreeItem> | undefined;
+  if (readDebugViewEnabled()) {
+    debugTreeView = vscode.window.createTreeView("beskidDebugView", {
+      treeDataProvider: deps.debugProvider,
+      showCollapseAll: true,
+    });
+    views.beskidDebugView = debugTreeView;
   }
 
+  for (const id of BESKID_TREE_VIEW_IDS) {
+    context.subscriptions.push(views[id]!);
+  }
+  if (debugTreeView) {
+    context.subscriptions.push(debugTreeView);
+  }
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("beskid.debug.enabled")) {
+        void vscode.window
+          .showInformationMessage(
+            "Beskid Debug view setting changed. Reload the window to apply.",
+            "Reload",
+          )
+          .then((choice) => {
+            if (choice === "Reload") {
+              void vscode.commands.executeCommand("workbench.action.reloadWindow");
+            }
+          });
+      }
+    }),
+  );
+
   return {
-    workspaceTreeView: views.beskidWorkspaceView,
-    projectTreeView: views.beskidProjectView,
-    debugTreeView: views.beskidDebugView,
-    packagesTreeView: views.beskidPackagesView,
-    outlineTreeView: views.beskidProjectOutlineView,
+    projectsTreeView: views.beskidProjectsView as vscode.TreeView<ProjectsTreeItem>,
+    debugTreeView,
+    packagesTreeView: views.beskidPackagesView as vscode.TreeView<PackageTreeItem>,
+    outlineTreeView: views.beskidProjectOutlineView as vscode.TreeView<OutlineTreeItem>,
   };
 }

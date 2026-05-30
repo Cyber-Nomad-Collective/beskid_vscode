@@ -1,51 +1,73 @@
-# Beskid VS Code Extension
+# Beskid for VS Code
 
-VS Code support for Beskid source (`.bd`) and project (`.proj`) files, powered by the Beskid Language Server Protocol (LSP) server.
-
-## Superrepo and CI
-
-This repository is the canonical home for extension sources. It is wired into the aggregate repo as the **`beskid_vscode` submodule** ([`Cyber-Nomad-Collective/beskid`](https://github.com/Cyber-Nomad-Collective/beskid)).
-
-GitHub Actions and Open VS X publishing run **only from the superrepo** — workflow [`publish-open-vsx.yml`](https://github.com/Cyber-Nomad-Collective/beskid/blob/main/.github/workflows/publish-open-vsx.yml) builds `beskid_lsp`, bundles platform binaries under `server/`, packages the VSIX, and publishes. Avoid adding a second publish pipeline in this repository.
-
-Bundled LSP payloads under `server/` are not committed (see `.gitignore`); local installs place binaries there when packaging.
+Language support for [Beskid](https://beskid-lang.org): syntax highlighting, IntelliSense, diagnostics, project and package management, and integrated CLI tasks — powered by the Beskid language server (`beskid_lsp`).
 
 ## Features
 
-- Activates on `beskid` language files
-- Associates both `.bd` and `.proj` with Beskid
-- Uses GitHub CLI releases for the language server (`beskid lsp`) and project commands (fetch, lock, build, …)
-- Optional VSIX-bundled LSP binaries when `beskid.lsp.server.preferBundled` is enabled
-- Supports explicit local binary override via `beskid.lsp.server.path`
-- Supports source/dev launch mode for compiler contributors
-- Cross-module IntelliSense (`use` aliases, `IO.Member` completion) requires the open file to live under a Beskid project with a resolved `Project.proj` / lockfile and materialized dependencies—the same project context the CLI uses for builds
-- Trigger characters `.` and `:` drive member and path completion from the language server
-- **Workspaces**, **Project**, **Outline**, and **Packages** tree views under the Beskid activity bar (workspace members, focused project graph, registry search, local lockfile deps)
-- LSP `focusedProjectUri` (and deprecated `selectedProjectUri`) align diagnostics with the focused manifest; change focus without restarting LSP when only the project changes
+- **Language support** — `.bd` source and `.proj` project manifests with LSP diagnostics, completion, hover, go-to-definition, and formatting
+- **Projects sidebar** — workspaces (`Workspace.proj`) as containers; expand a member to see targets, dependencies, and source folders in one tree
+- **Graph Explorer** — interactive Mermaid dependency/module/host graphs in a webview panel (command palette: **Beskid: Show Project Graph**)
+- **Outline** — symbols for the focused project
+- **Packages** — local lockfile dependencies; browse the public [pckg](https://pckg.beskid-lang.org) registry in a document panel
+- **Quick panel** — status-bar entry opens a modal for LSP status, toolchain setup, fetch/lock, and common actions
+- **Symbol documentation** — open book docs from hover (“View documentation”) or **Beskid: Open Symbol Documentation**
+- **CLI integration** — fetch, lock, build, test, and analyze via the command palette and task provider
+- **Automatic toolchain** — downloads CLI and LSP from GitHub releases on first launch (configurable)
 
-### Tree views
+Cross-module IntelliSense requires a resolved project context (same `Project.proj` / lockfile layout the CLI uses for builds).
 
-| View | Id | Purpose |
-|------|-----|---------|
-| Workspaces | `beskidWorkspaceView` | `Workspace.proj` roots and members |
-| Project | `beskidProjectView` | Focused project targets, dependencies, sources |
-| Outline | `beskidProjectOutlineView` | Symbols for the focused project |
-| Packages | `beskidPackagesView` | Local lockfile deps and registry search |
+## Getting started
 
-### Workspace settings
+1. Install the extension from Open VSX (or run from source — see [Development](#development)).
+2. Open a folder containing a `Workspace.proj` or `Project.proj`.
+3. On first activate, the extension installs the Beskid CLI and LSP if needed and runs `beskid fetch`.
+4. Click **Beskid** in the status bar for the quick panel, or open the **Beskid** activity bar for Projects, Outline, and Packages.
+
+## Sidebar views
+
+| View | Purpose |
+|------|---------|
+| **Projects** | Workspaces and standalone projects; expand a project for targets, dependencies, and sources |
+| **Outline** | Symbols in the focused project |
+| **Packages** | Declared/locked deps; **Browse registry** opens the pckg catalog |
+| **Debug** | LSP runtime state (hidden until `beskid.debug.enabled` is `true`; reload required) |
+
+**Project focus** — click a workspace member or use **Beskid: Select Project**. The focused manifest drives diagnostics, outline, and package actions. Focus can change without restarting the LSP.
+
+## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `Project.proj` for the active editor |
-| `beskid.cli.path` | `beskid` | Beskid CLI binary for fetch, lock, build, and tasks (uses `~/.beskid/bin/beskid` when installed via the extension) |
-| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Beskid: Install CLI** (`cli-latest`, `cli-vX.Y.Z`, or bare semver) |
-| `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Beskid: Install LSP** (`lsp-latest`, `lsp-vX.Y.Z`, or bare semver) |
-| `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP from GitHub on activate when missing or outdated |
-| `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once on first successful bootstrap |
-| `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | pckg registry base URL |
-| `beskid.pckg.apiKey` | *(empty)* | Optional API key for private registry access (also stored in SecretStorage) |
+| `beskid.cli.path` | `beskid` | CLI binary for fetch, lock, build, and tasks |
+| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Install CLI** |
+| `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Install LSP** |
+| `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP on activate when missing |
+| `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once after first bootstrap |
+| `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | Registry base URL |
+| `beskid.pckg.apiKey` | *(empty)* | API key for private packages (public browse works without a key) |
+| `beskid.debug.enabled` | `false` | Show the Debug sidebar view |
+| `beskid.docs.bookBaseUrl` | `https://beskid-lang.org` | Book base URL for symbol documentation |
 
-## Development (Bun)
+Additional LSP overrides: `beskid.lsp.server.path`, `beskid.lsp.server.devMode`, `beskid.lsp.server.preferBundled`, and related `beskid.lsp.server.*` keys.
+
+## Commands (common)
+
+| Command | Description |
+|---------|-------------|
+| **Beskid: Open Quick Panel** | Status-bar modal (`beskid.modal.open`) |
+| **Beskid: Browse Packages** | Registry document panel |
+| **Beskid: Select Project** / **Reveal in Projects** | Change or reveal project focus |
+| **Beskid: Setup Toolchain** | Install CLI + LSP + fetch dependencies |
+| **Beskid: Refresh Workspace** | Re-sync LSP project graph |
+| **Beskid: Show Project Graph** | Open Graph Explorer (Mermaid dependency/workspace/module views) |
+| **Beskid: Open Symbol Documentation** | Open book page for symbol under cursor |
+
+Use **Beskid: LSP Quick Actions** for the full command list.
+
+## Development
+
+Requires [Bun](https://bun.sh).
 
 ```bash
 bun install
@@ -56,60 +78,31 @@ bun run test:integration   # first run downloads VS Code into .vscode-test/
 bun run test:all
 ```
 
-Press `F5` in VS Code to run the extension in an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first (`bun run bundle:lsp` + `bun run build`).
+Press **F5** to launch an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first.
 
-If the bundled binary is missing, the extension also tries a local `compiler/target/release/beskid_lsp` build and auto-launches via `cargo run -p beskid_lsp` when a sibling `compiler/` workspace is present (superrepo checkout).
+When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collective/beskid), the extension can use a local `compiler/target/release/beskid_lsp` build or `cargo run -p beskid_lsp` if `beskid.lsp.server.devMode` is enabled.
 
-### Test layout
+### Manual smoke
 
-| Layer | Runner | Scope |
-|-------|--------|--------|
-| Unit | Bun (`test/**/*.test.ts`, not `test/integration/`) | Pure helpers, manifest contracts, mocked view registration |
-| Integration | [@vscode/test-electron](https://www.npmjs.com/package/@vscode/test-electron) + Mocha | Extension activation, sidebar view focus commands, command palette entries |
-| Smoke | Bun (`test/e2e/`) | `package.json` contribution checks |
+1. Open a folder with `Workspace.proj` / `Project.proj` and start the Extension Development Host (**F5**).
+2. **Projects** lists the workspace; expand a member to see targets, dependencies, and sources.
+3. Click the status-bar **Beskid** item — quick panel opens.
+4. **Packages** → **Browse registry…** — public catalog without an API key.
+5. Hover a symbol → **View documentation**, or run **Open Symbol Documentation**.
 
-Integration tests launch a real VS Code build with `--disable-extensions` and verify that every sidebar view (including **Debug**) registers a `.focus` command.
+## Publishing and repository layout
 
-### Manual smoke (corelib workspace)
+This repo is the **`beskid_vscode` submodule** in the aggregate [beskid](https://github.com/Cyber-Nomad-Collective/beskid) monorepo. Open VSX publishing runs from the superrepo workflow `publish-open-vsx.yml` (builds `beskid_lsp`, bundles platform binaries under `server/`, packages the VSIX). Bundled LSP payloads under `server/` are not committed locally.
 
-1. Open the aggregate repo (or `compiler/corelib`) with a `Workspace.proj` / `Project.proj` layout and start the Extension Development Host (`F5`).
-2. Confirm **Workspaces** lists members; click a member and verify **Project** shows graph targets/dependencies and **Outline** updates.
-3. Open a `.bd` file under a project; use the editor title **Reveal in Project** control and confirm the **Project** tree reveals the focused manifest.
-4. In **Packages**, run **Search packages** for `corelib`; open details, then **Add Package Dependency** and confirm `Project.proj` gains a `dependency` block.
-5. Run **Beskid: Fetch Packages** (or **CLI Fetch**); refresh and confirm locked rows appear; if the registry requires auth, use **Configure Package Registry API Key** and retry search.
+## Language server resolution
 
-## Default language server
+On activate (unless auto-install is disabled, dev mode is on, or `beskid.lsp.server.path` is set):
 
-On activate the extension **automatically** prepares the toolchain (unless `beskid.toolchain.autoInstallOnLaunch` is false, `beskid.lsp.server.devMode` is enabled, or `beskid.lsp.server.path` is set):
+1. Managed CLI at `~/.beskid/bin/beskid` (from GitHub `cli-latest`)
+2. Managed LSP at `~/.beskid/bin/beskid_lsp` (from GitHub `lsp-latest`)
+3. `beskid fetch` for open manifests when `beskid.toolchain.autoFetchDependencies` is enabled
+4. Start the language server
 
-1. Checks for managed CLI at `~/.beskid/bin/beskid` — downloads from GitHub (`cli-latest` by default) when missing or too old for `beskid lsp`
-2. Checks for managed LSP at `~/.beskid/bin/beskid_lsp` — downloads from GitHub (`lsp-latest` by default) when missing
-3. Runs **`beskid fetch`** for each open `Workspace.proj` / `Project.proj` on first launch (disable with `beskid.toolchain.autoFetchDependencies`)
-4. Starts the language server
+Override order when starting LSP: explicit `beskid.lsp.server.path` → managed LSP → VSIX-bundled binary (`beskid.lsp.server.preferBundled`) → managed CLI `beskid lsp` → local compiler build.
 
-Progress appears in the status bar and a short notification while downloads run. Details log to the **Beskid LSP** output channel. Use **Beskid: Setup Toolchain** to retry after a failure.
-
-Resolution order when starting the LSP:
-
-1. `beskid.lsp.server.path` — explicit LSP binary
-2. Managed LSP — `~/.beskid/bin/beskid_lsp` (installed from GitHub `lsp-latest` / `lsp-vX.Y.Z`)
-3. VSIX-bundled `server/<platform>-<arch>/beskid_lsp` when `beskid.lsp.server.preferBundled` is true
-4. Managed CLI — `beskid lsp` from an up-to-date `beskid.cli.path` or `~/.beskid/bin/beskid`
-5. Local `compiler/target/release/beskid_lsp` or `cargo run -p beskid_lsp` when developing in the superrepo
-
-## Default server command (contributors)
-
-For compiler work in a cloned superrepo, enable `beskid.lsp.server.devMode` or rely on the auto-detected `compiler/` workspace:
-
-```bash
-cargo run -p beskid_lsp
-```
-
-You can override in VS Code settings:
-
-- `beskid.lsp.server.devMode`
-- `beskid.lsp.server.command`
-- `beskid.lsp.server.args`
-- `beskid.lsp.server.cwd`
-- `beskid.lsp.server.debugArgs`
-- `beskid.lsp.server.path`
+Progress appears in the status bar and **Beskid LSP** output channel. Use **Beskid: Setup Toolchain** to retry after failure.

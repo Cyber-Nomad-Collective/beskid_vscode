@@ -1,45 +1,7 @@
 import type { LspRuntimeSnapshot } from "../runtime/lspRuntimeTypes.js";
 import { escapeHtml, WEBVIEW_CSP_META } from "../webviews/webviewHtml.js";
 
-function row(label: string, value: string | undefined): string {
-  const display = value?.trim() ? escapeHtml(value) : "—";
-  return `<div class="row"><span class="label">${escapeHtml(label)}</span><span class="value">${display}</span></div>`;
-}
-
-function phaseBadge(snapshot: LspRuntimeSnapshot): string {
-  const phase = snapshot.scan.active ? "scanning" : snapshot.phase;
-  return `<span class="badge badge--${escapeHtml(phase)}">${escapeHtml(phase)}</span>`;
-}
-
-export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersion: string): string {
-  const launch = snapshot.launch;
-  const launchLine = launch
-    ? `${launch.command} ${launch.args.join(" ")}`.trim()
-    : undefined;
-  const scanLine =
-    snapshot.scan.active && snapshot.scan.total !== undefined
-      ? `${snapshot.scan.current ?? 0} / ${snapshot.scan.total}${snapshot.scan.message ? ` — ${snapshot.scan.message}` : ""}`
-      : snapshot.scan.message;
-
-  const focused = snapshot.focusedProjectUri
-    ? snapshot.focusedProjectUri.replace(/^file:\/\//, "")
-    : undefined;
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  ${WEBVIEW_CSP_META}
-  <style>
-    body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-foreground);
-      background: var(--vscode-sideBar-background);
-      padding: 12px;
-      margin: 0;
-      line-height: 1.45;
-    }
+const DASHBOARD_STYLES = `
     h2 {
       font-size: 11px;
       font-weight: 600;
@@ -90,9 +52,36 @@ export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersi
       color: var(--vscode-descriptionForeground);
       margin-top: 6px;
     }
-  </style>
-</head>
-<body>
+`;
+
+function row(label: string, value: string | undefined): string {
+  const display = value?.trim() ? escapeHtml(value) : "—";
+  return `<div class="row"><span class="label">${escapeHtml(label)}</span><span class="value">${display}</span></div>`;
+}
+
+function phaseBadge(snapshot: LspRuntimeSnapshot): string {
+  const phase = snapshot.scan.active ? "scanning" : snapshot.phase;
+  return `<span class="badge badge--${escapeHtml(phase)}">${escapeHtml(phase)}</span>`;
+}
+
+export function renderDashboardBodyHtml(
+  snapshot: LspRuntimeSnapshot,
+  extensionVersion: string,
+): string {
+  const launch = snapshot.launch;
+  const launchLine = launch
+    ? `${launch.command} ${launch.args.join(" ")}`.trim()
+    : undefined;
+  const scanLine =
+    snapshot.scan.active && snapshot.scan.total !== undefined
+      ? `${snapshot.scan.current ?? 0} / ${snapshot.scan.total}${snapshot.scan.message ? ` — ${snapshot.scan.message}` : ""}`
+      : snapshot.scan.message;
+
+  const focused = snapshot.focusedProjectUri
+    ? snapshot.focusedProjectUri.replace(/^file:\/\//, "")
+    : undefined;
+
+  return `<style>${DASHBOARD_STYLES}</style>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <strong>Language server</strong>
@@ -120,13 +109,37 @@ export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersi
     <div class="actions">
       <button class="primary" data-command="beskid.lsp.restart">Restart LSP</button>
       <button data-command="beskid.cli.bootstrap">Setup toolchain</button>
+      <button data-command="beskid.packages.open">Browse packages</button>
       <button data-command="beskid.refreshWorkspace">Refresh workspace</button>
       <button data-command="beskid.lsp.openLogs">Open logs</button>
       <button data-command="beskid.lsp.quickActions">More actions…</button>
     </div>
     <p class="hint">Formatting is provided by the Beskid language server (default formatter for .bd and .proj).</p>
-  </div>
+  </div>`;
+}
 
+/** @deprecated Sidebar webview HTML; modal uses renderDashboardBodyHtml. */
+export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersion: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  ${WEBVIEW_CSP_META}
+  <style>
+    body {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-foreground);
+      background: var(--vscode-sideBar-background);
+      padding: 12px;
+      margin: 0;
+      line-height: 1.45;
+    }
+    ${DASHBOARD_STYLES}
+  </style>
+</head>
+<body>
+  ${renderDashboardBodyHtml(snapshot, extensionVersion)}
   <script>
     const vscode = acquireVsCodeApi();
     document.querySelectorAll('button[data-command]').forEach((btn) => {

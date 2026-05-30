@@ -1,11 +1,10 @@
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
-import { focusBeskidTreeView } from "../activation/focusBeskidViews.js";
-import { BeskidDashboardProvider } from "../dashboard/BeskidDashboardProvider.js";
+import { BeskidModalPanel } from "../dashboard/BeskidModalPanel.js";
 import type { LspRuntimeState } from "../runtime/LspRuntimeState.js";
 
 export type RuntimeUiHandles = {
-  dashboard: BeskidDashboardProvider;
+  modal: BeskidModalPanel;
 };
 
 export function registerRuntimeUi(
@@ -13,16 +12,21 @@ export function registerRuntimeUi(
   runtime: LspRuntimeState,
   extensionVersion: string,
 ): RuntimeUiHandles {
-  const dashboard = new BeskidDashboardProvider(runtime, extensionVersion);
+  const modal = new BeskidModalPanel(runtime, extensionVersion);
+  modal.register(context);
 
   context.subscriptions.push(
-    runtime.onDidChange(() => dashboard.refresh()),
-    vscode.window.registerWebviewViewProvider(BeskidDashboardProvider.viewType, dashboard, {
-      webviewOptions: { retainContextWhenHidden: true },
+    vscode.commands.registerCommand("beskid.debug.focus", async () => {
+      const enabled = vscode.workspace.getConfiguration("beskid").get<boolean>("debug.enabled", false);
+      if (!enabled) {
+        void vscode.window.showInformationMessage(
+          "Enable beskid.debug.enabled in settings to use the Debug view.",
+        );
+        return;
+      }
+      await vscode.commands.executeCommand("beskidDebugView.focus");
     }),
-    vscode.commands.registerCommand("beskid.dashboard.focus", () => dashboard.focus()),
-    vscode.commands.registerCommand("beskid.debug.focus", () => focusBeskidTreeView("beskidDebugView")),
   );
 
-  return { dashboard };
+  return { modal };
 }

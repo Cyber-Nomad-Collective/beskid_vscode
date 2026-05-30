@@ -43,6 +43,34 @@
   "contributes": {
     "commands": [
       {
+        "command": "beskid.showGraph",
+        "title": "Beskid: Show Project Graph"
+      },
+      {
+        "command": "beskid.showGraph.project",
+        "title": "Beskid: Show Project Dependency Graph"
+      },
+      {
+        "command": "beskid.showGraph.workspace",
+        "title": "Beskid: Show Workspace Graph"
+      },
+      {
+        "command": "beskid.showGraph.module",
+        "title": "Beskid: Show Module Graph"
+      },
+      {
+        "command": "beskid.showGraph.imports",
+        "title": "Beskid: Show Import Closure Graph"
+      },
+      {
+        "command": "beskid.showGraph.host",
+        "title": "Beskid: Show Host Composition Graph"
+      },
+      {
+        "command": "beskid.refreshGraph",
+        "title": "Beskid: Refresh Graph"
+      },
+      {
         "command": "beskid.selectProject",
         "title": "Beskid: Select Project"
       },
@@ -59,12 +87,16 @@
         "title": "Beskid: Refresh Workspace"
       },
       {
+        "command": "beskid.revealInProjectsTree",
+        "title": "Beskid: Reveal in Projects"
+      },
+      {
         "command": "beskid.revealInWorkspaceTree",
-        "title": "Beskid: Reveal in Workspaces"
+        "title": "Beskid: Reveal in Projects"
       },
       {
         "command": "beskid.revealInProjectTree",
-        "title": "Beskid: Reveal in Project"
+        "title": "Beskid: Reveal in Projects"
       },
       {
         "command": "beskid.lsp.quickActions",
@@ -167,8 +199,16 @@
         "title": "Beskid: Open LSP Logs"
       },
       {
+        "command": "beskid.modal.open",
+        "title": "Beskid: Open Quick Panel"
+      },
+      {
         "command": "beskid.dashboard.focus",
-        "title": "Beskid: Open Dashboard"
+        "title": "Beskid: Open Quick Panel"
+      },
+      {
+        "command": "beskid.openSymbolDocumentation",
+        "title": "Beskid: Open Symbol Documentation"
       },
       {
         "command": "beskid.debug.focus",
@@ -230,7 +270,22 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "beskid.showGraph.project"
+        },
+        {
+          "command": "beskid.showGraph.workspace"
+        },
+        {
+          "command": "beskid.showGraph.module"
+        },
+        {
+          "command": "beskid.showGraph.host"
+        },
+        {
           "command": "beskid.selectProject"
+        },
+        {
+          "command": "beskid.modal.open"
         },
         {
           "command": "beskid.dashboard.focus"
@@ -259,9 +314,9 @@
       ],
       "view/title": [
         {
-          "command": "beskid.packages.search",
+          "command": "beskid.packages.open",
           "when": "view == beskidPackagesView",
-          "group": "navigation@1"
+          "group": "navigation@0"
         },
         {
           "command": "beskid.packages.refresh",
@@ -280,12 +335,12 @@
         },
         {
           "command": "beskid.refreshWorkspace",
-          "when": "view == beskidWorkspaceView",
+          "when": "view == beskidProjectsView",
           "group": "navigation"
         },
         {
           "command": "beskid.selectProject",
-          "when": "view == beskidProjectView || view == beskidProjectOutlineView",
+          "when": "view == beskidProjectsView || view == beskidProjectOutlineView",
           "group": "navigation"
         }
       ],
@@ -317,13 +372,40 @@
         },
         {
           "command": "beskid.focusProject",
-          "when": "view == beskidWorkspaceView && viewItem == beskidWorkspaceMember",
+          "when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
           "group": "navigation"
+        },
+        {
+          "command": "beskid.showGraph.project",
+          "when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
+          "group": "2_graph@1"
+        },
+        {
+          "command": "beskid.showGraph.workspace",
+          "when": "view == beskidProjectsView && viewItem == beskidWorkspace",
+          "group": "2_graph@1"
+        },
+        {
+          "command": "beskid.showGraph.project",
+          "when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
+          "group": "2_graph@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "beskid.openSymbolDocumentation",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "group": "navigation@9"
         }
       ],
       "editor/title": [
         {
-          "command": "beskid.revealInProjectTree",
+          "command": "beskid.showGraph.project",
+          "when": "resourceLangId == beskid-proj",
+          "group": "navigation@3"
+        },
+        {
+          "command": "beskid.revealInProjectsTree",
           "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
           "group": "navigation@1"
         },
@@ -346,21 +428,8 @@
     "views": {
       "beskidViews": [
         {
-          "id": "beskidDashboardView",
-          "name": "Dashboard",
-          "type": "webview"
-        },
-        {
-          "id": "beskidDebugView",
-          "name": "Debug"
-        },
-        {
-          "id": "beskidWorkspaceView",
-          "name": "Workspaces"
-        },
-        {
-          "id": "beskidProjectView",
-          "name": "Project"
+          "id": "beskidProjectsView",
+          "name": "Projects"
         },
         {
           "id": "beskidProjectOutlineView",
@@ -369,13 +438,18 @@
         {
           "id": "beskidPackagesView",
           "name": "Packages"
+        },
+        {
+          "id": "beskidDebugView",
+          "name": "Debug",
+          "when": "config.beskid.debug.enabled"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "beskidPackagesView",
-        "contents": "Search the Beskid package registry.\n[Search packages](command:beskid.packages.search)"
+        "contents": "Local project dependencies and registry browse.\n[Browse registry](command:beskid.packages.open)"
       }
     ],
     "languages": [
@@ -421,12 +495,34 @@
           "beskid.dashboard.openOnActivate": {
             "type": "boolean",
             "default": false,
-            "description": "Open the Beskid Dashboard sidebar view when the extension activates."
+            "description": "Open the Beskid quick panel (status bar modal) when the extension activates."
+          },
+          "beskid.debug.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show the Beskid Debug tree view in the activity bar (requires window reload)."
+          },
+          "beskid.docs.bookBaseUrl": {
+            "type": "string",
+            "default": "https://beskid-lang.org",
+            "description": "Base URL for Beskid book documentation fallback when opening symbol docs."
           },
           "beskid.project.autoSelectFromEditor": {
             "type": "boolean",
             "default": true,
             "description": "Automatically focus the Beskid project manifest for the active editor file."
+          },
+          "beskid.graph.defaultKind": {
+            "type": "string",
+            "enum": [
+              "projectDeps",
+              "workspace",
+              "moduleTree",
+              "importClosure",
+              "hostComposition"
+            ],
+            "default": "projectDeps",
+            "description": "Default graph kind when opening the Graph Explorer panel."
           }
         }
       },
@@ -558,7 +654,8 @@
   },
   "scripts": {
     "sync:keywords": "bun scripts/sync-keywords.mjs",
-    "build": "bunx tsc -p . && bunx tsc -p tsconfig.integration.json",
+    "postinstall": "node scripts/bundle-mermaid.mjs",
+    "build": "node scripts/bundle-mermaid.mjs && bunx tsc -p . && bunx tsc -p tsconfig.integration.json",
     "build:ext": "bunx tsc -p .",
     "bundle:lsp": "node scripts/bundle-lsp-host.mjs",
     "watch": "bunx tsc -w -p .",
@@ -573,6 +670,7 @@
     "vscode:prepublish": "node scripts/vscode-prepublish.mjs"
   },
   "dependencies": {
+    "mermaid": "^11.12.0",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-protocol": "3.17.5"
   },
