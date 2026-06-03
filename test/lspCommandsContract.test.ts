@@ -49,7 +49,7 @@ describe("LSP execute command contracts", () => {
       "src/dashboard/BeskidModalPanel.ts",
     ];
     for (const relativePath of registrationSources) {
-      const source = readFileSync(join(import.meta.dir, "..", relativePath), "utf8");
+      const source = readFileSync(join(import.meta.dirname, "..", relativePath), "utf8");
       for (const command of PROJECT_EXPLORER_COMMANDS) {
         expect(source).not.toContain(`registerCommand("${command}"`);
       }
