@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 /** Mirrors LSP `PROJECT_EXPLORER_COMMANDS` — update when server contract changes. */
-const PROJECT_EXPLORER_COMMANDS = [
+export const PROJECT_EXPLORER_COMMANDS = [
   "beskid.refreshWorkspace",
   "beskid.listWorkspaces",
   "beskid.getWorkspaceSummary",
@@ -31,6 +33,26 @@ describe("LSP execute command contracts", () => {
       expect(PROJECT_EXPLORER_COMMANDS.includes(cmd as (typeof PROJECT_EXPLORER_COMMANDS)[number])).toBe(
         true,
       );
+    }
+  });
+
+  test("extension does not manually register LSP execute commands", () => {
+    const registrationSources = [
+      "src/commands/explorerCommands.ts",
+      "src/commands/graphCommands.ts",
+      "src/commands/lspCommands.ts",
+      "src/commands/packageCommands.ts",
+      "src/commands/symbolCommands.ts",
+      "src/cli/cliService.ts",
+      "src/packages/PackageRegistryPanel.ts",
+      "src/activation/registerRuntimeUi.ts",
+      "src/dashboard/BeskidModalPanel.ts",
+    ];
+    for (const relativePath of registrationSources) {
+      const source = readFileSync(join(import.meta.dir, "..", relativePath), "utf8");
+      for (const command of PROJECT_EXPLORER_COMMANDS) {
+        expect(source).not.toContain(`registerCommand("${command}"`);
+      }
     }
   });
 });

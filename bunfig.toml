@@ -1,0 +1,3 @@
+[test]
+# Mocha/@vscode/test-electron suites and compiled artifacts are run via test:integration.
+pathIgnorePatterns = ["test/integration/**", "out/**"]
