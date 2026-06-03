@@ -64,6 +64,5 @@ export function registerExplorerCommands(
     vscode.commands.registerCommand("beskid.revealInProjectTree", async () => {
       await revealInProjectsTree(deps.views, deps.projectsTree, deps.focus.getFocusedProject());
     }),
-    vscode.commands.registerCommand("beskid.refreshWorkspace", () => deps.refresh.scheduleFull()),
   );
 }
