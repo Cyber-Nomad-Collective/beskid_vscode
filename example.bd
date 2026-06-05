@@ -19,6 +19,6 @@ User make_user(i32 id, string name) {
 
 unit main(){
     User user = make_user(1, "John");
-    std.io.println("User:");
-    std.io.println(user.name);
+    System.Output.WriteLine("User:");
+    System.Output.WriteLine(user.name);
 }
