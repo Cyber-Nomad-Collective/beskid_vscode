@@ -1,15 +1,11 @@
 import * as vscode from "vscode";
 import type { ExtensionContext } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
+import { readBookBaseUrl, readSpecBaseUrl } from "../config/workspaceSettings.js";
+import { buildFallbackDocsUrl, resolveDocumentationUrl } from "./docsUrls.js";
 import { lspExecuteCommand } from "../lsp/lspExecuteCommand.js";
-import { readPckgBaseUrl } from "../config/workspaceSettings.js";
 
-function readBookBaseUrl(): string {
-  return (
-    vscode.workspace.getConfiguration("beskid").get<string>("docs.bookBaseUrl") ??
-    "https://beskid-lang.org"
-  );
-}
+export { buildFallbackDocsUrl, buildPckgDocsUrl, resolveDocumentationUrl } from "./docsUrls.js";
 
 export function registerSymbolCommands(
   context: ExtensionContext,
@@ -33,26 +29,19 @@ export function registerSymbolCommands(
       ]);
       const url = raw?.url?.trim();
       if (url) {
-        await vscode.env.openExternal(vscode.Uri.parse(url));
+        await vscode.env.openExternal(
+          vscode.Uri.parse(
+            resolveDocumentationUrl(url, {
+              specBaseUrl: readSpecBaseUrl(),
+              bookBaseUrl: readBookBaseUrl(),
+            }),
+          ),
+        );
         return;
       }
-      const bookBase = readBookBaseUrl().replace(/\/$/, "");
-      await vscode.env.openExternal(vscode.Uri.parse(`${bookBase}/book/`));
+      await vscode.env.openExternal(
+        vscode.Uri.parse(buildFallbackDocsUrl(undefined, { bookBaseUrl: readBookBaseUrl() })),
+      );
     }),
   );
-}
-
-export function buildFallbackDocsUrl(symbolName?: string): string {
-  const bookBase = readBookBaseUrl().replace(/\/$/, "");
-  if (symbolName?.trim()) {
-    return `${bookBase}/book/?q=${encodeURIComponent(symbolName.trim())}`;
-  }
-  return `${bookBase}/book/`;
-}
-
-export function buildPckgDocsUrl(packageName: string, version: string, symbol?: string): string {
-  const base = readPckgBaseUrl().replace(/\/$/, "");
-  const atVersion = `${encodeURIComponent(packageName)}@${encodeURIComponent(version)}`;
-  const fragment = symbol?.trim() ? `#${encodeURIComponent(symbol.trim())}` : "";
-  return `${base}/docs/${atVersion}${fragment}`;
 }

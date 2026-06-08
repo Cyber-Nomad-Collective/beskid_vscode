@@ -24,6 +24,29 @@ export function readPckgBaseUrl(): string {
   );
 }
 
+export function readBookBaseUrl(): string {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<string>("docs.bookBaseUrl") ??
+    "https://beskid-lang.org"
+  );
+}
+
+export function readSpecBaseUrl(): string {
+  return (
+    vscode.workspace.getConfiguration("beskid").get<string>("docs.specBaseUrl") ??
+    "https://beskid-lang.org/platform-spec"
+  );
+}
+
+/** Env vars forwarded to the LSP for documentation URL resolution. */
+export function lspDocumentationEnv(): Record<string, string> {
+  return {
+    BESKID_BOOK_BASE_URL: readBookBaseUrl().replace(/\/$/, ""),
+    BESKID_SPEC_BASE_URL: readSpecBaseUrl().replace(/\/$/, ""),
+    BESKID_PCKG_BASE_URL: readPckgBaseUrl().replace(/\/$/, ""),
+  };
+}
+
 export function readCliReleaseTag(): string {
   const configured =
     vscode.workspace.getConfiguration("beskid").get<string>("cli.releaseTag", "cli-latest") ||

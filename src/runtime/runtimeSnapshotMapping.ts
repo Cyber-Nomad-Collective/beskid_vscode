@@ -15,6 +15,7 @@ export function toBeskidStatusSnapshot(runtime: LspRuntimeSnapshot): BeskidStatu
     pckgActive: runtime.pckgActivity?.active ?? false,
     pckgPhase: runtime.pckgActivity?.phase,
     pckgMessage: runtime.pckgActivity?.message,
+    pckgConnection: runtime.pckgConnection,
     lspClientRunning: clientRunning,
     lspStartedOnce: startedOnce,
     runtimePhase: runtime.phase,

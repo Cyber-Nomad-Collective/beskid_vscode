@@ -1,11 +1,16 @@
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
-import type { LspRuntimePhase, LspScanSnapshot } from "../runtime/lspRuntimeTypes.js";
+import type {
+  LspRuntimePhase,
+  LspScanSnapshot,
+  PckgConnectionSnapshot,
+} from "../runtime/lspRuntimeTypes.js";
 
 export type BeskidStatusSnapshot = {
   lspScan: LspScanSnapshot;
   pckgActive: boolean;
   pckgPhase?: BeskidActivityPhase;
   pckgMessage?: string;
+  pckgConnection?: PckgConnectionSnapshot;
   lspClientRunning: boolean;
   lspStartedOnce: boolean;
   runtimePhase?: LspRuntimePhase;
@@ -45,12 +50,19 @@ function formatPckgPart(phase: BeskidActivityPhase, message?: string): string {
   return `$(package) ${label}`;
 }
 
+function formatPckgHealthPart(connection: PckgConnectionSnapshot): string {
+  const icon = connection.connected ? "$(check)" : "$(warning)";
+  return `${icon} pckg`;
+}
+
 function activityParts(snapshot: BeskidStatusSnapshot): string[] {
   const parts: string[] = [];
   if (snapshot.lspScan.active) {
     parts.push(formatScanPart(snapshot.lspScan));
   } else if (snapshot.pckgActive && snapshot.pckgPhase) {
     parts.push(formatPckgPart(snapshot.pckgPhase, snapshot.pckgMessage));
+  } else if (snapshot.pckgConnection) {
+    parts.push(formatPckgHealthPart(snapshot.pckgConnection));
   }
   return parts;
 }
@@ -98,6 +110,9 @@ export function deriveBeskidStatusPresentation(snapshot: BeskidStatusSnapshot): 
   }
   if (snapshot.pckgActive) {
     tooltipLines.push(snapshot.pckgMessage ?? "Package / CLI activity");
+  }
+  if (snapshot.pckgConnection) {
+    tooltipLines.push(`Registry: ${snapshot.pckgConnection.label}`);
   }
 
   return { text, tooltipLines };

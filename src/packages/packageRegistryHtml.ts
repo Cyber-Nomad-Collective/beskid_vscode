@@ -1,3 +1,4 @@
+import { buildPckgDocsUrl } from "../commands/docsUrls.js";
 import type { PackageDetails, PackageKind, PackageSearchRow } from "./pckgTypes.js";
 import { escapeHtml, WEBVIEW_CSP_META } from "../webviews/webviewHtml.js";
 
@@ -32,9 +33,17 @@ function renderDetailActions(details: PackageDetails, baseUrl: string): string {
   const kind = kindLabel(details.package.packageKind);
   const name = details.package.name;
   const browserUrl = `${baseUrl.replace(/\/$/, "")}/packages/${encodeURIComponent(name)}`;
+  const version = details.latestVersion ?? details.versions[0]?.version ?? "latest";
   const actions: string[] = [
     `<button class="primary" data-open-browser="${escapeHtml(browserUrl)}">Open in browser</button>`,
   ];
+
+  if (kind === "library" || kind === "tool") {
+    const docsUrl = buildPckgDocsUrl(name, version, undefined, { pckgBaseUrl: baseUrl });
+    actions.push(
+      `<button data-open-browser="${escapeHtml(docsUrl)}">Open API docs</button>`,
+    );
+  }
 
   if (kind === "template") {
     const shortName = details.package.shortName ?? name.split(".").pop() ?? name;

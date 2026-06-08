@@ -6,7 +6,7 @@ import type { Executable } from "vscode-languageclient/node";
 import { cliSupportsLsp } from "../cli/cliCapabilities.js";
 import { shouldAutoInstallToolchainOnLaunch } from "../cli/ensureToolchainOnLaunch.js";
 import { defaultLspInstallPath } from "../cli/lspPlatform.js";
-import { resolveCliExecutablePath } from "../config/workspaceSettings.js";
+import { lspDocumentationEnv, resolveCliExecutablePath } from "../config/workspaceSettings.js";
 import {
   bundledPlatformArchKeys,
   platformArchKey,
@@ -49,16 +49,21 @@ function resolveCompilerWorkspaceRootFromContext(
   return resolveCompilerWorkspaceRoot(context.extensionPath, vscode.workspace.workspaceFolders);
 }
 
-function serverCwd(selectedProjectUri: vscode.Uri | undefined): { cwd?: string } {
+function serverCwd(selectedProjectUri: vscode.Uri | undefined): { cwd?: string; env?: NodeJS.ProcessEnv } {
   const config = vscode.workspace.getConfiguration("beskid.lsp");
   const configuredCwd = config.get<string>("server.cwd", "").trim();
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const projectRoot = selectedProjectUri ? dirname(selectedProjectUri.fsPath) : undefined;
   const cwd = configuredCwd.length > 0 ? configuredCwd : projectRoot ?? workspaceRoot;
-  return cwd ? { cwd } : {};
+  const env = { ...process.env, ...lspDocumentationEnv() };
+  return cwd ? { cwd, env } : { env };
 }
 
-function executable(command: string, args: string[], options: { cwd?: string }): Executable {
+function executable(
+  command: string,
+  args: string[],
+  options: { cwd?: string; env?: NodeJS.ProcessEnv },
+): Executable {
   return { command, args, options };
 }
 

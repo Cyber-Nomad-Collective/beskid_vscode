@@ -94,4 +94,29 @@ describe("deriveBeskidStatusPresentation", () => {
     });
     expect(text).toBe("$(zap) Beskid LSP: Running");
   });
+
+  test("shows pckg connection health when idle", () => {
+    const { text, tooltipLines } = deriveBeskidStatusPresentation({
+      ...idle,
+      lspClientRunning: true,
+      pckgConnection: {
+        connected: true,
+        label: "Connected · https://pckg.beskid-lang.org · public catalog",
+      },
+    });
+    expect(text).toContain("$(check) pckg");
+    expect(tooltipLines.some((line) => line.includes("pckg.beskid-lang.org"))).toBe(true);
+  });
+
+  test("shows warning icon when registry is unreachable", () => {
+    const { text } = deriveBeskidStatusPresentation({
+      ...idle,
+      lspClientRunning: true,
+      pckgConnection: {
+        connected: false,
+        label: "https://pckg.beskid-lang.org · timeout",
+      },
+    });
+    expect(text).toContain("$(warning) pckg");
+  });
 });

@@ -7,6 +7,7 @@ import { promptAndAddDependency } from "./dependencyEditor.js";
 import type { PckgActivityReporter } from "./pckgActivity.js";
 export type { PckgActivityPhase } from "./pckgActivity.js";
 import { PackageTreeItem } from "./PackageTreeItem.js";
+import type { PckgConnectionStatus } from "./pckgConnectionTypes.js";
 import type { PckgService } from "./pckgService.js";
 
 export type PackageManagerDeps = {
@@ -15,9 +16,22 @@ export type PackageManagerDeps = {
   getFocusedProjectUri: () => vscode.Uri | undefined;
   lspApi: LspProjectApi;
   reportActivity: PckgActivityReporter;
+  reportConnectionStatus: (status: PckgConnectionStatus) => void;
   cli: CliService;
   refreshUi: () => Promise<void>;
 };
+
+export function formatPckgConnectionLabel(status: PckgConnectionStatus): string {
+  const url = status.baseUrl || status.workspaceDefaultRegistryUrl || "not configured";
+  if (status.connected) {
+    const authNote = status.authConfigured ? "auth configured" : "public catalog";
+    return `Connected · ${url} · ${authNote}`;
+  }
+  if (status.validation.status === "error" && status.validation.message) {
+    return `${url} · ${status.validation.message}`;
+  }
+  return `Public catalog · ${url}`;
+}
 
 /** Sidebar tree: focused project dependencies only. Registry browse uses PackageRegistryPanel. */
 export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTreeItem> {
@@ -44,15 +58,8 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
 
   private async refreshConnectionStatus(): Promise<void> {
     const status = await this.deps.pckg.getConnectionStatus(true);
-    const url = status.baseUrl || status.workspaceDefaultRegistryUrl || "not configured";
-    if (status.connected) {
-      const authNote = status.authConfigured ? "auth configured" : "public catalog";
-      this.connectionStatusLabel = `Connected · ${url} · ${authNote}`;
-    } else if (status.validation.status === "error" && status.validation.message) {
-      this.connectionStatusLabel = `${url} · ${status.validation.message}`;
-    } else {
-      this.connectionStatusLabel = `Public catalog · ${url}`;
-    }
+    this.connectionStatusLabel = formatPckgConnectionLabel(status);
+    this.deps.reportConnectionStatus(status);
     this.refresh();
   }
 

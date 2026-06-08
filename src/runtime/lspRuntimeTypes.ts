@@ -40,6 +40,11 @@ export type PckgActivitySnapshot = {
   message?: string;
 };
 
+export type PckgConnectionSnapshot = {
+  connected: boolean;
+  label: string;
+};
+
 /** Read-only snapshot consumed by dashboard, debug tree, and status bar. */
 export type LspRuntimeSnapshot = {
   phase: LspRuntimePhase;
@@ -52,6 +57,7 @@ export type LspRuntimeSnapshot = {
   lastStatusNotification?: BeskidStatusParams;
   error?: string;
   pckgActivity?: PckgActivitySnapshot;
+  pckgConnection?: PckgConnectionSnapshot;
   workspaceRoots: string[];
   settingsFlags: LspSettingsFlags;
 };

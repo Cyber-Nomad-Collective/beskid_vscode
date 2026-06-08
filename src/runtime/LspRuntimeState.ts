@@ -8,6 +8,7 @@ import {
   type LspScanSnapshot,
   type LspSettingsFlags,
   type PckgActivitySnapshot,
+  type PckgConnectionSnapshot,
 } from "./lspRuntimeTypes.js";
 import {
   applyWorkspaceScanNotification,
@@ -48,6 +49,7 @@ export class LspRuntimeState {
   private lastStatusNotification: BeskidStatusParams | undefined;
   private error: string | undefined;
   private pckgActivity: PckgActivitySnapshot | undefined;
+  private pckgConnection: PckgConnectionSnapshot | undefined;
   private clientStartedOnce = false;
 
   private readonly emitter = new vscode.EventEmitter<LspRuntimeSnapshot>();
@@ -70,6 +72,7 @@ export class LspRuntimeState {
       lastStatusNotification: this.lastStatusNotification,
       error: this.error,
       pckgActivity: this.pckgActivity ? { ...this.pckgActivity } : undefined,
+      pckgConnection: this.pckgConnection ? { ...this.pckgConnection } : undefined,
       workspaceRoots: workspaceRoots(),
       settingsFlags: readSettingsFlags(),
     };
@@ -147,6 +150,11 @@ export class LspRuntimeState {
     } else if (this.pckgActivity?.phase === phase) {
       this.pckgActivity = undefined;
     }
+    this.publish();
+  }
+
+  setPckgConnection(connection: PckgConnectionSnapshot | undefined): void {
+    this.pckgConnection = connection;
     this.publish();
   }
 

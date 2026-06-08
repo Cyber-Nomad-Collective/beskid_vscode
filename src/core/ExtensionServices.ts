@@ -6,7 +6,7 @@ import { BeskidDebugTreeProvider } from "../debug/BeskidDebugTreeProvider.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
 import { registerCommands } from "../commands/registerCommands.js";
-import { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
+import { PackageManagerProvider, formatPckgConnectionLabel } from "../packages/PackageManagerProvider.js";
 import { PackageRegistryPanel } from "../packages/PackageRegistryPanel.js";
 import { PckgService } from "../packages/pckgService.js";
 import { SelectedProjectOutlineProvider } from "../outline/SelectedProjectOutlineProvider.js";
@@ -113,6 +113,12 @@ export class ExtensionServices {
       getFocusedProjectUri: () => this.focus.getFocusedProject(),
       lspApi: this.lspApi,
       reportActivity,
+      reportConnectionStatus: (status) => {
+        this.runtime.setPckgConnection({
+          connected: status.connected,
+          label: formatPckgConnectionLabel(status),
+        });
+      },
       cli: this.cli,
       refreshUi: async () => {
         await this.refresh.scheduleFull();
@@ -180,7 +186,7 @@ export class ExtensionServices {
     this.workspaceProjUri = workspaces[0]?.uri;
     this.projectsTree.refresh();
     this.packageProvider.refresh();
-    void this.pckg.probePublicCatalog();
+    void this.pckg.probePublicCatalog().then(() => this.packageProvider.refreshProjectSection());
     await this.focus.autoSelectFromActiveEditor(this.session.getClient(), this.refresh);
 
     if (readDashboardOpenOnActivate()) {
