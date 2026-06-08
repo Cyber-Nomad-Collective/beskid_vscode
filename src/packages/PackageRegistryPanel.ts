@@ -8,6 +8,7 @@ import { WebviewPanelHost } from "../webviews/WebviewPanelHost.js";
 const PANEL_TYPE = "beskidPackageRegistry";
 
 export class PackageRegistryPanel extends WebviewPanelHost {
+  private extensionUri: vscode.Uri | undefined;
   private state: RegistryPanelState = {
     query: "",
     loading: false,
@@ -23,6 +24,7 @@ export class PackageRegistryPanel extends WebviewPanelHost {
   }
 
   register(context: vscode.ExtensionContext): void {
+    this.extensionUri = context.extensionUri;
     context.subscriptions.push(
       vscode.commands.registerCommand("beskid.packages.registrySearch", (query: string) => {
         this.open();
@@ -43,7 +45,10 @@ export class PackageRegistryPanel extends WebviewPanelHost {
         vscode.ViewColumn.One,
         { enableScripts: true, retainContextWhenHidden: true },
       );
-      this.bindPanel(panel);
+      const mediaRoot = this.extensionUri
+        ? vscode.Uri.joinPath(this.extensionUri, "media")
+        : undefined;
+      this.bindPanel(panel, mediaRoot ? [mediaRoot] : []);
       panel.webview.onDidReceiveMessage((message: unknown) => void this.handleMessage(message));
     } else {
       this.reveal();
@@ -141,6 +146,12 @@ export class PackageRegistryPanel extends WebviewPanelHost {
   }
 
   private render(): void {
-    this.postHtml(renderPackageRegistryHtml(this.state));
+    const logoUri =
+      this.panel && this.extensionUri
+        ? this.panel.webview
+            .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "beskid-logo.svg"))
+            .toString()
+        : undefined;
+    this.postHtml(renderPackageRegistryHtml({ ...this.state, logoUri }));
   }
 }
