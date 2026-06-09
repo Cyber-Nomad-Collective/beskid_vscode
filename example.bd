@@ -17,7 +17,7 @@ User make_user(i32 id, string name) {
     return User { id: id, name: name };
 }
 
-unit main(){
+unit Main(){
     User user = make_user(1, "John");
     System.Output.WriteLine("User:");
     System.Output.WriteLine(user.name);
