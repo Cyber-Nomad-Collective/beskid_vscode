@@ -19,7 +19,7 @@ export function registerSymbolCommands(
         return;
       }
       const lang = editor.document.languageId;
-      if (lang !== "beskid" && lang !== "beskid-proj") {
+      if (lang !== "beskid" && lang !== "beskid-manifest") {
         return;
       }
       const offset = editor.document.offsetAt(editor.selection.active);

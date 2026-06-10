@@ -36,9 +36,9 @@ export function registerExplorerCommands(
 
   context.subscriptions.push(
     vscode.commands.registerCommand("beskid.selectProject", async () => {
-      const files = await vscode.workspace.findFiles("**/*.proj", "**/target/**", 300);
+      const files = await vscode.workspace.findFiles("**/*.bproj", "**/target/**", 300);
       if (files.length === 0) {
-        void vscode.window.showWarningMessage("No .proj files found in workspace.");
+        void vscode.window.showWarningMessage("No .bproj files found in workspace.");
         return;
       }
       const selected = await vscode.window.showQuickPick(

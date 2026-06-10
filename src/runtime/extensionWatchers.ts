@@ -7,7 +7,7 @@ export function registerExtensionWatchers(
   onManifestChange?: () => void,
 ): void {
   const watcher = vscode.workspace.createFileSystemWatcher(
-    "**/{*.bd,*.proj,Project.lock,workspace.package.json}",
+    "**/{*.bd,*.bproj,*.bws,Project.lock,workspace.package.json}",
   );
   const scheduleRefresh = () => {
     refresh.scheduleDebouncedFull();

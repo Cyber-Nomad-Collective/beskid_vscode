@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { LspProjectApi } from "../workspace/lspProjectApi.js";
+import { isProjectManifestUri, isWorkspaceManifestUri } from "../workspace/manifestPath.js";
 import type { GraphKindId } from "./lspGraphTypes.js";
 import { renderGraphPanelHtml, type GraphPanelViewState } from "./graphPanelHtml.js";
 import { WebviewPanelHost } from "../webviews/WebviewPanelHost.js";
@@ -27,7 +28,22 @@ export class GraphExplorerPanel extends WebviewPanelHost {
       void vscode.window.showWarningMessage("Focus a Beskid project first.");
       return;
     }
-    this.projectUri = focused.toString();
+    if (kind === "workspace") {
+      if (!isWorkspaceManifestUri(focused.fsPath)) {
+        void vscode.window.showWarningMessage("Open a .bws workspace manifest for the workspace graph.");
+        return;
+      }
+      this.workspaceUri = focused.toString();
+      this.projectUri = focused.toString();
+    } else if (isWorkspaceManifestUri(focused.fsPath)) {
+      void vscode.window.showWarningMessage("Focus a .bproj project manifest for this graph kind.");
+      return;
+    } else if (isProjectManifestUri(focused.fsPath)) {
+      this.projectUri = focused.toString();
+    } else {
+      void vscode.window.showWarningMessage("Focus a Beskid .bproj manifest first.");
+      return;
+    }
 
     if (!this.panel) {
       const panel = vscode.window.createWebviewPanel(

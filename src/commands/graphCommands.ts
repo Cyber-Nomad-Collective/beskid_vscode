@@ -2,6 +2,7 @@ import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { GraphExplorerPanel } from "../graphs/GraphExplorerPanel.js";
 import type { GraphKindId } from "../graphs/lspGraphTypes.js";
+import { isManifestUri, isProjectManifestUri, isWorkspaceManifestUri } from "../workspace/manifestPath.js";
 import type { ProjectsTreeItem } from "../workspace/ProjectsTreeItem.js";
 
 function projectUriFromTreeItem(item: unknown): vscode.Uri | undefined {
@@ -19,6 +20,18 @@ function workspaceUriFromTreeItem(item: unknown): string | undefined {
   return (item as ProjectsTreeItem).workspaceUri;
 }
 
+function manifestUriFromEditor(): vscode.Uri | undefined {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return undefined;
+  }
+  const path = editor.document.uri.fsPath;
+  if (isManifestUri(path)) {
+    return editor.document.uri;
+  }
+  return undefined;
+}
+
 export function registerGraphCommands(
   context: ExtensionContext,
   panel: GraphExplorerPanel,
@@ -32,8 +45,9 @@ export function registerGraphCommands(
       await panel.open(kind, vscode.Uri.parse(workspaceUri));
       return;
     }
-    const projectUri = projectUriFromTreeItem(item) ?? vscode.window.activeTextEditor?.document.uri;
-    if (projectUri?.path.endsWith(".proj")) {
+    const projectUri =
+      projectUriFromTreeItem(item) ?? manifestUriFromEditor() ?? vscode.window.activeTextEditor?.document.uri;
+    if (projectUri && (isProjectManifestUri(projectUri.fsPath) || isWorkspaceManifestUri(projectUri.fsPath))) {
       await panel.open(kind, projectUri);
       return;
     }

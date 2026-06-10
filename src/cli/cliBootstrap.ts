@@ -68,7 +68,7 @@ async function fetchWorkspaceDependencies(
   const projects = await discoverBootstrapProjects();
   if (projects.length === 0) {
     outputChannel.appendLine(
-      "[Beskid toolchain] No Workspace.proj or Project.proj found in open folders; skipping fetch.",
+      "[Beskid toolchain] No .bws or .bproj manifest found in open folders; skipping fetch.",
     );
     return { attempted: false, failures: [] };
   }

@@ -114,7 +114,7 @@ export function renderDashboardBodyHtml(
       <button data-command="beskid.lsp.openLogs">Open logs</button>
       <button data-command="beskid.lsp.quickActions">More actions…</button>
     </div>
-    <p class="hint">Formatting is provided by the Beskid language server (default formatter for .bd and .proj).</p>
+    <p class="hint">Formatting is provided by the Beskid language server (default formatter for .bd and manifest files).</p>
   </div>`;
 }
 

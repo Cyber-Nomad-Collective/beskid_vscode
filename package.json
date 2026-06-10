@@ -222,7 +222,7 @@
         "properties": {
           "projectPath": {
             "type": "string",
-            "description": "Project root or Project.proj path"
+            "description": "Project root or .bproj manifest path"
           }
         }
       },
@@ -232,7 +232,7 @@
         "properties": {
           "projectPath": {
             "type": "string",
-            "description": "Project root or Project.proj path"
+            "description": "Project root or .bproj manifest path"
           }
         }
       },
@@ -242,7 +242,7 @@
         "properties": {
           "projectPath": {
             "type": "string",
-            "description": "Project root or Project.proj path"
+            "description": "Project root or .bproj manifest path"
           }
         }
       },
@@ -252,7 +252,7 @@
         "properties": {
           "projectPath": {
             "type": "string",
-            "description": "Project root or Project.proj path"
+            "description": "Project root or .bproj manifest path"
           }
         }
       },
@@ -262,7 +262,7 @@
         "properties": {
           "projectPath": {
             "type": "string",
-            "description": "Project root or Project.proj path"
+            "description": "Project root or .bproj manifest path"
           }
         }
       }
@@ -394,24 +394,24 @@
       "editor/context": [
         {
           "command": "beskid.openSymbolDocumentation",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
           "group": "navigation@9"
         }
       ],
       "editor/title": [
         {
           "command": "beskid.showGraph.project",
-          "when": "resourceLangId == beskid-proj",
+          "when": "resourceLangId == beskid-manifest",
           "group": "navigation@3"
         },
         {
           "command": "beskid.revealInProjectsTree",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
           "group": "navigation@1"
         },
         {
           "command": "beskid.revealInWorkspaceTree",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-proj",
+          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
           "group": "navigation@2"
         }
       ]
@@ -465,13 +465,14 @@
         "configuration": "./language-configuration.json"
       },
       {
-        "id": "beskid-proj",
+        "id": "beskid-manifest",
         "aliases": [
-          "Beskid Project",
-          "beskid-proj"
+          "Beskid Manifest",
+          "beskid-manifest"
         ],
         "extensions": [
-          ".proj"
+          ".bproj",
+          ".bws"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -483,7 +484,7 @@
         "path": "./syntaxes/beskid.tmLanguage.json"
       },
       {
-        "language": "beskid-proj",
+        "language": "beskid-manifest",
         "scopeName": "source.beskid.proj",
         "path": "./syntaxes/beskid-proj.tmLanguage.json"
       }
@@ -657,7 +658,7 @@
       "[beskid]": {
         "editor.defaultFormatter": "beskid.beskid-vscode"
       },
-      "[beskid-proj]": {
+      "[beskid-manifest]": {
         "editor.defaultFormatter": "beskid.beskid-vscode"
       }
     }

@@ -139,7 +139,7 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
       return [
         new ProjectsTreeItem(
           "info",
-          "No Workspace.proj or Project.proj found in open folders.",
+          "No .bws or .bproj manifest found in open folders.",
           vscode.TreeItemCollapsibleState.None,
         ),
       ];
@@ -219,15 +219,9 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
         }
       }
     }
-    const files = await vscode.workspace.findFiles("**/*.proj", "**/target/**", 300);
+    const files = await vscode.workspace.findFiles("**/*.bproj", "**/target/**", 300);
     return files
-      .filter((uri) => {
-        const base = uri.path.split("/").pop() ?? "";
-        if (base === "Workspace.proj") {
-          return false;
-        }
-        return !inWorkspace.has(uri.toString());
-      })
+      .filter((uri) => !inWorkspace.has(uri.toString()))
       .map((uri) => uri.toString());
   }
 }

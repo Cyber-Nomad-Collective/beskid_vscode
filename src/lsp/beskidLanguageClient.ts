@@ -24,7 +24,8 @@ export function buildBeskidClientOptions(
   return {
     documentSelector: [
       { scheme: "file", language: "beskid", pattern: "**/*.bd" },
-      { scheme: "file", language: "beskid-proj", pattern: "**/*.proj" },
+      { scheme: "file", language: "beskid-manifest", pattern: "**/*.bproj" },
+      { scheme: "file", language: "beskid-manifest", pattern: "**/*.bws" },
     ],
     synchronize: {
       configurationSection: ["beskid.lsp", "beskid"],
