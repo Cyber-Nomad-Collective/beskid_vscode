@@ -510,13 +510,8 @@
           },
           "beskid.docs.specBaseUrl": {
             "type": "string",
-            "default": "https://beskid-lang.org",
-            "description": "Base URL for platform-spec deep links (corelib workspace sources)."
-          },
-          "beskid.docs.specBaseUrl": {
-            "type": "string",
-            "default": "https://beskid-lang.org/platform-spec",
-            "description": "Base URL for platform-spec documentation when the LSP returns /platform-spec/... paths."
+            "default": "https://spec.beskid-lang.org/platform-spec",
+            "description": "Base URL for platform-spec deep links from the LSP and symbol documentation."
           },
           "beskid.project.autoSelectFromEditor": {
             "type": "boolean",
