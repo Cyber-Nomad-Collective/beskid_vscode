@@ -118,7 +118,7 @@ export function renderDashboardBodyHtml(
   </div>`;
 }
 
-/** @deprecated Sidebar webview HTML; modal uses renderDashboardBodyHtml. */
+/** Panel / status dashboard HTML (opened from status bar, not an editor tab). */
 export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersion: string): string {
   return `<!DOCTYPE html>
 <html lang="en">

@@ -95,13 +95,14 @@ export class GraphExplorerPanel extends WebviewPanelHost {
     if (!this.panel || !this.projectUri) {
       return;
     }
-    const payload = await this.lspApi.getGraph(this.projectUri, this.kind, {
+    const outcome = await this.lspApi.getGraph(this.projectUri, this.kind, {
       workspaceUri: this.workspaceUri,
     });
-    if (!payload) {
-      void vscode.window.showErrorMessage("Failed to load graph from language server.");
+    if (!outcome.ok) {
+      void vscode.window.showErrorMessage(`Failed to load graph from language server: ${outcome.error}`);
       return;
     }
+    const payload = outcome.value;
     this.nodesById.clear();
     for (const node of payload.metadata.nodes) {
       this.nodesById.set(node.id, node);

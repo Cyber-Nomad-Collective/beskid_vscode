@@ -12,6 +12,19 @@ describe("extension manifest smoke", () => {
     }
   });
 
+  test("declares status dashboard in bottom panel webview", () => {
+    const panelViews = pkg.contributes.views.beskidPanel as { id: string; type?: string; name?: string }[];
+    expect(panelViews).toEqual([
+      expect.objectContaining({
+        id: "beskidDashboardView",
+        type: "webview",
+        name: "Status",
+      }),
+    ]);
+    const panelContainers = pkg.contributes.viewsContainers.panel as { id: string; title?: string }[];
+    expect(panelContainers.some((container) => container.id === "beskidPanel")).toBe(true);
+  });
+
   test("declares package panel and explorer commands", () => {
     const ids = (pkg.contributes.commands as { command: string }[]).map((command) => command.command);
     expect(ids).toContain("beskid.packages.configureApiKey");

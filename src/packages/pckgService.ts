@@ -45,9 +45,9 @@ export class PckgService {
     const authConfigured = Boolean(await readPckgApiKey(this.context));
     const workspaceUri = this.getWorkspaceProjUri();
     const fromLsp = await this.lspPckg.getConnectionStatus({ workspaceUri, authConfigured });
-    if (fromLsp?.baseUrl) {
-      this.connectionStatusCache = fromLsp;
-      return fromLsp;
+    if (fromLsp.ok && fromLsp.value.baseUrl) {
+      this.connectionStatusCache = fromLsp.value;
+      return fromLsp.value;
     }
 
     const fallbackUrl = await this.resolveRegistryBaseUrlFromManifest();
@@ -77,8 +77,8 @@ export class PckgService {
       apiKey,
     });
     this.connectionStatusCache = undefined;
-    if (result) {
-      return result;
+    if (result.ok) {
+      return result.value;
     }
     return {
       ok: false,
@@ -99,7 +99,9 @@ export class PckgService {
     const workspaceUri = this.getWorkspaceProjUri();
     if (workspaceUri) {
       const summary = await this.lspApi.getWorkspaceSummary(workspaceUri);
-      const defaultRegistry = summary?.registries?.default?.trim();
+      const defaultRegistry = summary.ok
+        ? summary.value.registries?.default?.trim()
+        : undefined;
       if (defaultRegistry) {
         return defaultRegistry.replace(/\/$/, "");
       }

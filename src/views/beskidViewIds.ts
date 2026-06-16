@@ -1,12 +1,8 @@
 /** Tree views declared under `contributes.views.beskidViews`. */
 export const BESKID_TREE_VIEW_IDS = [
   "beskidProjectsView",
-  "beskidProjectOutlineView",
   "beskidPackagesView",
 ] as const;
-
-/** @deprecated Use `beskidProjectsView`. Kept for command/menu migration. */
-export const LEGACY_PROJECT_VIEW_IDS = ["beskidWorkspaceView", "beskidProjectView"] as const;
 
 export const BESKID_OPTIONAL_TREE_VIEW_IDS = ["beskidDebugView"] as const;
 

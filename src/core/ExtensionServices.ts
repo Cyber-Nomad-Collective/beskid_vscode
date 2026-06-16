@@ -6,10 +6,10 @@ import { BeskidDebugTreeProvider } from "../debug/BeskidDebugTreeProvider.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
 import { registerCommands } from "../commands/registerCommands.js";
+import { registerCoreCommands } from "../commands/registerCoreCommands.js";
 import { PackageManagerProvider, formatPckgConnectionLabel } from "../packages/PackageManagerProvider.js";
 import { PackageRegistryPanel } from "../packages/PackageRegistryPanel.js";
 import { PckgService } from "../packages/pckgService.js";
-import { SelectedProjectOutlineProvider } from "../outline/SelectedProjectOutlineProvider.js";
 import { BeskidStatusController } from "../status/beskidStatusController.js";
 import { FocusCoordinator } from "../runtime/FocusCoordinator.js";
 import { BeskidLspSession } from "../runtime/BeskidLspSession.js";
@@ -43,7 +43,6 @@ export class ExtensionServices {
   readonly pckg: PckgService;
   readonly packageProvider: PackageManagerProvider;
   readonly registryPanel: PackageRegistryPanel;
-  readonly outlineProvider: SelectedProjectOutlineProvider;
   readonly projectsTree: ProjectsTreeProvider;
   readonly debugProvider: BeskidDebugTreeProvider;
   readonly views: RegisteredViews;
@@ -59,7 +58,7 @@ export class ExtensionServices {
     this.statusBar.show();
     this.status = new BeskidStatusController(this.statusBar, this.runtime);
 
-    this.focus = new FocusCoordinator(context);
+    this.focus = new FocusCoordinator(context, this.outputChannel);
     this.runtime.setFocusedProject(this.focus.getFocusedProject());
 
     this.session = new BeskidLspSession(
@@ -77,20 +76,22 @@ export class ExtensionServices {
         },
       },
     );
-    this.lspApi = new LspProjectApi(() => this.session.getClient());
-    this.lspPckg = new LspPckgApi(() => this.session.getClient());
+    this.lspApi = new LspProjectApi(() => this.session.getClient(), this.outputChannel);
+    this.lspPckg = new LspPckgApi(() => this.session.getClient(), this.outputChannel);
 
-    this.outlineProvider = new SelectedProjectOutlineProvider();
     this.projectsTree = new ProjectsTreeProvider(
       () => this.session.getClient(),
       () => this.focus.getFocusedProject(),
       this.lspApi,
+      () => this.runtime.getSnapshot().phase,
     );
 
     this.refresh = new RefreshCoordinator({
       getClient: () => this.session.getClient(),
       projectsTree: this.projectsTree,
+      outputChannel: this.outputChannel,
     });
+    this.session.setOnClientReady(() => this.refresh.scheduleLspReady());
 
     this.pckg = new PckgService(context, this.lspApi, this.lspPckg, () => this.workspaceProjUri);
 
@@ -139,20 +140,19 @@ export class ExtensionServices {
     this.debugProvider = new BeskidDebugTreeProvider(this.runtime);
     this.runtimeUi = registerRuntimeUi(context, this.runtime, extensionVersion);
 
+    registerCoreCommands(context, this);
+
     this.views = registerViews(context, {
       projectsTree: this.projectsTree,
       packageProvider: this.packageProvider,
-      outlineProvider: this.outlineProvider,
       debugProvider: this.debugProvider,
     });
 
     this.focus.onDidChangeFocus(({ projectUri }) => {
       this.runtime.setFocusedProject(projectUri);
-      this.outlineProvider.setProject(projectUri);
       this.refresh.scheduleFocusUi();
       void this.packageProvider.refreshProjectSection();
     });
-    this.outlineProvider.setProject(this.focus.getFocusedProject());
   }
 
   static create(context: ExtensionContext): ExtensionServices {
@@ -182,7 +182,7 @@ export class ExtensionServices {
     );
     await this.ensureToolchainForLaunch();
     await this.session.start();
-    const workspaces = await this.lspApi.listWorkspaces();
+    const { workspaces } = await this.lspApi.listWorkspaces();
     this.workspaceProjUri = workspaces[0]?.uri;
     this.projectsTree.refresh();
     this.packageProvider.refresh();

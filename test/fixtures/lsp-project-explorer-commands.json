@@ -1,0 +1,26 @@
+{
+  "commands": [
+    "beskid.refreshWorkspace",
+    "beskid.listWorkspaces",
+    "beskid.getWorkspaceSummary",
+    "beskid.getGraph",
+    "beskid.getProjectDependencies",
+    "beskid.pckg.getConnectionStatus",
+    "beskid.pckg.setRegistry",
+    "beskid.pckg.validateConnection",
+    "beskid.symbol.getDocumentationUri"
+  ],
+  "argumentShapes": {
+    "beskid.listWorkspaces": { "args": [] },
+    "beskid.refreshWorkspace": { "args": [] },
+    "beskid.getWorkspaceSummary": { "uriKey": "workspaceUri", "acceptsBareString": true },
+    "beskid.getProjectDependencies": { "uriKey": "projectUri", "acceptsBareString": true },
+    "beskid.getGraph": {
+      "objectKeys": ["projectUri", "kind", "entryUri", "workspaceUri"]
+    },
+    "beskid.pckg.getConnectionStatus": { "objectKeys": ["workspaceUri", "authConfigured"] },
+    "beskid.pckg.setRegistry": { "objectKeys": ["baseUrl", "registryName"] },
+    "beskid.pckg.validateConnection": { "objectKeys": ["baseUrl", "workspaceUri", "apiKey"] },
+    "beskid.symbol.getDocumentationUri": { "objectKeys": ["uri", "offset"] }
+  }
+}

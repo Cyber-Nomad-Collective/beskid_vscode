@@ -340,7 +340,7 @@
         },
         {
           "command": "beskid.selectProject",
-          "when": "view == beskidProjectsView || view == beskidProjectOutlineView",
+          "when": "view == beskidProjectsView",
           "group": "navigation"
         }
       ],
@@ -373,7 +373,12 @@
         {
           "command": "beskid.focusProject",
           "when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
-          "group": "navigation"
+          "group": "1_focus"
+        },
+        {
+          "command": "beskid.focusProject",
+          "when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
+          "group": "1_focus"
         },
         {
           "command": "beskid.showGraph.project",
@@ -423,6 +428,13 @@
           "title": "Beskid",
           "icon": "media/beskid-logo.svg"
         }
+      ],
+      "panel": [
+        {
+          "id": "beskidPanel",
+          "title": "Beskid",
+          "icon": "media/beskid-logo.svg"
+        }
       ]
     },
     "views": {
@@ -432,10 +444,6 @@
           "name": "Projects"
         },
         {
-          "id": "beskidProjectOutlineView",
-          "name": "Outline"
-        },
-        {
           "id": "beskidPackagesView",
           "name": "Packages"
         },
@@ -443,6 +451,14 @@
           "id": "beskidDebugView",
           "name": "Debug",
           "when": "config.beskid.debug.enabled"
+        }
+      ],
+      "beskidPanel": [
+        {
+          "type": "webview",
+          "id": "beskidDashboardView",
+          "name": "Status",
+          "icon": "$(hubot)"
         }
       ]
     },

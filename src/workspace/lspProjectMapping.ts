@@ -1,29 +1,47 @@
 import type { ProjectDependenciesResult } from "./lspProjectTypes.js";
 
+type RawDependencyRecord = {
+  name?: unknown;
+  version?: unknown;
+  source?: unknown;
+  registry?: unknown;
+  resolvedVersion?: unknown;
+  materializedRoot?: unknown;
+  materializedPath?: unknown;
+};
+
+type RawUnresolvedEntry = {
+  dependencyName?: unknown;
+};
+
 /** Map raw LSP `getProjectDependencies` JSON into extension tree models. */
 export function mapLspProjectDependencies(raw: {
-  declared?: Array<Record<string, unknown>>;
-  locked?: Array<Record<string, unknown>>;
-  unresolved?: Array<Record<string, unknown> | string>;
+  declared?: RawDependencyRecord[];
+  locked?: RawDependencyRecord[];
+  unresolved?: Array<RawUnresolvedEntry | string>;
 }): ProjectDependenciesResult {
   const declared = (raw.declared ?? []).map((d) => ({
     name: String(d.name ?? ""),
-    version: (d.version as string | undefined) ?? undefined,
-    source: (d.source as string | undefined) ?? undefined,
-    registry: (d.registry as string | undefined) ?? undefined,
+    version: typeof d.version === "string" ? d.version : undefined,
+    source: typeof d.source === "string" ? d.source : undefined,
+    registry: typeof d.registry === "string" ? d.registry : undefined,
   }));
   const locked = (raw.locked ?? []).map((d) => ({
     name: String(d.name ?? ""),
     version:
-      (d.resolvedVersion as string | undefined) ?? (d.version as string | undefined) ?? undefined,
-    source: (d.source as string | undefined) ?? undefined,
-    registry: (d.registry as string | undefined) ?? undefined,
+      (typeof d.resolvedVersion === "string" ? d.resolvedVersion : undefined) ??
+      (typeof d.version === "string" ? d.version : undefined),
+    source: typeof d.source === "string" ? d.source : undefined,
+    registry: typeof d.registry === "string" ? d.registry : undefined,
     materializedPath:
-      (d.materializedRoot as string | undefined) ??
-      (d.materializedPath as string | undefined),
+      (typeof d.materializedRoot === "string" ? d.materializedRoot : undefined) ??
+      (typeof d.materializedPath === "string" ? d.materializedPath : undefined),
   }));
-  const unresolved = (raw.unresolved ?? []).map((u) =>
-    typeof u === "string" ? u : String((u as { dependencyName?: string }).dependencyName ?? u),
-  );
+  const unresolved = (raw.unresolved ?? []).map((entry) => {
+    if (typeof entry === "string") {
+      return entry;
+    }
+    return String(entry.dependencyName ?? "");
+  });
   return { declared, locked, unresolved };
 }

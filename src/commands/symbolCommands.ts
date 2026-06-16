@@ -10,6 +10,7 @@ export { buildFallbackDocsUrl, buildPckgDocsUrl, resolveDocumentationUrl } from 
 export function registerSymbolCommands(
   context: ExtensionContext,
   getClient: () => LanguageClient | undefined,
+  outputChannel?: vscode.OutputChannel,
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("beskid.openSymbolDocumentation", async () => {
@@ -24,10 +25,19 @@ export function registerSymbolCommands(
       }
       const offset = editor.document.offsetAt(editor.selection.active);
       const uri = editor.document.uri.toString();
-      const raw = await lspExecuteCommand<{ url?: string }>(getClient(), "beskid.symbol.getDocumentationUri", [
-        { uri, offset },
-      ]);
-      const url = raw?.url?.trim();
+      const result = await lspExecuteCommand<{ url?: string }>(
+        getClient(),
+        "beskid.symbol.getDocumentationUri",
+        [{ uri, offset }],
+        outputChannel,
+      );
+      if (!result.ok) {
+        void vscode.window.showWarningMessage(
+          "Could not resolve symbol documentation from the language server.",
+        );
+        return;
+      }
+      const url = result.value.url?.trim();
       if (url) {
         await vscode.env.openExternal(
           vscode.Uri.parse(

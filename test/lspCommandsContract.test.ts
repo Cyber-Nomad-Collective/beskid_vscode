@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-/** Mirrors LSP `PROJECT_EXPLORER_COMMANDS` — update when server contract changes. */
+/** Mirrors LSP `PROJECT_EXPLORER_COMMANDS` — kept in sync via contract snapshot. */
 export const PROJECT_EXPLORER_COMMANDS = [
   "beskid.refreshWorkspace",
   "beskid.listWorkspaces",
@@ -15,14 +15,37 @@ export const PROJECT_EXPLORER_COMMANDS = [
   "beskid.symbol.getDocumentationUri",
 ] as const;
 
-/** Planned pckg execute commands (see `beskid_lsp::pckg_connection_contract`). */
+type ContractSnapshot = {
+  commands: string[];
+  argumentShapes: Record<
+    string,
+    {
+      args?: unknown[];
+      uriKey?: string;
+      acceptsBareString?: boolean;
+      objectKeys?: string[];
+    }
+  >;
+};
+
 const PCKG_EXECUTE_COMMANDS = [
   "beskid.pckg.getConnectionStatus",
   "beskid.pckg.setRegistry",
   "beskid.pckg.validateConnection",
 ] as const;
 
+function loadContractSnapshot(): ContractSnapshot {
+  const path = join(import.meta.dirname, "fixtures/lsp-project-explorer-commands.json");
+  return JSON.parse(readFileSync(path, "utf8")) as ContractSnapshot;
+}
+
 describe("LSP execute command contracts", () => {
+  const snapshot = loadContractSnapshot();
+
+  test("explorer commands match committed Rust contract snapshot", () => {
+    expect([...PROJECT_EXPLORER_COMMANDS]).toEqual(snapshot.commands);
+  });
+
   test("explorer commands are unique", () => {
     expect(new Set(PROJECT_EXPLORER_COMMANDS).size).toBe(PROJECT_EXPLORER_COMMANDS.length);
   });
@@ -34,6 +57,23 @@ describe("LSP execute command contracts", () => {
         true,
       );
     }
+  });
+
+  test("argument shapes document URI and object payloads", () => {
+    expect(snapshot.argumentShapes["beskid.getWorkspaceSummary"]).toEqual({
+      uriKey: "workspaceUri",
+      acceptsBareString: true,
+    });
+    expect(snapshot.argumentShapes["beskid.getProjectDependencies"]).toEqual({
+      uriKey: "projectUri",
+      acceptsBareString: true,
+    });
+    expect(snapshot.argumentShapes["beskid.getGraph"]?.objectKeys).toContain("projectUri");
+    expect(snapshot.argumentShapes["beskid.getGraph"]?.objectKeys).toContain("workspaceUri");
+    expect(snapshot.argumentShapes["beskid.symbol.getDocumentationUri"]?.objectKeys).toEqual([
+      "uri",
+      "offset",
+    ]);
   });
 
   test("extension does not manually register LSP execute commands", () => {

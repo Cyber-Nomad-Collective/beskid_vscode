@@ -13,7 +13,7 @@ describe("mapLspProjectDependencies", () => {
           registry: "default",
         },
       ],
-      unresolved: [{ dependencyName: "missing-pkg" }, "legacy-string"],
+      unresolved: [{ dependencyName: "missing-pkg" }],
     });
     expect(mapped.declared).toEqual([
       { name: "lib", version: "1.0.0", source: "path", registry: undefined },
@@ -25,7 +25,7 @@ describe("mapLspProjectDependencies", () => {
       registry: "default",
       materializedPath: "/obj/deps/lib",
     });
-    expect(mapped.unresolved).toEqual(["missing-pkg", "legacy-string"]);
+    expect(mapped.unresolved).toEqual(["missing-pkg"]);
   });
 
   test("prefers materializedPath alias when materializedRoot absent", () => {

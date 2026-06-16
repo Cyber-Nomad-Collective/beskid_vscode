@@ -1,59 +1,87 @@
+import type * as vscode from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
+import { fromLspCommandResult } from "../lsp/lspBoundary.js";
+import type { LspOutcome } from "../lsp/lspBoundary.js";
 import { lspExecuteCommand } from "../lsp/lspExecuteCommand.js";
 import type { GraphKindId, GraphPayload } from "../graphs/lspGraphTypes.js";
 import type {
+  ListWorkspacesOutcome,
   ListWorkspacesResult,
   ProjectDependenciesResult,
   WorkspaceListEntry,
+  WorkspaceMember,
   WorkspaceSummaryResult,
 } from "./lspProjectTypes.js";
 import { mapLspProjectDependencies } from "./lspProjectMapping.js";
 
+type RawWorkspaceMember = {
+  name: string;
+  path?: string;
+  uri?: string | null;
+  memberId?: string;
+};
+
+type RawWorkspaceListEntry = {
+  uri: string;
+  name: string;
+  members?: RawWorkspaceMember[];
+};
+
+function mapWorkspaceMember(member: RawWorkspaceMember): WorkspaceMember {
+  return {
+    name: member.name,
+    path: member.path ?? member.name,
+    uri: member.uri ?? undefined,
+    memberId: member.memberId ?? member.path ?? member.name,
+  };
+}
+
+function mapWorkspaceEntry(ws: RawWorkspaceListEntry): WorkspaceListEntry {
+  return {
+    uri: ws.uri,
+    name: ws.name,
+    members: (ws.members ?? []).map(mapWorkspaceMember),
+  };
+}
+
 export class LspProjectApi {
-  constructor(private readonly getClient: () => LanguageClient | undefined) {}
+  constructor(
+    private readonly getClient: () => LanguageClient | undefined,
+    private readonly outputChannel?: vscode.OutputChannel,
+  ) {}
 
-  async listWorkspaces(): Promise<WorkspaceListEntry[]> {
-    const result = await lspExecuteCommand<ListWorkspacesResult>(
-      this.getClient(),
-      "beskid.listWorkspaces",
-      [],
-    );
-    const workspaces = result?.workspaces ?? [];
-    return workspaces.map((ws) => ({
-      uri: ws.uri,
-      name: ws.name,
-      members: (ws.members ?? []).map((m) => ({
-        uri: m.uri ?? "",
-        name: m.name,
-        path: (m as { path?: string }).path ?? m.name,
-        memberId: (m as { id?: string; memberId?: string }).id ?? (m as { memberId?: string }).memberId,
-      })),
-    }));
-  }
-
-  async getWorkspaceSummary(workspaceUri: string): Promise<WorkspaceSummaryResult | undefined> {
-    const raw = await lspExecuteCommand<{
-      workspaceUri: string;
-      members?: Array<{ name: string; path: string; uri?: string }>;
-      registries?: Array<{ name: string; url: string; alias?: string }>;
-    }>(this.getClient(), "beskid.getWorkspaceSummary", [workspaceUri]);
-    if (!raw) {
-      return undefined;
-    }
-    const registries: Record<string, string> = {};
-    for (const r of raw.registries ?? []) {
-      const key = (r as { alias?: string }).alias ?? r.name;
-      registries[key] = r.url;
+  async listWorkspaces(): Promise<ListWorkspacesOutcome> {
+    const outcome = await this.execute<ListWorkspacesResult>("beskid.listWorkspaces", []);
+    if (!outcome.ok) {
+      return { workspaces: [], error: outcome.error };
     }
     return {
-      workspaceUri: raw.workspaceUri,
-      members: (raw.members ?? []).map((m) => ({
-        uri: m.uri ?? "",
-        name: m.name,
-        path: m.path ?? m.name,
-        memberId: m.name,
-      })),
-      registries,
+      workspaces: (outcome.value.workspaces ?? []).map(mapWorkspaceEntry),
+    };
+  }
+
+  async getWorkspaceSummary(workspaceUri: string): Promise<LspOutcome<WorkspaceSummaryResult>> {
+    const outcome = await this.execute<{
+      workspaceUri: string;
+      members?: RawWorkspaceMember[];
+      registries?: Array<{ name: string; url: string; alias?: string }>;
+    }>("beskid.getWorkspaceSummary", [workspaceUri]);
+    if (!outcome.ok) {
+      return outcome;
+    }
+    const raw = outcome.value;
+    const registries: Record<string, string> = {};
+    for (const registry of raw.registries ?? []) {
+      const key = registry.alias ?? registry.name;
+      registries[key] = registry.url;
+    }
+    return {
+      ok: true,
+      value: {
+        workspaceUri: raw.workspaceUri,
+        members: (raw.members ?? []).map(mapWorkspaceMember),
+        registries,
+      },
     };
   }
 
@@ -61,8 +89,8 @@ export class LspProjectApi {
     projectUri: string,
     kind: GraphKindId = "projectDeps",
     options?: { entryUri?: string; workspaceUri?: string },
-  ): Promise<GraphPayload | undefined> {
-    const raw = await lspExecuteCommand<GraphPayload>(this.getClient(), "beskid.getGraph", [
+  ): Promise<LspOutcome<GraphPayload>> {
+    return this.execute("beskid.getGraph", [
       {
         projectUri,
         kind,
@@ -70,19 +98,27 @@ export class LspProjectApi {
         workspaceUri: options?.workspaceUri,
       },
     ]);
-    return raw ?? undefined;
   }
 
-  async getProjectDependencies(projectUri: string): Promise<ProjectDependenciesResult | undefined> {
-    const raw = await lspExecuteCommand<Record<string, unknown>>(
-      this.getClient(),
+  async getProjectDependencies(projectUri: string): Promise<LspOutcome<ProjectDependenciesResult>> {
+    const outcome = await this.execute<Record<string, unknown>>(
       "beskid.getProjectDependencies",
       [projectUri],
     );
-    if (!raw) {
-      return undefined;
+    if (!outcome.ok) {
+      return outcome;
     }
-    return mapLspProjectDependencies(raw);
+    return { ok: true, value: mapLspProjectDependencies(outcome.value) };
+  }
+
+  private async execute<T>(command: string, args: unknown[]): Promise<LspOutcome<T>> {
+    const result = await lspExecuteCommand<T>(
+      this.getClient(),
+      command,
+      args,
+      this.outputChannel,
+    );
+    return fromLspCommandResult(result);
   }
 }
 

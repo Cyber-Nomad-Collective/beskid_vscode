@@ -4,9 +4,20 @@ import * as vscode from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 import type { LspProjectApi } from "./lspProjectApi.js";
 import type { WorkspaceListEntry } from "./lspProjectTypes.js";
+import type { LspRuntimePhase } from "../runtime/lspRuntimeTypes.js";
 import { projectSectionChildren, projectSectionItems } from "./projectGraphTree.js";
 import { ProjectsTreeItem } from "./ProjectsTreeItem.js";
 import { ContextValue, prefixMultiRootLabel, themeIcon } from "./tree/treeItemHelpers.js";
+
+const STARTING_PHASES = new Set<LspRuntimePhase>(["starting", "downloading", "bootstrapping"]);
+
+function truncateMessage(message: string, max = 120): string {
+  const trimmed = message.trim();
+  if (trimmed.length <= max) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, max - 1)}…`;
+}
 
 /** Workspaces as containers; member projects expand into targets, deps, and sources. */
 export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTreeItem> {
@@ -15,11 +26,13 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
 
   private workspaces: WorkspaceListEntry[] = [];
   private standaloneProjectUris: string[] = [];
+  private listWorkspacesError: string | undefined;
 
   constructor(
     private readonly getClient: () => LanguageClient | undefined,
     private readonly getFocusedProject: () => vscode.Uri | undefined,
     private readonly lspApi?: LspProjectApi,
+    private readonly getRuntimePhase?: () => LspRuntimePhase,
   ) {}
 
   refresh(): void {
@@ -51,7 +64,7 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
   }
 
   getTreeItem(element: ProjectsTreeItem): vscode.TreeItem {
-    if (element.unresolved) {
+    if (element.unresolved || element.nodeType === "warning") {
       element.iconPath = themeIcon("warning");
     }
     return element;
@@ -73,7 +86,13 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
         return [];
       case "section":
         if (element.projectUri && element.section && this.lspApi) {
-          return projectSectionChildren(this.lspApi, element.projectUri, element.section);
+          const result = await projectSectionChildren(
+            this.lspApi,
+            element.projectUri,
+            element.section,
+            element.workspaceUri,
+          );
+          return result.items;
         }
         return [];
       default:
@@ -84,16 +103,44 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
   private async getRootChildren(): Promise<ProjectsTreeItem[]> {
     const client = this.getClient();
     if (!client) {
-      return [
-        new ProjectsTreeItem("info", "Start Beskid LSP to load projects.", vscode.TreeItemCollapsibleState.None),
-      ];
+      const item = new ProjectsTreeItem(
+        "info",
+        "Start Beskid LSP to load projects.",
+        vscode.TreeItemCollapsibleState.None,
+      );
+      item.command = { command: "beskid.lsp.start", title: "Start Beskid LSP" };
+      item.iconPath = themeIcon("info");
+      return [item];
     }
     if (!this.lspApi) {
       return [];
     }
 
-    this.workspaces = await this.lspApi.listWorkspaces();
+    const phase = this.getRuntimePhase?.() ?? "idle";
+    if (STARTING_PHASES.has(phase)) {
+      const item = new ProjectsTreeItem(
+        "info",
+        "Language server starting…",
+        vscode.TreeItemCollapsibleState.None,
+      );
+      item.iconPath = themeIcon("sync~spin");
+      return [item];
+    }
+
+    const outcome = await this.lspApi.listWorkspaces();
+    this.listWorkspacesError = outcome.error;
+    this.workspaces = outcome.workspaces;
     this.standaloneProjectUris = await this.discoverStandaloneProjectUris(this.workspaces);
+
+    if (this.listWorkspacesError) {
+      const item = new ProjectsTreeItem(
+        "warning",
+        `Failed to list workspaces: ${truncateMessage(this.listWorkspacesError)}`,
+        vscode.TreeItemCollapsibleState.None,
+      );
+      item.command = { command: "beskid.lsp.openLogs", title: "Open LSP logs" };
+      return [item];
+    }
 
     const items: ProjectsTreeItem[] = [];
 
@@ -157,7 +204,20 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
     const focusedUri = this.getFocusedProject()?.toString();
     const children: ProjectsTreeItem[] = ws.members.map((member) => {
       const projectUri = member.uri?.trim() ? member.uri : undefined;
-      const expanded = projectUri !== undefined && projectUri === focusedUri;
+      if (!projectUri) {
+        const warning = new ProjectsTreeItem(
+          "warning",
+          `${member.name} (no .bproj found)`,
+          vscode.TreeItemCollapsibleState.None,
+          undefined,
+          undefined,
+          true,
+          ws.uri,
+        );
+        warning.description = member.memberId ?? member.path;
+        return warning;
+      }
+      const expanded = projectUri === focusedUri;
       const item = new ProjectsTreeItem(
         "member",
         member.name,
@@ -172,13 +232,11 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectsTre
       item.description = member.memberId ?? member.name;
       item.iconPath = themeIcon("folder-library");
       item.contextValue = ContextValue.workspaceMember;
-      if (projectUri) {
-        item.command = {
-          command: "beskid.focusProject",
-          title: "Focus project",
-          arguments: [vscode.Uri.parse(projectUri)],
-        };
-      }
+      item.command = {
+        command: "beskid.focusProject",
+        title: "Focus project",
+        arguments: [vscode.Uri.parse(projectUri)],
+      };
       return item;
     });
 

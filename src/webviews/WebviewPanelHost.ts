@@ -117,6 +117,7 @@ export function modalShellStyles(): string {
   `;
 }
 
+/** @deprecated Editor-tab modal shell; dashboard uses panel webview HTML via renderDashboardHtml. */
 export function modalDocumentOpen(bodyInnerHtml: string, title = "Beskid"): string {
   return `<!DOCTYPE html>
 <html lang="en">

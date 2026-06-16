@@ -160,8 +160,8 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
         new PackageTreeItem("info", "ThisProject", "Focus a project first.", vscode.TreeItemCollapsibleState.None),
       ];
     }
-    const deps = await this.deps.lspApi.getProjectDependencies(projectUri.toString());
-    if (!deps) {
+    const depsOutcome = await this.deps.lspApi.getProjectDependencies(projectUri.toString());
+    if (!depsOutcome.ok) {
       return [
         new PackageTreeItem(
           "info",
@@ -171,6 +171,7 @@ export class PackageManagerProvider implements vscode.TreeDataProvider<PackageTr
         ),
       ];
     }
+    const deps = depsOutcome.value;
     const lockedNames = new Set(deps.locked.map((d) => d.name.toLowerCase()));
     const items: PackageTreeItem[] = [];
     for (const dep of deps.declared) {

@@ -4,6 +4,13 @@ import { BESKID_TREE_VIEW_IDS } from "../src/views/beskidViewIds.js";
 type TreeViewStub = { id: string; dispose: () => void };
 
 function createMockVscode(debugEnabled = false) {
+  class TreeItem {
+    constructor(
+      public label: string,
+      public collapsibleState: number,
+    ) {}
+  }
+
   const subscriptions: unknown[] = [];
   const treeViews = new Map<string, TreeViewStub>();
 
@@ -20,6 +27,11 @@ function createMockVscode(debugEnabled = false) {
     subscriptions,
     treeViews,
     module: {
+      TreeItem,
+      ThemeIcon: class ThemeIcon {
+        constructor(public readonly id: string) {}
+      },
+      TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
       window: {
         createTreeView,
       },
@@ -29,16 +41,18 @@ function createMockVscode(debugEnabled = false) {
             key === "debug.enabled" ? debugEnabled : defaultValue,
         }),
         onDidChangeConfiguration: () => ({ dispose: () => undefined }),
+        asRelativePath: (uri: { fsPath?: string } | string) => String(uri),
+        findFiles: async () => [],
+      },
+      Uri: {
+        parse: (value: string) => ({ fsPath: value.replace(/^file:\/\//, "") }),
+        file: (value: string) => ({ fsPath: value }),
       },
     },
   };
 }
 
 describe("registerViews", () => {
-  beforeEach(() => {
-    mock.restore();
-  });
-
   test("registers core tree views with createTreeView", async () => {
     const mockVscode = createMockVscode(false);
     mock.module("vscode", () => mockVscode.module);
@@ -48,7 +62,6 @@ describe("registerViews", () => {
     const deps = {
       projectsTree: { onDidChangeTreeData: undefined },
       packageProvider: { onDidChangeTreeData: undefined },
-      outlineProvider: { onDidChangeTreeData: undefined },
       debugProvider: { onDidChangeTreeData: undefined },
     };
 
@@ -73,7 +86,6 @@ describe("registerViews", () => {
     const deps = {
       projectsTree: { onDidChangeTreeData: undefined },
       packageProvider: { onDidChangeTreeData: undefined },
-      outlineProvider: { onDidChangeTreeData: undefined },
       debugProvider: { onDidChangeTreeData: undefined },
     };
 

@@ -4,41 +4,39 @@ Language support for [Beskid](https://beskid-lang.org): syntax highlighting, Int
 
 ## Features
 
-- **Language support** — `.bd` source and `.proj` project manifests with LSP diagnostics, completion, hover, go-to-definition, and formatting
-- **Projects sidebar** — workspaces (`Workspace.proj`) as containers; expand a member to see targets, dependencies, and source folders in one tree
+- **Language support** — `.bd` source and BSOL manifests (`.bproj`, `.bws`) with LSP diagnostics, completion, hover, go-to-definition, and formatting
+- **Projects sidebar** — workspaces (`.bws`) as containers; expand a member to see targets, dependencies, and source folders in one tree
 - **Graph Explorer** — interactive Mermaid dependency/module/host graphs in a webview panel (command palette: **Beskid: Show Project Graph**)
-- **Outline** — symbols for the focused project
 - **Packages** — local lockfile dependencies; browse the public [pckg](https://pckg.beskid-lang.org) registry in a document panel
-- **Quick panel** — status-bar entry opens a modal for LSP status, toolchain setup, fetch/lock, and common actions
+- **Status dashboard** — click the status-bar **Beskid** item to open the Status panel (LSP health, toolchain, fetch/lock, common actions)
 - **Symbol documentation** — open book docs from hover (“View documentation”) or **Beskid: Open Symbol Documentation**
 - **CLI integration** — fetch, lock, build, test, and analyze via the command palette and task provider
 - **Automatic toolchain** — downloads CLI and LSP from GitHub releases on first launch (configurable)
 
-Cross-module IntelliSense requires a resolved project context (same `Project.proj` / lockfile layout the CLI uses for builds).
+Cross-module IntelliSense requires a resolved project context (same `.bproj` / `Project.lock` layout the CLI uses for builds).
 
 ## Getting started
 
 1. Install the extension from Open VSX (or run from source — see [Development](#development)).
-2. Open a folder containing a `Workspace.proj` or `Project.proj`.
+2. Open a folder containing a `.bws` workspace manifest or a `.bproj` project manifest.
 3. On first activate, the extension installs the Beskid CLI and LSP if needed and runs `beskid fetch`.
-4. Click **Beskid** in the status bar for the quick panel, or open the **Beskid** activity bar for Projects, Outline, and Packages.
+4. Click **Beskid** in the status bar for the quick panel, or open the **Beskid** activity bar for Projects and Packages.
 
 ## Sidebar views
 
 | View | Purpose |
 |------|---------|
 | **Projects** | Workspaces and standalone projects; expand a project for targets, dependencies, and sources |
-| **Outline** | Symbols in the focused project |
 | **Packages** | Declared/locked deps; **Browse registry** opens the pckg catalog |
 | **Debug** | LSP runtime state (hidden until `beskid.debug.enabled` is `true`; reload required) |
 
-**Project focus** — click a workspace member or use **Beskid: Select Project**. The focused manifest drives diagnostics, outline, and package actions. Focus can change without restarting the LSP.
+**Project focus** — click a workspace member or use **Beskid: Select Project**. The focused manifest drives diagnostics and package actions. Focus can change without restarting the LSP.
 
 ## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `Project.proj` for the active editor |
+| `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `.bproj` for the active editor |
 | `beskid.cli.path` | `beskid` | CLI binary for fetch, lock, build, and tasks |
 | `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Install CLI** |
 | `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Install LSP** |
@@ -55,7 +53,7 @@ Additional LSP overrides: `beskid.lsp.server.path`, `beskid.lsp.server.devMode`,
 
 | Command | Description |
 |---------|-------------|
-| **Beskid: Open Quick Panel** | Status-bar modal (`beskid.modal.open`) |
+| **Beskid: Open Quick Panel** | Status dashboard in the bottom panel (`beskid.modal.open`) |
 | **Beskid: Browse Packages** | Registry document panel |
 | **Beskid: Select Project** / **Reveal in Projects** | Change or reveal project focus |
 | **Beskid: Setup Toolchain** | Install CLI + LSP + fetch dependencies |
@@ -84,9 +82,9 @@ When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collect
 
 ### Manual smoke
 
-1. Open a folder with `Workspace.proj` / `Project.proj` and start the Extension Development Host (**F5**).
+1. Open a folder with `.bws` / `.bproj` manifests and start the Extension Development Host (**F5**).
 2. **Projects** lists the workspace; expand a member to see targets, dependencies, and sources.
-3. Click the status-bar **Beskid** item — quick panel opens.
+3. Click the status-bar **Beskid** item — the Status panel opens above the status bar (not a new editor tab).
 4. **Packages** → **Browse registry…** — public catalog without an API key.
 5. Hover a symbol → **View documentation**, or run **Open Symbol Documentation**.
 

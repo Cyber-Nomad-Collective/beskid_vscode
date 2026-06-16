@@ -5,6 +5,7 @@ import type { BeskidClientHooks } from "../lsp/clientHooks.js";
 import {
   createBeskidLanguageClient,
   requestWorkspaceRefresh,
+  sendFocusedProjectConfiguration,
 } from "../lsp/beskidLanguageClient.js";
 import { probeCliVersion } from "../lsp/probeCliVersion.js";
 import type { LspInstallCli, LspLaunchProgress } from "../lsp/resolveLspServerLaunch.js";
@@ -16,6 +17,7 @@ const BeskidStatusNotification = new NotificationType<BeskidStatusParams>("beski
 export class BeskidLspSession {
   private client: LanguageClient | undefined;
   private clientStateDisposable: vscode.Disposable | undefined;
+  private onClientReady: (() => void | Promise<void>) | undefined;
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -28,6 +30,10 @@ export class BeskidLspSession {
 
   getClient(): LanguageClient | undefined {
     return this.client;
+  }
+
+  setOnClientReady(handler: () => void | Promise<void>): void {
+    this.onClientReady = handler;
   }
 
   async start(): Promise<LanguageClient> {
@@ -86,7 +92,9 @@ export class BeskidLspSession {
 
     this.runtime.setClientRunning(true);
     void this.probeVersions();
-    await requestWorkspaceRefresh(this.client);
+    void requestWorkspaceRefresh(client, this.outputChannel).then(async () => {
+      await this.onClientReady?.();
+    });
     return client;
   }
 
@@ -104,7 +112,13 @@ export class BeskidLspSession {
 
   async restart(): Promise<LanguageClient> {
     await this.stop();
-    return this.start();
+    const client = await this.start();
+    await sendFocusedProjectConfiguration(
+      client,
+      this.getFocusedProject(),
+      this.outputChannel,
+    );
+    return client;
   }
 
   private attachClientStateListener(client: LanguageClient): void {

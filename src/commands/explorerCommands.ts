@@ -4,6 +4,7 @@ import type { BeskidLspSession } from "../runtime/BeskidLspSession.js";
 import type { RefreshCoordinator } from "../core/RefreshCoordinator.js";
 import type { RegisteredViews } from "../activation/registerViews.js";
 import type { ProjectsTreeProvider } from "../workspace/ProjectsTreeProvider.js";
+import { resolveFocusTarget, type FocusTargetInput } from "../workspace/resolveFocusTarget.js";
 
 async function revealInProjectsTree(
   views: RegisteredViews,
@@ -22,15 +23,15 @@ async function revealInProjectsTree(
   }
 }
 
-export function registerExplorerCommands(
+type ExplorerCommandDeps = {
+  focus: FocusCoordinator;
+  session: BeskidLspSession;
+  refresh: RefreshCoordinator;
+};
+
+export function registerCoreExplorerCommands(
   context: vscode.ExtensionContext,
-  deps: {
-    focus: FocusCoordinator;
-    session: BeskidLspSession;
-    refresh: RefreshCoordinator;
-    views: RegisteredViews;
-    projectsTree: ProjectsTreeProvider;
-  },
+  deps: ExplorerCommandDeps,
 ): void {
   const client = () => deps.session.getClient();
 
@@ -46,15 +47,32 @@ export function registerExplorerCommands(
         { placeHolder: "Select Beskid project manifest" },
       );
       if (selected) {
-        await deps.focus.setFocusedProject(selected.uri, client(), deps.refresh);
+        const uri = resolveFocusTarget(selected.uri);
+        if (uri) {
+          await deps.focus.setFocusedProject(uri, client(), deps.refresh);
+        }
       }
     }),
-    vscode.commands.registerCommand("beskid.focusProject", (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand("beskid.focusProject", async (target?: FocusTargetInput) => {
+      const uri = resolveFocusTarget(target);
       if (uri) {
-        return deps.focus.setFocusedProject(uri, client(), deps.refresh);
+        await deps.focus.setFocusedProject(uri, client(), deps.refresh);
       }
     }),
-    vscode.commands.registerCommand("beskid.clearFocus", () => deps.focus.clearFocus(client(), deps.refresh)),
+    vscode.commands.registerCommand("beskid.clearFocus", async () => {
+      await deps.focus.clearFocus(client(), deps.refresh);
+    }),
+  );
+}
+
+export function registerDeferredExplorerCommands(
+  context: vscode.ExtensionContext,
+  deps: ExplorerCommandDeps & {
+    views: RegisteredViews;
+    projectsTree: ProjectsTreeProvider;
+  },
+): void {
+  context.subscriptions.push(
     vscode.commands.registerCommand("beskid.revealInProjectsTree", async () => {
       await revealInProjectsTree(deps.views, deps.projectsTree, deps.focus.getFocusedProject());
     }),

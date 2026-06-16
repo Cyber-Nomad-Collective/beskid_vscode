@@ -7,9 +7,9 @@ import {
 } from "vscode-languageclient/node";
 import { readLogServerOutput, readLspLogLevel } from "../config/workspaceSettings.js";
 import type { LspRuntimeState } from "../runtime/LspRuntimeState.js";
+import { type BeskidClientHooks, buildExecuteCommandMiddleware } from "./clientHooks.js";
 import { launchSnapshotFromExecutable } from "./launchSnapshot.js";
 import { lspExecuteCommand } from "./lspExecuteCommand.js";
-import { type BeskidClientHooks, buildExecuteCommandMiddleware } from "./clientHooks.js";
 import {
   resolveLspServerLaunch,
   type LspInstallCli,
@@ -68,6 +68,7 @@ export async function createBeskidLanguageClient(
 export async function sendFocusedProjectConfiguration(
   client: LanguageClient,
   focusedProjectUri: vscode.Uri | undefined,
+  outputChannel?: vscode.OutputChannel,
 ): Promise<void> {
   try {
     await client.sendNotification("workspace/didChangeConfiguration", {
@@ -79,11 +80,18 @@ export async function sendFocusedProjectConfiguration(
         },
       },
     });
-  } catch {
-    // server may not be ready
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : String(cause);
+    outputChannel?.appendLine(`[Beskid LSP] Failed to sync focused project: ${detail}`);
+    if (cause instanceof Error && cause.stack) {
+      outputChannel?.appendLine(cause.stack);
+    }
   }
 }
 
-export async function requestWorkspaceRefresh(client: LanguageClient | undefined): Promise<void> {
-  await lspExecuteCommand(client, "beskid.refreshWorkspace", []);
+export async function requestWorkspaceRefresh(
+  client: LanguageClient | undefined,
+  outputChannel?: vscode.OutputChannel,
+): Promise<void> {
+  await lspExecuteCommand(client, "beskid.refreshWorkspace", [], outputChannel);
 }

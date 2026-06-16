@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
 import type { BeskidDebugTreeProvider, DebugTreeItem } from "../debug/BeskidDebugTreeProvider.js";
-import type { SelectedProjectOutlineProvider } from "../outline/SelectedProjectOutlineProvider.js";
-import type { OutlineTreeItem } from "../outline/OutlineTreeItem.js";
 import type { PackageManagerProvider } from "../packages/PackageManagerProvider.js";
 import type { PackageTreeItem } from "../packages/PackageTreeItem.js";
 import type { ProjectsTreeItem } from "../workspace/ProjectsTreeItem.js";
@@ -19,13 +17,11 @@ export type RegisteredViews = {
   projectsTreeView: vscode.TreeView<ProjectsTreeItem>;
   debugTreeView?: vscode.TreeView<DebugTreeItem>;
   packagesTreeView: vscode.TreeView<PackageTreeItem>;
-  outlineTreeView: vscode.TreeView<OutlineTreeItem>;
 };
 
 export type RegisterViewsDeps = {
   projectsTree: ProjectsTreeProvider;
   packageProvider: PackageManagerProvider;
-  outlineProvider: SelectedProjectOutlineProvider;
   debugProvider: BeskidDebugTreeProvider;
 };
 
@@ -41,9 +37,6 @@ export function registerViews(
     }),
     beskidPackagesView: vscode.window.createTreeView("beskidPackagesView", {
       treeDataProvider: deps.packageProvider,
-    }),
-    beskidProjectOutlineView: vscode.window.createTreeView("beskidProjectOutlineView", {
-      treeDataProvider: deps.outlineProvider,
     }),
   };
 
@@ -84,6 +77,5 @@ export function registerViews(
     projectsTreeView: views.beskidProjectsView as vscode.TreeView<ProjectsTreeItem>,
     debugTreeView,
     packagesTreeView: views.beskidPackagesView as vscode.TreeView<PackageTreeItem>,
-    outlineTreeView: views.beskidProjectOutlineView as vscode.TreeView<OutlineTreeItem>,
   };
 }

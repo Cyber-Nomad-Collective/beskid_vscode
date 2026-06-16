@@ -4,6 +4,7 @@ export class ProjectsTreeItem extends vscode.TreeItem {
   constructor(
     readonly nodeType:
       | "info"
+      | "warning"
       | "workspace"
       | "standalone"
       | "member"

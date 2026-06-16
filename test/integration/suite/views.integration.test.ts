@@ -5,7 +5,6 @@ const EXTENSION_ID = "beskid.beskid-vscode";
 
 const BESKID_TREE_VIEW_IDS = [
   "beskidProjectsView",
-  "beskidProjectOutlineView",
   "beskidPackagesView",
 ] as const;
 
@@ -33,6 +32,17 @@ suite("Beskid sidebar views", () => {
       }, `focus command failed for ${viewId}`);
     }
   });
+
+  test("beskidProjectsView.focus is registered and executable", async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes("beskidProjectsView.focus"),
+      "missing beskidProjectsView.focus",
+    );
+    await assert.doesNotReject(async () => {
+      await vscode.commands.executeCommand("beskidProjectsView.focus");
+    });
+  });
 });
 
 suite("Beskid commands", () => {
@@ -50,5 +60,20 @@ suite("Beskid commands", () => {
     ]) {
       assert.ok(commands.includes(command), `missing command ${command}`);
     }
+  });
+
+  test("registers beskid.focusProject after activation", async () => {
+    const extension = vscode.extensions.getExtension(EXTENSION_ID);
+    assert.ok(extension, `${EXTENSION_ID} not found`);
+    if (!extension.isActive) {
+      await extension.activate();
+    }
+
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes("beskid.focusProject"), "missing beskid.focusProject");
+
+    await assert.doesNotReject(async () => {
+      await vscode.commands.executeCommand("beskid.focusProject");
+    });
   });
 });

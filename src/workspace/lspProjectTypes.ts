@@ -4,8 +4,11 @@ export type { GraphKindId, GraphPayload, GraphNodeSummary } from "../graphs/lspG
 
 export type WorkspaceMember = {
   name: string;
-  path?: string;
+  /** BSOL member directory path relative to workspace root. */
+  path: string;
+  /** Canonical `file://` URI of the member `.bproj` when resolvable. */
   uri?: string | null;
+  /** BSOL workspace member identifier. */
   memberId?: string;
 };
 
@@ -17,6 +20,11 @@ export type WorkspaceListEntry = {
 
 export type ListWorkspacesResult = {
   workspaces: WorkspaceListEntry[];
+};
+
+export type ListWorkspacesOutcome = {
+  workspaces: WorkspaceListEntry[];
+  error?: string;
 };
 
 export type WorkspaceSummaryResult = {

@@ -1,4 +1,6 @@
+import type * as vscode from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
+import { fromLspCommandResult, type LspOutcome } from "../lsp/lspBoundary.js";
 import { lspExecuteCommand } from "../lsp/lspExecuteCommand.js";
 import type {
   PckgConnectionStatus,
@@ -10,44 +12,55 @@ import {
 } from "./pckgConnectionMapping.js";
 
 export class LspPckgApi {
-  constructor(private readonly getClient: () => LanguageClient | undefined) {}
+  constructor(
+    private readonly getClient: () => LanguageClient | undefined,
+    private readonly outputChannel?: vscode.OutputChannel,
+  ) {}
 
   async getConnectionStatus(input: {
     workspaceUri?: string;
     authConfigured: boolean;
-  }): Promise<PckgConnectionStatus | undefined> {
-    const raw = await lspExecuteCommand<Record<string, unknown>>(
-      this.getClient(),
+  }): Promise<LspOutcome<PckgConnectionStatus>> {
+    const outcome = await this.execute<Record<string, unknown>>(
       "beskid.pckg.getConnectionStatus",
       [input],
     );
-    if (!raw) {
-      return undefined;
+    if (!outcome.ok) {
+      return outcome;
     }
-    return mapPckgConnectionStatus(raw);
+    return { ok: true, value: mapPckgConnectionStatus(outcome.value) };
   }
 
-  async setRegistry(input: { baseUrl: string; registryName?: string }): Promise<boolean> {
-    if (!this.getClient()) {
-      return false;
+  async setRegistry(input: { baseUrl: string; registryName?: string }): Promise<LspOutcome<void>> {
+    const outcome = await this.execute<unknown>("beskid.pckg.setRegistry", [input]);
+    if (!outcome.ok) {
+      return outcome;
     }
-    await lspExecuteCommand<unknown>(this.getClient(), "beskid.pckg.setRegistry", [input]);
-    return true;
+    return { ok: true, value: undefined };
   }
 
   async validateConnection(input: {
     baseUrl?: string;
     workspaceUri?: string;
     apiKey?: string;
-  }): Promise<PckgValidateConnectionResult | undefined> {
-    const raw = await lspExecuteCommand<Record<string, unknown>>(
-      this.getClient(),
+  }): Promise<LspOutcome<PckgValidateConnectionResult>> {
+    const outcome = await this.execute<Record<string, unknown>>(
       "beskid.pckg.validateConnection",
       [input],
     );
-    if (!raw) {
-      return undefined;
+    if (!outcome.ok) {
+      return outcome;
     }
-    return mapPckgValidateConnectionResult(raw);
+    return { ok: true, value: mapPckgValidateConnectionResult(outcome.value) };
+  }
+
+  private async execute<T>(command: string, args: unknown[]): Promise<LspOutcome<T>> {
+    const result = await lspExecuteCommand<T>(
+      this.getClient(),
+      command,
+      args,
+      this.outputChannel,
+    );
+    return fromLspCommandResult(result);
   }
 }

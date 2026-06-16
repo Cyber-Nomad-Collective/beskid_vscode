@@ -18,7 +18,10 @@ export class FocusCoordinator {
   private focused: vscode.Uri | undefined;
   private readonly listeners = new Set<FocusChangeListener>();
 
-  constructor(private readonly context: vscode.ExtensionContext) {
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly outputChannel?: vscode.OutputChannel,
+  ) {
     this.focused = loadFocusedProject(context);
   }
 
@@ -53,7 +56,7 @@ export class FocusCoordinator {
     await saveFocusedProject(this.context, uri);
     this.notify();
     if (client) {
-      await sendFocusedProjectConfiguration(client, uri);
+      await sendFocusedProjectConfiguration(client, uri, this.outputChannel);
     }
     if (refresh) {
       refresh.scheduleFocusUi();

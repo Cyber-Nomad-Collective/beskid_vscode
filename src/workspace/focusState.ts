@@ -5,10 +5,7 @@ export type FocusedProjectState = {
   projectUri: vscode.Uri | undefined;
 };
 
-export function loadFocusedProject(context: vscode.ExtensionContext): vscode.Uri | undefined {
-  const focused = context.workspaceState.get<string>(FOCUSED_PROJECT_KEY);
-  const legacy = context.workspaceState.get<string>(SELECTED_PROJECT_KEY);
-  const value = focused ?? legacy;
+function parseFocusedUri(value: string | undefined): vscode.Uri | undefined {
   if (!value) {
     return undefined;
   }
@@ -19,11 +16,26 @@ export function loadFocusedProject(context: vscode.ExtensionContext): vscode.Uri
   }
 }
 
+export function loadFocusedProject(context: vscode.ExtensionContext): vscode.Uri | undefined {
+  const focused = context.workspaceState.get<string>(FOCUSED_PROJECT_KEY);
+  if (focused) {
+    return parseFocusedUri(focused);
+  }
+
+  const legacy = context.workspaceState.get<string>(SELECTED_PROJECT_KEY);
+  if (!legacy) {
+    return undefined;
+  }
+
+  void context.workspaceState.update(FOCUSED_PROJECT_KEY, legacy);
+  void context.workspaceState.update(SELECTED_PROJECT_KEY, undefined);
+  return parseFocusedUri(legacy);
+}
+
 export async function saveFocusedProject(
   context: vscode.ExtensionContext,
   uri: vscode.Uri | undefined,
 ): Promise<void> {
   const serialized = uri?.toString();
   await context.workspaceState.update(FOCUSED_PROJECT_KEY, serialized);
-  await context.workspaceState.update(SELECTED_PROJECT_KEY, serialized);
 }
