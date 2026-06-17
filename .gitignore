@@ -3,3 +3,14 @@ out/
 *.vsix
 server/
 .vscode-test/
+
+# Lockfiles
+bun.lock
+
+# Build artifacts
+**/*.trace
+**/*.zip
+**/*.tar.gz
+**/*.tgz
+package-lock.json
+**/*.bun
