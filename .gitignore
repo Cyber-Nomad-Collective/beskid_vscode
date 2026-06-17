@@ -4,9 +4,6 @@ out/
 server/
 .vscode-test/
 
-# Lockfiles
-bun.lock
-
 # Build artifacts
 **/*.trace
 **/*.zip
