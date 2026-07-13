@@ -1,6 +1,7 @@
 import { describe, expect, test, mock } from "bun:test";
 import type { LspRuntimeSnapshot } from "../src/runtime/lspRuntimeTypes.js";
 import { testRuntimeSnapshot } from "./fixtures/lspRuntimeSnapshot.js";
+import { completeVscodeMock } from "./fixtures/vscodeMock.js";
 
 type ChangeListener = (snapshot: LspRuntimeSnapshot) => void;
 
@@ -26,8 +27,10 @@ describe("registerRuntimeUi status dashboard", () => {
       return { dispose: () => registeredCommands.delete(id) };
     });
 
-    mock.module("vscode", () => ({
-      window: { registerWebviewViewProvider },
+    mock.module("vscode", () => completeVscodeMock({
+      window: {
+        registerWebviewViewProvider,
+      },
       commands: {
         registerCommand,
         executeCommand: mock(async () => undefined),

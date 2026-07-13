@@ -1,5 +1,5 @@
 const DEFAULT_BOOK_BASE = "https://beskid-lang.org";
-const DEFAULT_SPEC_BASE = "https://beskid-lang.org/platform-spec";
+const DEFAULT_SPEC_BASE = "https://spec.beskid-lang.org/platform-spec";
 const DEFAULT_PCKG_BASE = "https://pckg.beskid-lang.org";
 
 /** Join site-relative `/platform-spec/...` paths with the configured spec base URL. */

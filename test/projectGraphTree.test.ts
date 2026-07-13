@@ -1,38 +1,13 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import type { LspProjectApi } from "../src/workspace/lspProjectApi.js";
+import { completeVscodeMock } from "./fixtures/vscodeMock.js";
 
 function createMockVscode() {
-  class TreeItem {
-    label: string;
-    collapsibleState: number;
-    description?: string;
-    iconPath?: unknown;
-    command?: unknown;
-    resourceUri?: unknown;
-    tooltip?: string;
-    contextValue?: string;
-
-    constructor(label: string, collapsibleState: number) {
-      this.label = label;
-      this.collapsibleState = collapsibleState;
-    }
-  }
-
-  return {
-    TreeItem,
-    ThemeIcon: class ThemeIcon {
-      constructor(public readonly id: string) {}
-    },
-    TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-    Uri: {
-      parse: (value: string) => ({ fsPath: value.replace(/^file:\/\//, "") }),
-      file: (value: string) => ({ fsPath: value }),
-    },
+  return completeVscodeMock({
     workspace: {
       asRelativePath: (uri: { fsPath: string }) => uri.fsPath,
-      findFiles: async () => [],
     },
-  };
+  });
 }
 
 function mockApi(overrides: Partial<LspProjectApi>): LspProjectApi {

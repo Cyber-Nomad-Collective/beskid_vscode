@@ -34,7 +34,7 @@ export function readBookBaseUrl(): string {
 export function readSpecBaseUrl(): string {
   return (
     vscode.workspace.getConfiguration("beskid").get<string>("docs.specBaseUrl") ??
-    "https://beskid-lang.org/platform-spec"
+    "https://spec.beskid-lang.org/platform-spec"
   );
 }
 

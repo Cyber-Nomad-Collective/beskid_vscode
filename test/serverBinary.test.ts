@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 import {
   bundledPlatformArchKeys,
   platformArchKey,
@@ -8,6 +9,8 @@ import {
 } from "../src/lsp/serverBinary.js";
 
 describe("serverBinary", () => {
+  const extensionPath = fileURLToPath(new URL("../", import.meta.url)).replace(/[\\/]test[\\/]?$/, "");
+
   test("platformArchKey returns a supported host key", () => {
     const key = platformArchKey();
     expect(key).toBeDefined();
@@ -33,14 +36,12 @@ describe("serverBinary", () => {
   });
 
   test("resolveCompilerWorkspaceRoot finds sibling compiler checkout", () => {
-    const extensionPath = new URL("../", import.meta.url).pathname.replace(/\/test\/?$/, "");
     const root = resolveCompilerWorkspaceRoot(extensionPath, undefined);
     expect(root).toBeDefined();
-    expect(root?.endsWith("/compiler")).toBe(true);
+    expect(root).toMatch(/[\\/]compiler$/);
   });
 
   test("resolveCompilerReleaseBinary returns release binary when present", () => {
-    const extensionPath = new URL("../", import.meta.url).pathname.replace(/\/test\/?$/, "");
     const compilerRoot = resolveCompilerWorkspaceRoot(extensionPath, undefined);
     if (!compilerRoot) {
       return;

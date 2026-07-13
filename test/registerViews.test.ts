@@ -1,5 +1,6 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { BESKID_TREE_VIEW_IDS } from "../src/views/beskidViewIds.js";
+import { completeVscodeMock } from "./fixtures/vscodeMock.js";
 
 type TreeViewStub = { id: string; dispose: () => void };
 
@@ -26,12 +27,8 @@ function createMockVscode(debugEnabled = false) {
   return {
     subscriptions,
     treeViews,
-    module: {
+    module: completeVscodeMock({
       TreeItem,
-      ThemeIcon: class ThemeIcon {
-        constructor(public readonly id: string) {}
-      },
-      TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
       window: {
         createTreeView,
       },
@@ -40,15 +37,8 @@ function createMockVscode(debugEnabled = false) {
           get: (key: string, defaultValue: boolean) =>
             key === "debug.enabled" ? debugEnabled : defaultValue,
         }),
-        onDidChangeConfiguration: () => ({ dispose: () => undefined }),
-        asRelativePath: (uri: { fsPath?: string } | string) => String(uri),
-        findFiles: async () => [],
       },
-      Uri: {
-        parse: (value: string) => ({ fsPath: value.replace(/^file:\/\//, "") }),
-        file: (value: string) => ({ fsPath: value }),
-      },
-    },
+    }),
   };
 }
 

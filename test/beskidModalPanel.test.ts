@@ -4,6 +4,7 @@ import { join } from "node:path";
 import pkg from "../package.json";
 import type { LspRuntimeSnapshot } from "../src/runtime/lspRuntimeTypes.js";
 import { testRuntimeSnapshot } from "./fixtures/lspRuntimeSnapshot.js";
+import { completeVscodeMock } from "./fixtures/vscodeMock.js";
 
 type MessageHandler = (message: unknown) => void;
 type ChangeListener = (snapshot: LspRuntimeSnapshot) => void;
@@ -119,17 +120,8 @@ function createMockVscode() {
     triggerMessage(message: unknown) {
       messageHandler?.(message);
     },
-    module: {
+    module: completeVscodeMock({
       TreeItem,
-      ThemeIcon: class ThemeIcon {
-        constructor(public readonly id: string) {}
-      },
-      TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-      EventEmitter: class EventEmitter<T> {
-        event = () => ({ dispose: () => undefined });
-        fire(_value: T) {}
-        dispose() {}
-      },
       window: {
         registerWebviewViewProvider,
       },
@@ -145,11 +137,7 @@ function createMockVscode() {
         asRelativePath: (uri: { fsPath?: string } | string) => String(uri),
         findFiles: async () => [],
       },
-      Uri: {
-        parse: (value: string) => ({ fsPath: value.replace(/^file:\/\//, "") }),
-        file: (value: string) => ({ fsPath: value }),
-      },
-    },
+    }),
   };
 }
 
