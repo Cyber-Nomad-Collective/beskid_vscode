@@ -1,34 +1,38 @@
 import { buildPckgDocsUrl } from "../commands/docsUrls.js";
-import type { PackageDetails, PackageKind, PackageSearchRow } from "./pckgTypes.js";
-import { actionButton, registryIcons } from "./packageRegistryIcons.js";
-import { renderPackageMarkdown } from "./renderPackageMarkdown.js";
 import { escapeHtml } from "../webviews/webviewHtml.js";
+import { actionButton, registryIcons } from "./packageRegistryIcons.js";
+import type {
+	PackageDetails,
+	PackageKind,
+	PackageSearchRow,
+} from "./pckgTypes.js";
+import { renderPackageMarkdown } from "./renderPackageMarkdown.js";
 
 export type RegistryPanelState = {
-  query: string;
-  loading: boolean;
-  error?: string;
-  rows: PackageSearchRow[];
-  selected?: string;
-  details?: PackageDetails;
-  detailsLoading?: boolean;
-  registryBaseUrl: string;
-  logoUri?: string;
+	query: string;
+	loading: boolean;
+	error?: string;
+	rows: PackageSearchRow[];
+	selected?: string;
+	details?: PackageDetails;
+	detailsLoading?: boolean;
+	registryBaseUrl: string;
+	logoUri?: string;
 };
 
 const PACKAGE_REGISTRY_CSP =
-  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src https: data:;" />';
+	"<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src https: data:;\" />";
 
 function kindLabel(kind: PackageKind | undefined): string {
-  return kind ?? "library";
+	return kind ?? "library";
 }
 
 function renderListItem(row: PackageSearchRow, selected?: string): string {
-  const name = row.package.name;
-  const active = selected === name ? " active" : "";
-  const kind = kindLabel(row.package.packageKind);
-  const desc = row.package.description?.trim().slice(0, 80) ?? "";
-  return `<button type="button" class="pkg-item${active}" data-select="${escapeHtml(name)}">
+	const name = row.package.name;
+	const active = selected === name ? " active" : "";
+	const kind = kindLabel(row.package.packageKind);
+	const desc = row.package.description?.trim().slice(0, 80) ?? "";
+	return `<button type="button" class="pkg-item${active}" data-select="${escapeHtml(name)}">
     <span class="pkg-name">${escapeHtml(name)}</span>
     <span class="kind-badge">${escapeHtml(kind)}</span>
     ${desc ? `<span class="pkg-desc">${escapeHtml(desc)}</span>` : ""}
@@ -36,103 +40,108 @@ function renderListItem(row: PackageSearchRow, selected?: string): string {
 }
 
 function renderDetailActions(details: PackageDetails, baseUrl: string): string {
-  const kind = kindLabel(details.package.packageKind);
-  const name = details.package.name;
-  const browserUrl = `${baseUrl.replace(/\/$/, "")}/packages/${encodeURIComponent(name)}`;
-  const version = details.latestVersion ?? details.versions[0]?.version ?? "latest";
-  const actions: string[] = [
-    actionButton(
-      `data-open-browser="${escapeHtml(browserUrl)}"`,
-      registryIcons.openBrowser,
-      "Open in browser",
-      true,
-    ),
-  ];
+	const kind = kindLabel(details.package.packageKind);
+	const name = details.package.name;
+	const browserUrl = `${baseUrl.replace(/\/$/, "")}/packages/${encodeURIComponent(name)}`;
+	const version =
+		details.latestVersion ?? details.versions[0]?.version ?? "latest";
+	const actions: string[] = [
+		actionButton(
+			`data-open-browser="${escapeHtml(browserUrl)}"`,
+			registryIcons.openBrowser,
+			"Open in browser",
+			true,
+		),
+	];
 
-  if (kind === "library" || kind === "tool") {
-    const docsUrl = buildPckgDocsUrl(name, version, undefined, { pckgBaseUrl: baseUrl });
-    actions.push(
-      actionButton(
-        `data-open-browser="${escapeHtml(docsUrl)}"`,
-        registryIcons.apiDocs,
-        "Open API docs",
-      ),
-    );
-  }
+	if (kind === "library" || kind === "tool") {
+		const docsUrl = buildPckgDocsUrl(name, version, undefined, {
+			pckgBaseUrl: baseUrl,
+		});
+		actions.push(
+			actionButton(
+				`data-open-browser="${escapeHtml(docsUrl)}"`,
+				registryIcons.apiDocs,
+				"Open API docs",
+			),
+		);
+	}
 
-  if (kind === "template") {
-    const shortName = details.package.shortName ?? name.split(".").pop() ?? name;
-    actions.push(
-      actionButton(
-        `data-copy="beskid new install ${name}"`,
-        registryIcons.copy,
-        "Copy install command",
-      ),
-      actionButton(
-        `data-copy="beskid new ${shortName}"`,
-        registryIcons.copy,
-        `Copy: beskid new ${escapeHtml(shortName)}`,
-      ),
-    );
-  } else if (kind === "library") {
-    actions.push(
-      actionButton(
-        `data-command="beskid.packages.addDependency"`,
-        registryIcons.addDependency,
-        "Add dependency…",
-      ),
-    );
-  } else if (kind === "tool") {
-    const ver = details.latestVersion ?? details.versions[0]?.version ?? "latest";
-    actions.push(
-      actionButton(
-        `data-copy="beskid pckg download ${name}@${ver}"`,
-        registryIcons.copy,
-        "Copy download command",
-      ),
-    );
-  }
+	if (kind === "template") {
+		const shortName = details.package.shortName ?? name.split(".").pop() ?? name;
+		actions.push(
+			actionButton(
+				`data-copy="beskid new install ${name}"`,
+				registryIcons.copy,
+				"Copy install command",
+			),
+			actionButton(
+				`data-copy="beskid new ${shortName}"`,
+				registryIcons.copy,
+				`Copy: beskid new ${escapeHtml(shortName)}`,
+			),
+		);
+	} else if (kind === "library") {
+		actions.push(
+			actionButton(
+				`data-command="beskid.packages.addDependency"`,
+				registryIcons.addDependency,
+				"Add dependency…",
+			),
+		);
+	} else if (kind === "tool") {
+		const ver = details.latestVersion ?? details.versions[0]?.version ?? "latest";
+		actions.push(
+			actionButton(
+				`data-copy="beskid pckg download ${name}@${ver}"`,
+				registryIcons.copy,
+				"Copy download command",
+			),
+		);
+	}
 
-  return `<div class="detail-actions">${actions.join("")}</div>`;
+	return `<div class="detail-actions">${actions.join("")}</div>`;
 }
 
 function renderPackageIcon(details: PackageDetails): string {
-  const name = details.package.name;
-  const initial = escapeHtml(name.slice(0, 1).toUpperCase());
-  const iconUrl = details.package.iconUrl?.trim();
-  if (iconUrl) {
-    return `<img class="package-icon" src="${escapeHtml(iconUrl)}" alt="" referrerpolicy="no-referrer" />`;
-  }
-  return `<div class="package-icon package-icon-placeholder" aria-hidden="true">${initial}</div>`;
+	const name = details.package.name;
+	const initial = escapeHtml(name.slice(0, 1).toUpperCase());
+	const iconUrl = details.package.iconUrl?.trim();
+	if (iconUrl) {
+		return `<img class="package-icon" src="${escapeHtml(iconUrl)}" alt="" referrerpolicy="no-referrer" />`;
+	}
+	return `<div class="package-icon package-icon-placeholder" aria-hidden="true">${initial}</div>`;
 }
 
 function renderReadme(readme: string): string {
-  const html = renderPackageMarkdown(readme);
-  if (!html) {
-    return "";
-  }
-  return `<h3>Readme</h3><div class="readme markdown-body">${html}</div>`;
+	const html = renderPackageMarkdown(readme);
+	if (!html) {
+		return "";
+	}
+	return `<h3>Readme</h3><div class="readme markdown-body">${html}</div>`;
 }
 
 function renderDetailPane(state: RegistryPanelState): string {
-  if (state.detailsLoading) {
-    return `<div class="detail-empty">Loading details…</div>`;
-  }
-  if (!state.selected) {
-    return `<div class="detail-empty">Select a package to view details.</div>`;
-  }
-  if (!state.details) {
-    return `<div class="detail-empty">No details loaded.</div>`;
-  }
-  const pkg = state.details.package;
-  const kind = kindLabel(pkg.packageKind);
-  const readme = state.details.readme?.trim();
-  const versions = state.details.versions
-    .slice(0, 10)
-    .map((v) => `<li>${escapeHtml(v.version)}${v.isYanked ? " (yanked)" : ""}</li>`)
-    .join("");
+	if (state.detailsLoading) {
+		return `<div class="detail-empty">Loading details…</div>`;
+	}
+	if (!state.selected) {
+		return `<div class="detail-empty">Select a package to view details.</div>`;
+	}
+	if (!state.details) {
+		return `<div class="detail-empty">No details loaded.</div>`;
+	}
+	const pkg = state.details.package;
+	const kind = kindLabel(pkg.packageKind);
+	const readme = state.details.readme?.trim();
+	const versions = state.details.versions
+		.slice(0, 10)
+		.map(
+			(v) => `<li>${escapeHtml(v.version)}${v.isYanked ? " (yanked)" : ""}</li>`,
+		)
+		.join("");
 
-  return `<div class="detail">
+	return `<div class="detail">
     <div class="detail-header">
       ${renderPackageIcon(state.details)}
       <div class="detail-header-main">
@@ -151,10 +160,10 @@ function renderDetailPane(state: RegistryPanelState): string {
 }
 
 function renderToolbar(state: RegistryPanelState): string {
-  const logo = state.logoUri
-    ? `<img class="toolbar-logo" src="${escapeHtml(state.logoUri)}" alt="Beskid" />`
-    : "";
-  return `<div class="toolbar">
+	const logo = state.logoUri
+		? `<img class="toolbar-logo" src="${escapeHtml(state.logoUri)}" alt="Beskid" />`
+		: "";
+	return `<div class="toolbar">
     <div class="toolbar-brand">
       ${logo}
       <span class="toolbar-kicker">Beskid</span>
@@ -169,15 +178,15 @@ function renderToolbar(state: RegistryPanelState): string {
 }
 
 export function renderPackageRegistryHtml(state: RegistryPanelState): string {
-  const listContent = state.loading
-    ? `<div class="list-empty">Loading…</div>`
-    : state.error
-      ? `<div class="list-empty error">${escapeHtml(state.error)}</div>`
-      : state.rows.length === 0
-        ? `<div class="list-empty">No packages found.</div>`
-        : state.rows.map((row) => renderListItem(row, state.selected)).join("");
+	const listContent = state.loading
+		? `<div class="list-empty">Loading…</div>`
+		: state.error
+			? `<div class="list-empty error">${escapeHtml(state.error)}</div>`
+			: state.rows.length === 0
+				? `<div class="list-empty">No packages found.</div>`
+				: state.rows.map((row) => renderListItem(row, state.selected)).join("");
 
-  return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />

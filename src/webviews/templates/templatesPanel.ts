@@ -8,11 +8,11 @@
 export const TEMPLATES_PANEL_VIEW_TYPE = "beskidTemplatesView";
 
 export type TemplatesPanelMessage =
-  | { type: "search"; query: string }
-  | { type: "install"; templateId: string; projectUri?: string };
+	| { type: "search"; query: string }
+	| { type: "install"; templateId: string; projectUri?: string };
 
 export type TemplatesSearchResult = {
-  id: string;
-  name: string;
-  description?: string;
+	id: string;
+	name: string;
+	description?: string;
 };

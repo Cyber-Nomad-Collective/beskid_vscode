@@ -1,712 +1,712 @@
 {
-  "name": "beskid-vscode",
-  "displayName": "Beskid",
-  "description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
-  "version": "0.1.181",
-  "publisher": "beskid",
-  "license": "MIT",
-  "icon": "icon.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Cyber-Nomad-Collective/beskid_vscode.git"
-  },
-  "homepage": "https://beskid-lang.org",
-  "bugs": {
-    "url": "https://github.com/Cyber-Nomad-Collective/beskid/issues"
-  },
-  "keywords": [
-    "beskid",
-    "language-server",
-    "lsp",
-    "programming-language",
-    "compiler"
-  ],
-  "engines": {
-    "vscode": "^1.88.0"
-  },
-  "categories": [
-    "Programming Languages",
-    "Linters"
-  ],
-  "main": "./out/extension.js",
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "packageManager": "bun@1.2.20",
-  "overrides": {
-    "undici": "^8.2.0",
-    "lodash": "^4.18.1",
-    "picomatch": "^4.0.4",
-    "brace-expansion": "^5.0.5",
-    "uuid": "^14.0.0"
-  },
-  "contributes": {
-    "commands": [
-      {
-        "command": "beskid.showGraph",
-        "title": "Beskid: Show Project Graph"
-      },
-      {
-        "command": "beskid.showGraph.project",
-        "title": "Beskid: Show Project Dependency Graph"
-      },
-      {
-        "command": "beskid.showGraph.workspace",
-        "title": "Beskid: Show Workspace Graph"
-      },
-      {
-        "command": "beskid.showGraph.module",
-        "title": "Beskid: Show Module Graph"
-      },
-      {
-        "command": "beskid.showGraph.imports",
-        "title": "Beskid: Show Import Closure Graph"
-      },
-      {
-        "command": "beskid.showGraph.host",
-        "title": "Beskid: Show Host Composition Graph"
-      },
-      {
-        "command": "beskid.refreshGraph",
-        "title": "Beskid: Refresh Graph"
-      },
-      {
-        "command": "beskid.selectProject",
-        "title": "Beskid: Select Project"
-      },
-      {
-        "command": "beskid.focusProject",
-        "title": "Beskid: Focus Project"
-      },
-      {
-        "command": "beskid.clearFocus",
-        "title": "Beskid: Clear Project Focus"
-      },
-      {
-        "command": "beskid.refreshWorkspace",
-        "title": "Beskid: Refresh Workspace"
-      },
-      {
-        "command": "beskid.revealInProjectsTree",
-        "title": "Beskid: Reveal in Projects"
-      },
-      {
-        "command": "beskid.revealInWorkspaceTree",
-        "title": "Beskid: Reveal in Projects"
-      },
-      {
-        "command": "beskid.revealInProjectTree",
-        "title": "Beskid: Reveal in Projects"
-      },
-      {
-        "command": "beskid.lsp.quickActions",
-        "title": "Beskid: LSP Quick Actions"
-      },
-      {
-        "command": "beskid.lsp.start",
-        "title": "Beskid: Start Language Server"
-      },
-      {
-        "command": "beskid.lsp.stop",
-        "title": "Beskid: Stop Language Server"
-      },
-      {
-        "command": "beskid.lsp.restart",
-        "title": "Beskid: Restart Language Server"
-      },
-      {
-        "command": "beskid.packages.open",
-        "title": "Beskid: Open Package Manager"
-      },
-      {
-        "command": "beskid.packages.search",
-        "title": "Beskid: Search Packages"
-      },
-      {
-        "command": "beskid.packages.showDetails",
-        "title": "Beskid: Show Package Details"
-      },
-      {
-        "command": "beskid.packages.addDependency",
-        "title": "Beskid: Add Package Dependency"
-      },
-      {
-        "command": "beskid.packages.fetch",
-        "title": "Beskid: Fetch Packages"
-      },
-      {
-        "command": "beskid.packages.lock",
-        "title": "Beskid: Lock Project"
-      },
-      {
-        "command": "beskid.packages.refresh",
-        "title": "Beskid: Refresh Packages"
-      },
-      {
-        "command": "beskid.packages.configureApiKey",
-        "title": "Beskid: Configure Package Registry API Key"
-      },
-      {
-        "command": "beskid.packages.openManifest",
-        "title": "Beskid: Open Project Manifest"
-      },
-      {
-        "command": "beskid.packages.openMaterializedFolder",
-        "title": "Beskid: Open Materialized Package Folder"
-      },
-      {
-        "command": "beskid.packages.copyDependencyLabel",
-        "title": "Beskid: Copy Dependency Label"
-      },
-      {
-        "command": "beskid.packages.openRegistryUri",
-        "title": "Beskid: Open registry URL"
-      },
-      {
-        "command": "beskid.cli.install",
-        "title": "Beskid: Install CLI"
-      },
-      {
-        "command": "beskid.lsp.install",
-        "title": "Beskid: Install LSP"
-      },
-      {
-        "command": "beskid.cli.bootstrap",
-        "title": "Beskid: Setup Toolchain (CLI + LSP + Dependencies)"
-      },
-      {
-        "command": "beskid.cli.fetch",
-        "title": "Beskid: CLI Fetch"
-      },
-      {
-        "command": "beskid.cli.lock",
-        "title": "Beskid: CLI Lock"
-      },
-      {
-        "command": "beskid.cli.build",
-        "title": "Beskid: CLI Build"
-      },
-      {
-        "command": "beskid.cli.test",
-        "title": "Beskid: CLI Test"
-      },
-      {
-        "command": "beskid.cli.analyze",
-        "title": "Beskid: CLI Analyze"
-      },
-      {
-        "command": "beskid.lsp.openLogs",
-        "title": "Beskid: Open LSP Logs"
-      },
-      {
-        "command": "beskid.modal.open",
-        "title": "Beskid: Open Quick Panel"
-      },
-      {
-        "command": "beskid.dashboard.focus",
-        "title": "Beskid: Open Quick Panel"
-      },
-      {
-        "command": "beskid.openSymbolDocumentation",
-        "title": "Beskid: Open Symbol Documentation"
-      },
-      {
-        "command": "beskid.debug.focus",
-        "title": "Beskid: Open Debug View"
-      }
-    ],
-    "taskDefinitions": [
-      {
-        "type": "beskid-fetch",
-        "required": [],
-        "properties": {
-          "projectPath": {
-            "type": "string",
-            "description": "Project root or .bproj manifest path"
-          }
-        }
-      },
-      {
-        "type": "beskid-lock",
-        "required": [],
-        "properties": {
-          "projectPath": {
-            "type": "string",
-            "description": "Project root or .bproj manifest path"
-          }
-        }
-      },
-      {
-        "type": "beskid-build",
-        "required": [],
-        "properties": {
-          "projectPath": {
-            "type": "string",
-            "description": "Project root or .bproj manifest path"
-          }
-        }
-      },
-      {
-        "type": "beskid-test",
-        "required": [],
-        "properties": {
-          "projectPath": {
-            "type": "string",
-            "description": "Project root or .bproj manifest path"
-          }
-        }
-      },
-      {
-        "type": "beskid-analyze",
-        "required": [],
-        "properties": {
-          "projectPath": {
-            "type": "string",
-            "description": "Project root or .bproj manifest path"
-          }
-        }
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "beskid.showGraph.project"
-        },
-        {
-          "command": "beskid.showGraph.workspace"
-        },
-        {
-          "command": "beskid.showGraph.module"
-        },
-        {
-          "command": "beskid.showGraph.host"
-        },
-        {
-          "command": "beskid.selectProject"
-        },
-        {
-          "command": "beskid.modal.open"
-        },
-        {
-          "command": "beskid.dashboard.focus"
-        },
-        {
-          "command": "beskid.lsp.quickActions"
-        },
-        {
-          "command": "beskid.lsp.start"
-        },
-        {
-          "command": "beskid.lsp.stop"
-        },
-        {
-          "command": "beskid.lsp.restart"
-        },
-        {
-          "command": "beskid.packages.open"
-        },
-        {
-          "command": "beskid.packages.search"
-        },
-        {
-          "command": "beskid.lsp.openLogs"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "beskid.packages.open",
-          "when": "view == beskidPackagesView",
-          "group": "navigation@0"
-        },
-        {
-          "command": "beskid.packages.refresh",
-          "when": "view == beskidPackagesView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "beskid.packages.fetch",
-          "when": "view == beskidPackagesView",
-          "group": "navigation@3"
-        },
-        {
-          "command": "beskid.packages.lock",
-          "when": "view == beskidPackagesView",
-          "group": "navigation@4"
-        },
-        {
-          "command": "beskid.refreshWorkspace",
-          "when": "view == beskidProjectsView",
-          "group": "navigation"
-        },
-        {
-          "command": "beskid.selectProject",
-          "when": "view == beskidProjectsView",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "beskid.packages.showDetails",
-          "when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
-          "group": "inline"
-        },
-        {
-          "command": "beskid.packages.addDependency",
-          "when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
-          "group": "1_packages"
-        },
-        {
-          "command": "beskid.packages.openManifest",
-          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
-          "group": "1_packages@1"
-        },
-        {
-          "command": "beskid.packages.openMaterializedFolder",
-          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
-          "group": "1_packages@2"
-        },
-        {
-          "command": "beskid.packages.copyDependencyLabel",
-          "when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
-          "group": "1_packages@3"
-        },
-        {
-          "command": "beskid.focusProject",
-          "when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
-          "group": "1_focus"
-        },
-        {
-          "command": "beskid.focusProject",
-          "when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
-          "group": "1_focus"
-        },
-        {
-          "command": "beskid.showGraph.project",
-          "when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
-          "group": "2_graph@1"
-        },
-        {
-          "command": "beskid.showGraph.workspace",
-          "when": "view == beskidProjectsView && viewItem == beskidWorkspace",
-          "group": "2_graph@1"
-        },
-        {
-          "command": "beskid.showGraph.project",
-          "when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
-          "group": "2_graph@1"
-        }
-      ],
-      "editor/context": [
-        {
-          "command": "beskid.openSymbolDocumentation",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
-          "group": "navigation@9"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "beskid.showGraph.project",
-          "when": "resourceLangId == beskid-manifest",
-          "group": "navigation@3"
-        },
-        {
-          "command": "beskid.revealInProjectsTree",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
-          "group": "navigation@1"
-        },
-        {
-          "command": "beskid.revealInWorkspaceTree",
-          "when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
-          "group": "navigation@2"
-        }
-      ]
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "beskidViews",
-          "title": "Beskid",
-          "icon": "media/beskid-logo.svg"
-        }
-      ],
-      "panel": [
-        {
-          "id": "beskidPanel",
-          "title": "Beskid",
-          "icon": "media/beskid-logo.svg"
-        }
-      ]
-    },
-    "views": {
-      "beskidViews": [
-        {
-          "id": "beskidProjectsView",
-          "name": "Projects"
-        },
-        {
-          "id": "beskidPackagesView",
-          "name": "Packages"
-        },
-        {
-          "id": "beskidDebugView",
-          "name": "Debug",
-          "when": "config.beskid.debug.enabled"
-        }
-      ],
-      "beskidPanel": [
-        {
-          "type": "webview",
-          "id": "beskidDashboardView",
-          "name": "Status",
-          "icon": "$(hubot)"
-        }
-      ]
-    },
-    "viewsWelcome": [
-      {
-        "view": "beskidPackagesView",
-        "contents": "Local project dependencies and registry browse.\n[Browse registry](command:beskid.packages.open)"
-      }
-    ],
-    "languages": [
-      {
-        "id": "beskid",
-        "aliases": [
-          "Beskid",
-          "beskid"
-        ],
-        "extensions": [
-          ".bd"
-        ],
-        "configuration": "./language-configuration.json"
-      },
-      {
-        "id": "beskid-manifest",
-        "aliases": [
-          "Beskid Manifest",
-          "beskid-manifest"
-        ],
-        "extensions": [
-          ".bproj",
-          ".bws"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "beskid",
-        "scopeName": "source.beskid",
-        "path": "./syntaxes/beskid.tmLanguage.json"
-      },
-      {
-        "language": "beskid-manifest",
-        "scopeName": "source.beskid.proj",
-        "path": "./syntaxes/beskid-proj.tmLanguage.json"
-      }
-    ],
-    "configuration": [
-      {
-        "title": "Beskid",
-        "properties": {
-          "beskid.dashboard.openOnActivate": {
-            "type": "boolean",
-            "default": false,
-            "description": "Open the Beskid quick panel (status bar modal) when the extension activates."
-          },
-          "beskid.debug.enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Show the Beskid Debug tree view in the activity bar (requires window reload)."
-          },
-          "beskid.docs.bookBaseUrl": {
-            "type": "string",
-            "default": "https://beskid-lang.org",
-            "description": "Base URL for Beskid book documentation fallback when opening symbol docs."
-          },
-          "beskid.docs.specBaseUrl": {
-            "type": "string",
-            "default": "https://spec.beskid-lang.org/platform-spec",
-            "description": "Base URL for platform-spec deep links from the LSP and symbol documentation."
-          },
-          "beskid.project.autoSelectFromEditor": {
-            "type": "boolean",
-            "default": true,
-            "description": "Automatically focus the Beskid project manifest for the active editor file."
-          },
-          "beskid.graph.defaultKind": {
-            "type": "string",
-            "enum": [
-              "projectDeps",
-              "workspace",
-              "moduleTree",
-              "importClosure",
-              "hostComposition"
-            ],
-            "default": "projectDeps",
-            "description": "Default graph kind when opening the Graph Explorer panel."
-          }
-        }
-      },
-      {
-        "title": "Beskid › LSP",
-        "properties": {
-          "beskid.lsp.server.command": {
-            "type": "string",
-            "default": "cargo",
-            "description": "Launch command when `beskid.lsp.server.devMode` is enabled (typically `cargo run -p beskid_lsp`)."
-          },
-          "beskid.lsp.server.args": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [
-              "run",
-              "-p",
-              "beskid_lsp"
-            ],
-            "description": "Arguments paired with `beskid.lsp.server.command` in dev mode."
-          },
-          "beskid.lsp.releaseTag": {
-            "type": "string",
-            "default": "lsp-latest",
-            "description": "GitHub release tag for LSP download (`lsp-latest` rolling tag, `lsp-vX.Y.Z` pinned release, or bare `X.Y.Y` / `vX.Y.Z` semver)."
-          },
-          "beskid.lsp.server.preferBundled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Prefer the VSIX-bundled `beskid_lsp` under `server/<platform>-<arch>/` when no managed binary exists at `~/.beskid/bin/beskid_lsp`."
-          },
-          "beskid.lsp.server.devMode": {
-            "type": "boolean",
-            "default": false,
-            "description": "Build and run the language server from a local compiler workspace via Cargo when no CLI/binary override is available."
-          },
-          "beskid.lsp.server.path": {
-            "type": "string",
-            "default": "",
-            "description": "Absolute path to a Beskid LSP binary. Overrides managed, bundled, and dev-mode launch."
-          },
-          "beskid.lsp.server.cwd": {
-            "type": "string",
-            "default": "",
-            "description": "Working directory for the language server. Empty uses the focused project or first workspace folder."
-          },
-          "beskid.lsp.server.debugArgs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [
-              "run",
-              "-p",
-              "beskid_lsp"
-            ],
-            "description": "Dev-mode arguments when the extension runs under a VS Code debug session."
-          },
-          "beskid.lsp.log.level": {
-            "type": "string",
-            "enum": [
-              "error",
-              "warning",
-              "info",
-              "log",
-              "debug"
-            ],
-            "default": "info",
-            "description": "Language server log level in the Beskid LSP output channel."
-          },
-          "beskid.lsp.log.serverOutput": {
-            "type": "boolean",
-            "default": true,
-            "description": "Mirror raw language server stdout/stderr to the Beskid LSP output channel."
-          }
-        }
-      },
-      {
-        "title": "Beskid › Toolchain",
-        "properties": {
-          "beskid.cli.path": {
-            "type": "string",
-            "default": "beskid",
-            "description": "Path to the Beskid CLI. `beskid` resolves to `~/.beskid/bin/beskid` after **Install CLI**."
-          },
-          "beskid.cli.releaseTag": {
-            "type": "string",
-            "default": "cli-latest",
-            "description": "GitHub release tag for CLI download (`cli-latest`, `cli-vX.Y.Z`, or bare `X.Y.Z` / `vX.Y.Z` semver)."
-          },
-          "beskid.toolchain.autoFetchDependencies": {
-            "type": "boolean",
-            "default": true,
-            "description": "On first toolchain bootstrap, run `beskid fetch` for discovered project manifests."
-          },
-          "beskid.toolchain.autoInstallOnLaunch": {
-            "type": "boolean",
-            "default": true,
-            "description": "On extension activate, automatically download the latest Beskid CLI and language server from GitHub when missing or outdated, then start the LSP."
-          }
-        }
-      },
-      {
-        "title": "Beskid › Packages",
-        "properties": {
-          "beskid.pckg.baseUrl": {
-            "type": "string",
-            "default": "https://pckg.beskid-lang.org",
-            "description": "Package registry (pckg) base URL for the Packages tree and dashboard."
-          },
-          "beskid.pckg.apiKey": {
-            "type": "string",
-            "default": "",
-            "description": "Optional registry API key. Prefer **Configure Package Registry API Key**; empty uses SecretStorage."
-          }
-        }
-      }
-    ],
-    "configurationDefaults": {
-      "[beskid]": {
-        "editor.defaultFormatter": "beskid.beskid-vscode"
-      },
-      "[beskid-manifest]": {
-        "editor.defaultFormatter": "beskid.beskid-vscode"
-      }
-    }
-  },
-  "scripts": {
-    "sync:keywords": "bun scripts/sync-keywords.mjs",
-    "postinstall": "node scripts/bundle-mermaid.mjs",
-    "build": "node scripts/bundle-mermaid.mjs && bunx tsc -p . && bunx tsc -p tsconfig.integration.json",
-    "build:ext": "bunx tsc -p .",
-    "bundle:lsp": "node scripts/bundle-lsp-host.mjs",
-    "watch": "bunx tsc -w -p .",
-    "lint": "bunx tsc -p . --noEmit && bunx tsc -p tsconfig.integration.json --noEmit",
-    "test": "bun run test:unit",
-    "test:unit": "bun test",
-    "test:integration": "bun run build && node out/test/integration/runTest.js",
-    "test:all": "bun run lint && bun run test:unit && bun run test:integration",
-    "test:e2e": "bun test test/e2e",
-    "test:smoke:formatter": "node scripts/smoke-formatter.mjs",
-    "package": "node scripts/package-vsix.mjs",
-    "vscode:prepublish": "node scripts/vscode-prepublish.mjs"
-  },
-  "dependencies": {
-    "marked": "^15.0.12",
-    "mermaid": "^11.12.0",
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver-protocol": "3.17.5"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^25.6.0",
-    "@types/vscode": "1.88.0",
-    "@vscode/test-electron": "^2.5.2",
-    "glob": "^13.0.0",
-    "mocha": "^11.7.5",
-    "typescript": "^6.0.3"
-  },
-  "trustedDependencies": [
-    "@vscode/vsce-sign"
-  ]
+	"name": "beskid-vscode",
+	"displayName": "Beskid",
+	"description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
+	"version": "0.1.181",
+	"publisher": "beskid",
+	"license": "MIT",
+	"icon": "icon.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Cyber-Nomad-Collective/beskid_vscode.git"
+	},
+	"homepage": "https://beskid-lang.org",
+	"bugs": {
+		"url": "https://github.com/Cyber-Nomad-Collective/beskid/issues"
+	},
+	"keywords": [
+		"beskid",
+		"language-server",
+		"lsp",
+		"programming-language",
+		"compiler"
+	],
+	"engines": {
+		"vscode": "^1.88.0"
+	},
+	"categories": [
+		"Programming Languages",
+		"Linters"
+	],
+	"main": "./out/extension.js",
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"packageManager": "bun@1.2.20",
+	"overrides": {
+		"undici": "^8.2.0",
+		"lodash": "^4.18.1",
+		"picomatch": "^4.0.4",
+		"brace-expansion": "^5.0.5",
+		"uuid": "^14.0.0"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "beskid.showGraph",
+				"title": "Beskid: Show Project Graph"
+			},
+			{
+				"command": "beskid.showGraph.project",
+				"title": "Beskid: Show Project Dependency Graph"
+			},
+			{
+				"command": "beskid.showGraph.workspace",
+				"title": "Beskid: Show Workspace Graph"
+			},
+			{
+				"command": "beskid.showGraph.module",
+				"title": "Beskid: Show Module Graph"
+			},
+			{
+				"command": "beskid.showGraph.imports",
+				"title": "Beskid: Show Import Closure Graph"
+			},
+			{
+				"command": "beskid.showGraph.host",
+				"title": "Beskid: Show Host Composition Graph"
+			},
+			{
+				"command": "beskid.refreshGraph",
+				"title": "Beskid: Refresh Graph"
+			},
+			{
+				"command": "beskid.selectProject",
+				"title": "Beskid: Select Project"
+			},
+			{
+				"command": "beskid.focusProject",
+				"title": "Beskid: Focus Project"
+			},
+			{
+				"command": "beskid.clearFocus",
+				"title": "Beskid: Clear Project Focus"
+			},
+			{
+				"command": "beskid.refreshWorkspace",
+				"title": "Beskid: Refresh Workspace"
+			},
+			{
+				"command": "beskid.revealInProjectsTree",
+				"title": "Beskid: Reveal in Projects"
+			},
+			{
+				"command": "beskid.revealInWorkspaceTree",
+				"title": "Beskid: Reveal in Projects"
+			},
+			{
+				"command": "beskid.revealInProjectTree",
+				"title": "Beskid: Reveal in Projects"
+			},
+			{
+				"command": "beskid.lsp.quickActions",
+				"title": "Beskid: LSP Quick Actions"
+			},
+			{
+				"command": "beskid.lsp.start",
+				"title": "Beskid: Start Language Server"
+			},
+			{
+				"command": "beskid.lsp.stop",
+				"title": "Beskid: Stop Language Server"
+			},
+			{
+				"command": "beskid.lsp.restart",
+				"title": "Beskid: Restart Language Server"
+			},
+			{
+				"command": "beskid.packages.open",
+				"title": "Beskid: Open Package Manager"
+			},
+			{
+				"command": "beskid.packages.search",
+				"title": "Beskid: Search Packages"
+			},
+			{
+				"command": "beskid.packages.showDetails",
+				"title": "Beskid: Show Package Details"
+			},
+			{
+				"command": "beskid.packages.addDependency",
+				"title": "Beskid: Add Package Dependency"
+			},
+			{
+				"command": "beskid.packages.fetch",
+				"title": "Beskid: Fetch Packages"
+			},
+			{
+				"command": "beskid.packages.lock",
+				"title": "Beskid: Lock Project"
+			},
+			{
+				"command": "beskid.packages.refresh",
+				"title": "Beskid: Refresh Packages"
+			},
+			{
+				"command": "beskid.packages.configureApiKey",
+				"title": "Beskid: Configure Package Registry API Key"
+			},
+			{
+				"command": "beskid.packages.openManifest",
+				"title": "Beskid: Open Project Manifest"
+			},
+			{
+				"command": "beskid.packages.openMaterializedFolder",
+				"title": "Beskid: Open Materialized Package Folder"
+			},
+			{
+				"command": "beskid.packages.copyDependencyLabel",
+				"title": "Beskid: Copy Dependency Label"
+			},
+			{
+				"command": "beskid.packages.openRegistryUri",
+				"title": "Beskid: Open registry URL"
+			},
+			{
+				"command": "beskid.cli.install",
+				"title": "Beskid: Install CLI"
+			},
+			{
+				"command": "beskid.lsp.install",
+				"title": "Beskid: Install LSP"
+			},
+			{
+				"command": "beskid.cli.bootstrap",
+				"title": "Beskid: Setup Toolchain (CLI + LSP + Dependencies)"
+			},
+			{
+				"command": "beskid.cli.fetch",
+				"title": "Beskid: CLI Fetch"
+			},
+			{
+				"command": "beskid.cli.lock",
+				"title": "Beskid: CLI Lock"
+			},
+			{
+				"command": "beskid.cli.build",
+				"title": "Beskid: CLI Build"
+			},
+			{
+				"command": "beskid.cli.test",
+				"title": "Beskid: CLI Test"
+			},
+			{
+				"command": "beskid.cli.analyze",
+				"title": "Beskid: CLI Analyze"
+			},
+			{
+				"command": "beskid.lsp.openLogs",
+				"title": "Beskid: Open LSP Logs"
+			},
+			{
+				"command": "beskid.modal.open",
+				"title": "Beskid: Open Quick Panel"
+			},
+			{
+				"command": "beskid.dashboard.focus",
+				"title": "Beskid: Open Quick Panel"
+			},
+			{
+				"command": "beskid.openSymbolDocumentation",
+				"title": "Beskid: Open Symbol Documentation"
+			},
+			{
+				"command": "beskid.debug.focus",
+				"title": "Beskid: Open Debug View"
+			}
+		],
+		"taskDefinitions": [
+			{
+				"type": "beskid-fetch",
+				"required": [],
+				"properties": {
+					"projectPath": {
+						"type": "string",
+						"description": "Project root or .bproj manifest path"
+					}
+				}
+			},
+			{
+				"type": "beskid-lock",
+				"required": [],
+				"properties": {
+					"projectPath": {
+						"type": "string",
+						"description": "Project root or .bproj manifest path"
+					}
+				}
+			},
+			{
+				"type": "beskid-build",
+				"required": [],
+				"properties": {
+					"projectPath": {
+						"type": "string",
+						"description": "Project root or .bproj manifest path"
+					}
+				}
+			},
+			{
+				"type": "beskid-test",
+				"required": [],
+				"properties": {
+					"projectPath": {
+						"type": "string",
+						"description": "Project root or .bproj manifest path"
+					}
+				}
+			},
+			{
+				"type": "beskid-analyze",
+				"required": [],
+				"properties": {
+					"projectPath": {
+						"type": "string",
+						"description": "Project root or .bproj manifest path"
+					}
+				}
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "beskid.showGraph.project"
+				},
+				{
+					"command": "beskid.showGraph.workspace"
+				},
+				{
+					"command": "beskid.showGraph.module"
+				},
+				{
+					"command": "beskid.showGraph.host"
+				},
+				{
+					"command": "beskid.selectProject"
+				},
+				{
+					"command": "beskid.modal.open"
+				},
+				{
+					"command": "beskid.dashboard.focus"
+				},
+				{
+					"command": "beskid.lsp.quickActions"
+				},
+				{
+					"command": "beskid.lsp.start"
+				},
+				{
+					"command": "beskid.lsp.stop"
+				},
+				{
+					"command": "beskid.lsp.restart"
+				},
+				{
+					"command": "beskid.packages.open"
+				},
+				{
+					"command": "beskid.packages.search"
+				},
+				{
+					"command": "beskid.lsp.openLogs"
+				}
+			],
+			"view/title": [
+				{
+					"command": "beskid.packages.open",
+					"when": "view == beskidPackagesView",
+					"group": "navigation@0"
+				},
+				{
+					"command": "beskid.packages.refresh",
+					"when": "view == beskidPackagesView",
+					"group": "navigation@2"
+				},
+				{
+					"command": "beskid.packages.fetch",
+					"when": "view == beskidPackagesView",
+					"group": "navigation@3"
+				},
+				{
+					"command": "beskid.packages.lock",
+					"when": "view == beskidPackagesView",
+					"group": "navigation@4"
+				},
+				{
+					"command": "beskid.refreshWorkspace",
+					"when": "view == beskidProjectsView",
+					"group": "navigation"
+				},
+				{
+					"command": "beskid.selectProject",
+					"when": "view == beskidProjectsView",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "beskid.packages.showDetails",
+					"when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
+					"group": "inline"
+				},
+				{
+					"command": "beskid.packages.addDependency",
+					"when": "view == beskidPackagesView && viewItem == beskidRegistryPackage",
+					"group": "1_packages"
+				},
+				{
+					"command": "beskid.packages.openManifest",
+					"when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+					"group": "1_packages@1"
+				},
+				{
+					"command": "beskid.packages.openMaterializedFolder",
+					"when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+					"group": "1_packages@2"
+				},
+				{
+					"command": "beskid.packages.copyDependencyLabel",
+					"when": "view == beskidPackagesView && viewItem == beskidLocalDependency",
+					"group": "1_packages@3"
+				},
+				{
+					"command": "beskid.focusProject",
+					"when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
+					"group": "1_focus"
+				},
+				{
+					"command": "beskid.focusProject",
+					"when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
+					"group": "1_focus"
+				},
+				{
+					"command": "beskid.showGraph.project",
+					"when": "view == beskidProjectsView && viewItem == beskidWorkspaceMember",
+					"group": "2_graph@1"
+				},
+				{
+					"command": "beskid.showGraph.workspace",
+					"when": "view == beskidProjectsView && viewItem == beskidWorkspace",
+					"group": "2_graph@1"
+				},
+				{
+					"command": "beskid.showGraph.project",
+					"when": "view == beskidProjectsView && viewItem == beskidStandaloneProject",
+					"group": "2_graph@1"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "beskid.openSymbolDocumentation",
+					"when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
+					"group": "navigation@9"
+				}
+			],
+			"editor/title": [
+				{
+					"command": "beskid.showGraph.project",
+					"when": "resourceLangId == beskid-manifest",
+					"group": "navigation@3"
+				},
+				{
+					"command": "beskid.revealInProjectsTree",
+					"when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
+					"group": "navigation@1"
+				},
+				{
+					"command": "beskid.revealInWorkspaceTree",
+					"when": "resourceLangId == beskid || resourceLangId == beskid-manifest",
+					"group": "navigation@2"
+				}
+			]
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "beskidViews",
+					"title": "Beskid",
+					"icon": "media/beskid-logo.svg"
+				}
+			],
+			"panel": [
+				{
+					"id": "beskidPanel",
+					"title": "Beskid",
+					"icon": "media/beskid-logo.svg"
+				}
+			]
+		},
+		"views": {
+			"beskidViews": [
+				{
+					"id": "beskidProjectsView",
+					"name": "Projects"
+				},
+				{
+					"id": "beskidPackagesView",
+					"name": "Packages"
+				},
+				{
+					"id": "beskidDebugView",
+					"name": "Debug",
+					"when": "config.beskid.debug.enabled"
+				}
+			],
+			"beskidPanel": [
+				{
+					"type": "webview",
+					"id": "beskidDashboardView",
+					"name": "Status",
+					"icon": "$(hubot)"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "beskidPackagesView",
+				"contents": "Local project dependencies and registry browse.\n[Browse registry](command:beskid.packages.open)"
+			}
+		],
+		"languages": [
+			{
+				"id": "beskid",
+				"aliases": [
+					"Beskid",
+					"beskid"
+				],
+				"extensions": [
+					".bd"
+				],
+				"configuration": "./language-configuration.json"
+			},
+			{
+				"id": "beskid-manifest",
+				"aliases": [
+					"Beskid Manifest",
+					"beskid-manifest"
+				],
+				"extensions": [
+					".bproj",
+					".bws"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "beskid",
+				"scopeName": "source.beskid",
+				"path": "./syntaxes/beskid.tmLanguage.json"
+			},
+			{
+				"language": "beskid-manifest",
+				"scopeName": "source.beskid.proj",
+				"path": "./syntaxes/beskid-proj.tmLanguage.json"
+			}
+		],
+		"configuration": [
+			{
+				"title": "Beskid",
+				"properties": {
+					"beskid.dashboard.openOnActivate": {
+						"type": "boolean",
+						"default": false,
+						"description": "Open the Beskid quick panel (status bar modal) when the extension activates."
+					},
+					"beskid.debug.enabled": {
+						"type": "boolean",
+						"default": false,
+						"description": "Show the Beskid Debug tree view in the activity bar (requires window reload)."
+					},
+					"beskid.docs.bookBaseUrl": {
+						"type": "string",
+						"default": "https://beskid-lang.org",
+						"description": "Base URL for Beskid book documentation fallback when opening symbol docs."
+					},
+					"beskid.docs.specBaseUrl": {
+						"type": "string",
+						"default": "https://spec.beskid-lang.org/platform-spec",
+						"description": "Base URL for platform-spec deep links from the LSP and symbol documentation."
+					},
+					"beskid.project.autoSelectFromEditor": {
+						"type": "boolean",
+						"default": true,
+						"description": "Automatically focus the Beskid project manifest for the active editor file."
+					},
+					"beskid.graph.defaultKind": {
+						"type": "string",
+						"enum": [
+							"projectDeps",
+							"workspace",
+							"moduleTree",
+							"importClosure",
+							"hostComposition"
+						],
+						"default": "projectDeps",
+						"description": "Default graph kind when opening the Graph Explorer panel."
+					}
+				}
+			},
+			{
+				"title": "Beskid › LSP",
+				"properties": {
+					"beskid.lsp.server.command": {
+						"type": "string",
+						"default": "cargo",
+						"description": "Launch command when `beskid.lsp.server.devMode` is enabled (typically `cargo run -p beskid_lsp`)."
+					},
+					"beskid.lsp.server.args": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"run",
+							"-p",
+							"beskid_lsp"
+						],
+						"description": "Arguments paired with `beskid.lsp.server.command` in dev mode."
+					},
+					"beskid.lsp.releaseTag": {
+						"type": "string",
+						"default": "lsp-latest",
+						"description": "GitHub release tag for LSP download (`lsp-latest` rolling tag, `lsp-vX.Y.Z` pinned release, or bare `X.Y.Y` / `vX.Y.Z` semver)."
+					},
+					"beskid.lsp.server.preferBundled": {
+						"type": "boolean",
+						"default": false,
+						"description": "Prefer the VSIX-bundled `beskid_lsp` under `server/<platform>-<arch>/` when no managed binary exists at `~/.beskid/bin/beskid_lsp`."
+					},
+					"beskid.lsp.server.devMode": {
+						"type": "boolean",
+						"default": false,
+						"description": "Build and run the language server from a local compiler workspace via Cargo when no CLI/binary override is available."
+					},
+					"beskid.lsp.server.path": {
+						"type": "string",
+						"default": "",
+						"description": "Absolute path to a Beskid LSP binary. Overrides managed, bundled, and dev-mode launch."
+					},
+					"beskid.lsp.server.cwd": {
+						"type": "string",
+						"default": "",
+						"description": "Working directory for the language server. Empty uses the focused project or first workspace folder."
+					},
+					"beskid.lsp.server.debugArgs": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"run",
+							"-p",
+							"beskid_lsp"
+						],
+						"description": "Dev-mode arguments when the extension runs under a VS Code debug session."
+					},
+					"beskid.lsp.log.level": {
+						"type": "string",
+						"enum": [
+							"error",
+							"warning",
+							"info",
+							"log",
+							"debug"
+						],
+						"default": "info",
+						"description": "Language server log level in the Beskid LSP output channel."
+					},
+					"beskid.lsp.log.serverOutput": {
+						"type": "boolean",
+						"default": true,
+						"description": "Mirror raw language server stdout/stderr to the Beskid LSP output channel."
+					}
+				}
+			},
+			{
+				"title": "Beskid › Toolchain",
+				"properties": {
+					"beskid.cli.path": {
+						"type": "string",
+						"default": "beskid",
+						"description": "Path to the Beskid CLI. `beskid` resolves to `~/.beskid/bin/beskid` after **Install CLI**."
+					},
+					"beskid.cli.releaseTag": {
+						"type": "string",
+						"default": "cli-latest",
+						"description": "GitHub release tag for CLI download (`cli-latest`, `cli-vX.Y.Z`, or bare `X.Y.Z` / `vX.Y.Z` semver)."
+					},
+					"beskid.toolchain.autoFetchDependencies": {
+						"type": "boolean",
+						"default": true,
+						"description": "On first toolchain bootstrap, run `beskid fetch` for discovered project manifests."
+					},
+					"beskid.toolchain.autoInstallOnLaunch": {
+						"type": "boolean",
+						"default": true,
+						"description": "On extension activate, automatically download the latest Beskid CLI and language server from GitHub when missing or outdated, then start the LSP."
+					}
+				}
+			},
+			{
+				"title": "Beskid › Packages",
+				"properties": {
+					"beskid.pckg.baseUrl": {
+						"type": "string",
+						"default": "https://pckg.beskid-lang.org",
+						"description": "Package registry (pckg) base URL for the Packages tree and dashboard."
+					},
+					"beskid.pckg.apiKey": {
+						"type": "string",
+						"default": "",
+						"description": "Optional registry API key. Prefer **Configure Package Registry API Key**; empty uses SecretStorage."
+					}
+				}
+			}
+		],
+		"configurationDefaults": {
+			"[beskid]": {
+				"editor.defaultFormatter": "beskid.beskid-vscode"
+			},
+			"[beskid-manifest]": {
+				"editor.defaultFormatter": "beskid.beskid-vscode"
+			}
+		}
+	},
+	"scripts": {
+		"sync:keywords": "bun scripts/sync-keywords.mjs",
+		"postinstall": "node scripts/bundle-mermaid.mjs",
+		"build": "node scripts/bundle-mermaid.mjs && bunx tsc -p . && bunx tsc -p tsconfig.integration.json",
+		"build:ext": "bunx tsc -p .",
+		"bundle:lsp": "node scripts/bundle-lsp-host.mjs",
+		"watch": "bunx tsc -w -p .",
+		"lint": "bunx tsc -p . --noEmit && bunx tsc -p tsconfig.integration.json --noEmit",
+		"test": "bun run test:unit",
+		"test:unit": "bun test",
+		"test:integration": "bun run build && node out/test/integration/runTest.js",
+		"test:all": "bun run lint && bun run test:unit && bun run test:integration",
+		"test:e2e": "bun test test/e2e",
+		"test:smoke:formatter": "node scripts/smoke-formatter.mjs",
+		"package": "node scripts/package-vsix.mjs",
+		"vscode:prepublish": "node scripts/vscode-prepublish.mjs"
+	},
+	"dependencies": {
+		"marked": "^15.0.12",
+		"mermaid": "^11.12.0",
+		"vscode-languageclient": "^9.0.1",
+		"vscode-languageserver-protocol": "3.17.5"
+	},
+	"devDependencies": {
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^25.6.0",
+		"@types/vscode": "1.88.0",
+		"@vscode/test-electron": "^2.5.2",
+		"glob": "^13.0.0",
+		"mocha": "^11.7.5",
+		"typescript": "^6.0.3"
+	},
+	"trustedDependencies": [
+		"@vscode/vsce-sign"
+	]
 }

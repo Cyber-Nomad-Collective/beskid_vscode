@@ -1,28 +1,28 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "bundle-lsp",
-      "type": "shell",
-      "command": "node scripts/bundle-lsp-host.mjs",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "build-extension",
-      "dependsOn": ["bundle-lsp"],
-      "type": "shell",
-      "command": "bun run build",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "problemMatcher": ["$tsc"]
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "bundle-lsp",
+			"type": "shell",
+			"command": "node scripts/bundle-lsp-host.mjs",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "build-extension",
+			"dependsOn": ["bundle-lsp"],
+			"type": "shell",
+			"command": "bun run build",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": ["$tsc"]
+		}
+	]
 }

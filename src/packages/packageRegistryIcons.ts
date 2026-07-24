@@ -13,23 +13,23 @@ const SVG_REFRESH = `<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="t
 const SVG_SEARCH = `<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.5 3a5.5 5.5 0 1 0 3.45 9.82l3.6 3.6a1 1 0 0 0 1.42-1.42l-3.6-3.6A5.5 5.5 0 0 0 8.5 3Zm0 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z"/></svg>`;
 
 export function actionButton(
-  attrs: string,
-  icon: string,
-  label: string,
-  primary = false,
+	attrs: string,
+	icon: string,
+	label: string,
+	primary = false,
 ): string {
-  const cls = primary ? "action-btn primary" : "action-btn";
-  return `<button type="button" class="${cls}" ${attrs}>
+	const cls = primary ? "action-btn primary" : "action-btn";
+	return `<button type="button" class="${cls}" ${attrs}>
     <span class="btn-icon">${icon}</span>
     <span class="btn-label">${label}</span>
   </button>`;
 }
 
 export const registryIcons = {
-  openBrowser: SVG_OPEN,
-  apiDocs: SVG_BOOK,
-  addDependency: SVG_ADD,
-  copy: SVG_COPY,
-  refresh: SVG_REFRESH,
-  search: SVG_SEARCH,
+	openBrowser: SVG_OPEN,
+	apiDocs: SVG_BOOK,
+	addDependency: SVG_ADD,
+	copy: SVG_COPY,
+	refresh: SVG_REFRESH,
+	search: SVG_SEARCH,
 } as const;

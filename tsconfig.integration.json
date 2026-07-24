@@ -1,15 +1,15 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "rootDir": "test/integration",
-    "outDir": "out/test/integration",
-    "strict": true,
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "types": ["node", "vscode", "mocha"]
-  },
-  "include": ["test/integration/**/*.ts"]
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ES2022",
+		"lib": ["ES2022"],
+		"rootDir": "test/integration",
+		"outDir": "out/test/integration",
+		"strict": true,
+		"sourceMap": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"types": ["node", "vscode", "mocha"]
+	},
+	"include": ["test/integration/**/*.ts"]
 }

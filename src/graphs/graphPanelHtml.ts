@@ -2,22 +2,22 @@ import { escapeHtml } from "../webviews/webviewHtml.js";
 import type { GraphNodeSummary } from "./lspGraphTypes.js";
 
 export interface GraphPanelViewState {
-  title: string;
-  mermaid: string;
-  revision: string;
-  kind: string;
-  warnings: Array<{ code: string; message: string }>;
-  nodes: GraphNodeSummary[];
+	title: string;
+	mermaid: string;
+	revision: string;
+	kind: string;
+	warnings: Array<{ code: string; message: string }>;
+	nodes: GraphNodeSummary[];
 }
 
 export function renderGraphPanelHtml(
-  cspSource: string,
-  mermaidScriptUri: string,
-  panelScriptUri: string,
-  state: GraphPanelViewState,
+	cspSource: string,
+	mermaidScriptUri: string,
+	panelScriptUri: string,
+	state: GraphPanelViewState,
 ): string {
-  const payload = JSON.stringify(state).replaceAll("<", "\\u003c");
-  return `<!DOCTYPE html>
+	const payload = JSON.stringify(state).replaceAll("<", "\\u003c");
+	return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />

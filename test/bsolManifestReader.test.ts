@@ -27,21 +27,24 @@ target "RuntimeTests" {
 `;
 
 describe("parseBprojManifest", () => {
-  test("extracts BSOL target blocks", () => {
-    const snapshot = parseBprojManifest(SAMPLE_BPROJ);
-    expect(snapshot.targets).toEqual([{ name: "RuntimeLib" }, { name: "RuntimeTests" }]);
-  });
+	test("extracts BSOL target blocks", () => {
+		const snapshot = parseBprojManifest(SAMPLE_BPROJ);
+		expect(snapshot.targets).toEqual([
+			{ name: "RuntimeLib" },
+			{ name: "RuntimeTests" },
+		]);
+	});
 
-  test("extracts declared dependencies with version and source", () => {
-    const snapshot = parseBprojManifest(SAMPLE_BPROJ);
-    expect(snapshot.dependencies).toEqual([
-      { name: "corelib_foundation", version: undefined, source: "path" },
-      { name: "registry_pkg", version: "1.2.3", source: "registry" },
-    ]);
-  });
+	test("extracts declared dependencies with version and source", () => {
+		const snapshot = parseBprojManifest(SAMPLE_BPROJ);
+		expect(snapshot.dependencies).toEqual([
+			{ name: "corelib_foundation", version: undefined, source: "path" },
+			{ name: "registry_pkg", version: "1.2.3", source: "registry" },
+		]);
+	});
 
-  test("returns empty collections for manifests without targets or deps", () => {
-    const snapshot = parseBprojManifest('project { name = "solo" }');
-    expect(snapshot).toEqual({ targets: [], dependencies: [] });
-  });
+	test("returns empty collections for manifests without targets or deps", () => {
+		const snapshot = parseBprojManifest('project { name = "solo" }');
+		expect(snapshot).toEqual({ targets: [], dependencies: [] });
+	});
 });

@@ -3,66 +3,70 @@ import { WEBVIEW_CSP_META } from "./webviewHtml.js";
 
 /** Shared CSP and script wiring for WebviewPanel instances. */
 export abstract class WebviewPanelHost {
-  protected panel: vscode.WebviewPanel | undefined;
+	protected panel: vscode.WebviewPanel | undefined;
 
-  protected bindPanel(
-    panel: vscode.WebviewPanel,
-    localRoots: vscode.Uri[] = [],
-  ): void {
-    this.panel = panel;
-    panel.webview.options = {
-      enableScripts: true,
-      localResourceRoots: localRoots,
-    };
-    panel.onDidDispose(() => {
-      this.panel = undefined;
-    });
-  }
+	protected bindPanel(
+		panel: vscode.WebviewPanel,
+		localRoots: vscode.Uri[] = [],
+	): void {
+		this.panel = panel;
+		panel.webview.options = {
+			enableScripts: true,
+			localResourceRoots: localRoots,
+		};
+		panel.onDidDispose(() => {
+			this.panel = undefined;
+		});
+	}
 
-  protected bindCommandMessages(): void {
-    this.panel?.webview.onDidReceiveMessage((message: unknown) => {
-      if (
-        message &&
-        typeof message === "object" &&
-        "type" in message &&
-        (message as { type?: string }).type === "command" &&
-        "command" in message &&
-        typeof (message as { command?: string }).command === "string"
-      ) {
-        void vscode.commands.executeCommand((message as { command: string }).command);
-      }
-      if (
-        message &&
-        typeof message === "object" &&
-        "type" in message &&
-        (message as { type?: string }).type === "close"
-      ) {
-        this.panel?.dispose();
-      }
-    });
-  }
+	protected bindCommandMessages(): void {
+		this.panel?.webview.onDidReceiveMessage((message: unknown) => {
+			if (
+				message &&
+				typeof message === "object" &&
+				"type" in message &&
+				(message as { type?: string }).type === "command" &&
+				"command" in message &&
+				typeof (message as { command?: string }).command === "string"
+			) {
+				void vscode.commands.executeCommand(
+					(message as { command: string }).command,
+				);
+			}
+			if (
+				message &&
+				typeof message === "object" &&
+				"type" in message &&
+				(message as { type?: string }).type === "close"
+			) {
+				this.panel?.dispose();
+			}
+		});
+	}
 
-  protected postHtml(html: string): void {
-    if (this.panel) {
-      this.panel.webview.html = html;
-    }
-  }
+	protected postHtml(html: string): void {
+		if (this.panel) {
+			this.panel.webview.html = html;
+		}
+	}
 
-  protected onMessage(handler: (message: unknown) => void): vscode.Disposable | undefined {
-    return this.panel?.webview.onDidReceiveMessage(handler);
-  }
+	protected onMessage(
+		handler: (message: unknown) => void,
+	): vscode.Disposable | undefined {
+		return this.panel?.webview.onDidReceiveMessage(handler);
+	}
 
-  dispose(): void {
-    this.panel?.dispose();
-  }
+	dispose(): void {
+		this.panel?.dispose();
+	}
 
-  reveal(): void {
-    this.panel?.reveal(vscode.ViewColumn.Active, false);
-  }
+	reveal(): void {
+		this.panel?.reveal(vscode.ViewColumn.Active, false);
+	}
 }
 
 export function modalShellStyles(): string {
-  return `
+	return `
     html, body {
       height: 100%;
       margin: 0;
@@ -118,8 +122,11 @@ export function modalShellStyles(): string {
 }
 
 /** @deprecated Editor-tab modal shell; dashboard uses panel webview HTML via renderDashboardHtml. */
-export function modalDocumentOpen(bodyInnerHtml: string, title = "Beskid"): string {
-  return `<!DOCTYPE html>
+export function modalDocumentOpen(
+	bodyInnerHtml: string,
+	title = "Beskid",
+): string {
+	return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />

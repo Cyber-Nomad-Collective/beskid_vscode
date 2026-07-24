@@ -55,33 +55,33 @@ const DASHBOARD_STYLES = `
 `;
 
 function row(label: string, value: string | undefined): string {
-  const display = value?.trim() ? escapeHtml(value) : "—";
-  return `<div class="row"><span class="label">${escapeHtml(label)}</span><span class="value">${display}</span></div>`;
+	const display = value?.trim() ? escapeHtml(value) : "—";
+	return `<div class="row"><span class="label">${escapeHtml(label)}</span><span class="value">${display}</span></div>`;
 }
 
 function phaseBadge(snapshot: LspRuntimeSnapshot): string {
-  const phase = snapshot.scan.active ? "scanning" : snapshot.phase;
-  return `<span class="badge badge--${escapeHtml(phase)}">${escapeHtml(phase)}</span>`;
+	const phase = snapshot.scan.active ? "scanning" : snapshot.phase;
+	return `<span class="badge badge--${escapeHtml(phase)}">${escapeHtml(phase)}</span>`;
 }
 
 export function renderDashboardBodyHtml(
-  snapshot: LspRuntimeSnapshot,
-  extensionVersion: string,
+	snapshot: LspRuntimeSnapshot,
+	extensionVersion: string,
 ): string {
-  const launch = snapshot.launch;
-  const launchLine = launch
-    ? `${launch.command} ${launch.args.join(" ")}`.trim()
-    : undefined;
-  const scanLine =
-    snapshot.scan.active && snapshot.scan.total !== undefined
-      ? `${snapshot.scan.current ?? 0} / ${snapshot.scan.total}${snapshot.scan.message ? ` — ${snapshot.scan.message}` : ""}`
-      : snapshot.scan.message;
+	const launch = snapshot.launch;
+	const launchLine = launch
+		? `${launch.command} ${launch.args.join(" ")}`.trim()
+		: undefined;
+	const scanLine =
+		snapshot.scan.active && snapshot.scan.total !== undefined
+			? `${snapshot.scan.current ?? 0} / ${snapshot.scan.total}${snapshot.scan.message ? ` — ${snapshot.scan.message}` : ""}`
+			: snapshot.scan.message;
 
-  const focused = snapshot.focusedProjectUri
-    ? snapshot.focusedProjectUri.replace(/^file:\/\//, "")
-    : undefined;
+	const focused = snapshot.focusedProjectUri
+		? snapshot.focusedProjectUri.replace(/^file:\/\//, "")
+		: undefined;
 
-  return `<style>${DASHBOARD_STYLES}</style>
+	return `<style>${DASHBOARD_STYLES}</style>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <strong>Language server</strong>
@@ -119,8 +119,11 @@ export function renderDashboardBodyHtml(
 }
 
 /** Panel / status dashboard HTML (opened from status bar, not an editor tab). */
-export function renderDashboardHtml(snapshot: LspRuntimeSnapshot, extensionVersion: string): string {
-  return `<!DOCTYPE html>
+export function renderDashboardHtml(
+	snapshot: LspRuntimeSnapshot,
+	extensionVersion: string,
+): string {
+	return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
