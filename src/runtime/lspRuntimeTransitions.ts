@@ -9,7 +9,7 @@ export type ScanNotificationOutcome = {
 /** Pure workspace-scan handling shared by {@link LspRuntimeState}. */
 export function applyWorkspaceScanNotification(
 	currentPhase: LspRuntimePhase,
-	scan: LspScanSnapshot,
+	_scan: LspScanSnapshot,
 	params: BeskidStatusParams,
 ): ScanNotificationOutcome | undefined {
 	if (params.source !== "lsp") {

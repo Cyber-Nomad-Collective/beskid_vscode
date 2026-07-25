@@ -1,7 +1,5 @@
-import { dirname } from "node:path";
 import type * as vscode from "vscode";
 import {
-	Executable,
 	LanguageClient,
 	type LanguageClientOptions,
 } from "vscode-languageclient/node";

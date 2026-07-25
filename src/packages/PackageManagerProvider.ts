@@ -43,7 +43,7 @@ export class PackageManagerProvider
 	implements vscode.TreeDataProvider<PackageTreeItem>
 {
 	private readonly emitter = new vscode.EventEmitter<
-		PackageTreeItem | undefined | null | void
+		PackageTreeItem | undefined | null | undefined
 	>();
 	readonly onDidChangeTreeData = this.emitter.event;
 

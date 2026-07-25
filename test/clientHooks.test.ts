@@ -4,7 +4,7 @@ import { buildExecuteCommandMiddleware } from "../src/lsp/clientHooks.js";
 describe("buildExecuteCommandMiddleware", () => {
 	test("passes through command result from next", async () => {
 		const middleware = buildExecuteCommandMiddleware(undefined);
-		const result = await middleware.executeCommand!(
+		const result = await middleware.executeCommand?.(
 			"beskid.listWorkspaces",
 			[],
 			async () => ({ workspaces: [] }),
@@ -20,7 +20,7 @@ describe("buildExecuteCommandMiddleware", () => {
 				uiCalls += 1;
 			},
 		});
-		await middleware.executeCommand!("beskid.refreshWorkspace", [], async () => {
+		await middleware.executeCommand?.("beskid.refreshWorkspace", [], async () => {
 			nextCalls += 1;
 			return null;
 		});
@@ -35,7 +35,7 @@ describe("buildExecuteCommandMiddleware", () => {
 				uiCalls += 1;
 			},
 		});
-		await middleware.executeCommand!(
+		await middleware.executeCommand?.(
 			"beskid.getGraph",
 			[{ projectUri: "file:///x" }],
 			async () => null,

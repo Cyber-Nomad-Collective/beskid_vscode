@@ -1,4 +1,3 @@
-import * as path from "node:path";
 import { globSync } from "glob";
 import Mocha from "mocha";
 

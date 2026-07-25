@@ -34,7 +34,7 @@ function formatLspCommandFailure(cause: unknown): string {
 
 function logLspCommandFailure(
 	outputChannel: vscode.OutputChannel | undefined,
-	command: string,
+	_command: string,
 	error: LspCommandError,
 ): void {
 	if (!outputChannel) {

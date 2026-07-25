@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { BESKID_TREE_VIEW_IDS } from "../src/views/beskidViewIds.js";
 import { completeVscodeMock } from "./fixtures/vscodeMock.js";
 

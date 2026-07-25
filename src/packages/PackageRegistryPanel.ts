@@ -6,7 +6,6 @@ import {
 } from "./packageRegistryHtml.js";
 import type { PckgActivityReporter } from "./pckgActivity.js";
 import type { PckgService } from "./pckgService.js";
-import type { PackageDetails, PackageSearchRow } from "./pckgTypes.js";
 
 const PANEL_TYPE = "beskidPackageRegistry";
 

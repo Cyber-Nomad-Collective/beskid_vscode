@@ -35,7 +35,7 @@ export class ProjectsTreeProvider
 	implements vscode.TreeDataProvider<ProjectsTreeItem>
 {
 	private readonly emitter = new vscode.EventEmitter<
-		ProjectsTreeItem | undefined | null | void
+		ProjectsTreeItem | undefined | null | undefined
 	>();
 	readonly onDidChangeTreeData = this.emitter.event;
 

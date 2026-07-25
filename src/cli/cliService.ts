@@ -110,7 +110,7 @@ export class CliService {
 				`Beskid CLI ${result.version} installed to ${result.path}.`,
 			);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const _message = error instanceof Error ? error.message : String(error);
 			void vscode.window.showErrorMessage(
 				`Failed to install Beskid CLI. See Beskid LSP output.`,
 			);

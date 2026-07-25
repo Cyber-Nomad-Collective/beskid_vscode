@@ -9,7 +9,7 @@ export class BeskidStatusController {
 
 	constructor(
 		private readonly statusBar: vscode.StatusBarItem,
-		private readonly runtime: LspRuntimeState,
+		readonly runtime: LspRuntimeState,
 	) {
 		this.subscription = runtime.onDidChange((snapshot) => this.render(snapshot));
 		this.render(runtime.getSnapshot());
