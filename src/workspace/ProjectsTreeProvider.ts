@@ -51,7 +51,7 @@ export class ProjectsTreeProvider
 	) {}
 
 	refresh(): void {
-		this.emitter.fire();
+		this.emitter.fire(undefined);
 	}
 
 	getRevealTarget(projectUri: vscode.Uri): ProjectsTreeItem {

@@ -22,7 +22,7 @@
 		"compiler"
 	],
 	"engines": {
-		"vscode": "^1.88.0"
+		"vscode": "^1.96.0"
 	},
 	"categories": [
 		"Programming Languages",
@@ -490,7 +490,7 @@
 					".bproj",
 					".bws"
 				],
-				"configuration": "./language-configuration.json"
+				"configuration": "./beskid-proj-language-configuration.json"
 			}
 		],
 		"grammars": [
@@ -511,28 +511,28 @@
 				"properties": {
 					"beskid.dashboard.openOnActivate": {
 						"type": "boolean",
-						"default": false,
-						"description": "Open the Beskid quick panel (status bar modal) when the extension activates."
+						"default": true,
+						"description": "Open the Beskid dashboard panel when the extension activates."
 					},
 					"beskid.debug.enabled": {
 						"type": "boolean",
 						"default": false,
-						"description": "Show the Beskid Debug tree view in the activity bar (requires window reload)."
+						"markdownDescription": "Show the Beskid Debug tree view in the activity bar. Requires a window reload (`Developer: Reload Window`)."
 					},
 					"beskid.docs.bookBaseUrl": {
 						"type": "string",
 						"default": "https://beskid-lang.org",
-						"description": "Base URL for Beskid book documentation fallback when opening symbol docs."
+						"markdownDescription": "Base URL for the Beskid Book. Used as a fallback when the LSP cannot resolve a documentation link for a symbol."
 					},
 					"beskid.docs.specBaseUrl": {
 						"type": "string",
 						"default": "https://spec.beskid-lang.org/platform-spec",
-						"description": "Base URL for platform-spec deep links from the LSP and symbol documentation."
+						"markdownDescription": "Base URL for the normative platform specification. Deep-links from LSP hover/go-to-definition resolve against this prefix."
 					},
 					"beskid.project.autoSelectFromEditor": {
 						"type": "boolean",
 						"default": true,
-						"description": "Automatically focus the Beskid project manifest for the active editor file."
+						"markdownDescription": "When the active editor changes, automatically select the nearest Beskid project (`.bproj` / `.bws`) as the focused workspace. Disable if you manage projects manually."
 					},
 					"beskid.graph.defaultKind": {
 						"type": "string",
@@ -543,8 +543,15 @@
 							"importClosure",
 							"hostComposition"
 						],
+						"enumDescriptions": [
+							"Project dependency graph",
+							"Workspace member graph",
+							"Module tree",
+							"Import closure (transitive)",
+							"Host composition graph"
+						],
 						"default": "projectDeps",
-						"description": "Default graph kind when opening the Graph Explorer panel."
+						"markdownDescription": "Default graph kind shown when opening the Graph Explorer panel. Change at runtime via the panel toolbar."
 					}
 				}
 			},
@@ -554,7 +561,7 @@
 					"beskid.lsp.server.command": {
 						"type": "string",
 						"default": "cargo",
-						"description": "Launch command when `beskid.lsp.server.devMode` is enabled (typically `cargo run -p beskid_lsp`)."
+						"markdownDescription": "Launch command when `#beskid.lsp.server.devMode#` is enabled. Typically `cargo` (args are specified separately via `#beskid.lsp.server.args#`)."
 					},
 					"beskid.lsp.server.args": {
 						"type": "array",
@@ -566,32 +573,32 @@
 							"-p",
 							"beskid_lsp"
 						],
-						"description": "Arguments paired with `beskid.lsp.server.command` in dev mode."
+						"markdownDescription": "Arguments passed to `#beskid.lsp.server.command#` in dev mode."
 					},
 					"beskid.lsp.releaseTag": {
 						"type": "string",
 						"default": "lsp-latest",
-						"description": "GitHub release tag for LSP download (`lsp-latest` rolling tag, `lsp-vX.Y.Z` pinned release, or bare `X.Y.Y` / `vX.Y.Z` semver)."
+						"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tag `lsp-latest`, a pinned release tag such as `lsp-v0.1.0`, or a bare semver (`v0.1.0` / `0.1.0`)."
 					},
 					"beskid.lsp.server.preferBundled": {
 						"type": "boolean",
-						"default": false,
-						"description": "Prefer the VSIX-bundled `beskid_lsp` under `server/<platform>-<arch>/` when no managed binary exists at `~/.beskid/bin/beskid_lsp`."
+						"default": true,
+						"markdownDescription": "Prefer the VSIX-bundled `beskid_lsp` binary under `server/<platform>-<arch>/` when no managed binary exists at `~/.beskid/bin/beskid_lsp`."
 					},
 					"beskid.lsp.server.devMode": {
 						"type": "boolean",
 						"default": false,
-						"description": "Build and run the language server from a local compiler workspace via Cargo when no CLI/binary override is available."
+						"markdownDescription": "Build and run the language server from a local compiler workspace via Cargo (`#beskid.lsp.server.command#` + `#beskid.lsp.server.args#`). Overrides managed and bundled binaries."
 					},
 					"beskid.lsp.server.path": {
 						"type": "string",
 						"default": "",
-						"description": "Absolute path to a Beskid LSP binary. Overrides managed, bundled, and dev-mode launch."
+						"markdownDescription": "Absolute path to a Beskid LSP binary. When set, this overrides managed, bundled, and dev-mode launch. Leave empty to use automatic resolution."
 					},
 					"beskid.lsp.server.cwd": {
 						"type": "string",
 						"default": "",
-						"description": "Working directory for the language server. Empty uses the focused project or first workspace folder."
+						"markdownDescription": "Working directory for the language server process. When empty, the extension uses the focused project directory or the first workspace folder."
 					},
 					"beskid.lsp.server.debugArgs": {
 						"type": "array",
@@ -603,7 +610,7 @@
 							"-p",
 							"beskid_lsp"
 						],
-						"description": "Dev-mode arguments when the extension runs under a VS Code debug session."
+						"markdownDescription": "Arguments used when the extension runs under a VS Code **debug session** (e.g. Extension Development Host). The `run` executable is built from `#beskid.lsp.server.command#` + `#beskid.lsp.server.args#`; `#beskid.lsp.server.debugArgs#` is used for the `debug` executable."
 					},
 					"beskid.lsp.log.level": {
 						"type": "string",
@@ -614,13 +621,20 @@
 							"log",
 							"debug"
 						],
+						"enumDescriptions": [
+							"Errors only",
+							"Errors and warnings",
+							"Errors, warnings, and info",
+							"Log-level output",
+							"Debug-level output (verbose)"
+						],
 						"default": "info",
-						"description": "Language server log level in the Beskid LSP output channel."
+						"markdownDescription": "Log level for the language server output channel (Beskid LSP)."
 					},
 					"beskid.lsp.log.serverOutput": {
 						"type": "boolean",
-						"default": true,
-						"description": "Mirror raw language server stdout/stderr to the Beskid LSP output channel."
+						"default": false,
+						"markdownDescription": "Mirror raw language server stdout/stderr to the Beskid LSP output channel. Enable for troubleshooting; leave off for normal use."
 					}
 				}
 			},
@@ -630,22 +644,22 @@
 					"beskid.cli.path": {
 						"type": "string",
 						"default": "beskid",
-						"description": "Path to the Beskid CLI. `beskid` resolves to `~/.beskid/bin/beskid` after **Install CLI**."
+						"markdownDescription": "Path to the Beskid CLI executable. The default `beskid` resolves to `~/.beskid/bin/beskid` after running **Install CLI**. Set an absolute path to override."
 					},
 					"beskid.cli.releaseTag": {
 						"type": "string",
 						"default": "cli-latest",
-						"description": "GitHub release tag for CLI download (`cli-latest`, `cli-vX.Y.Z`, or bare `X.Y.Z` / `vX.Y.Z` semver)."
+						"markdownDescription": "GitHub release tag for CLI binary download. Accepts `cli-latest`, a pinned release tag (`cli-v0.1.0`), or a bare semver (`v0.1.0` / `0.1.0`)."
 					},
 					"beskid.toolchain.autoFetchDependencies": {
 						"type": "boolean",
 						"default": true,
-						"description": "On first toolchain bootstrap, run `beskid fetch` for discovered project manifests."
+						"markdownDescription": "Run `beskid fetch` for discovered project manifests during the first toolchain bootstrap."
 					},
 					"beskid.toolchain.autoInstallOnLaunch": {
 						"type": "boolean",
 						"default": true,
-						"description": "On extension activate, automatically download the latest Beskid CLI and language server from GitHub when missing or outdated, then start the LSP."
+						"markdownDescription": "On extension activation, automatically download the latest Beskid CLI and language server from GitHub when missing or outdated, then start the LSP."
 					}
 				}
 			},
@@ -655,12 +669,12 @@
 					"beskid.pckg.baseUrl": {
 						"type": "string",
 						"default": "https://pckg.beskid-lang.org",
-						"description": "Package registry (pckg) base URL for the Packages tree and dashboard."
+						"markdownDescription": "Base URL for the Beskid package registry. Used by the Packages tree and dashboard."
 					},
 					"beskid.pckg.apiKey": {
 						"type": "string",
 						"default": "",
-						"description": "Optional registry API key. Prefer **Configure Package Registry API Key**; empty uses SecretStorage."
+						"markdownDescription": "Optional registry API key. Prefer the **Configure Package Registry API Key** command; when empty the extension falls back to VS Code SecretStorage."
 					}
 				}
 			}

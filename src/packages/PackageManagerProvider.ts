@@ -57,7 +57,7 @@ export class PackageManagerProvider
 	}
 
 	refresh(): void {
-		this.emitter.fire();
+		this.emitter.fire(undefined);
 	}
 
 	async refreshProjectSection(): Promise<void> {

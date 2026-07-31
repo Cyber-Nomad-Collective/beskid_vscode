@@ -82,15 +82,15 @@
 		},
 		"manifest-blocks": {
 			"name": "keyword.control.manifest.beskid.proj",
-			"match": "\\b(?:project|target|dependency|workspace|member|override|registry)\\b"
+			"match": "\\b(?:project|target|dependency|workspace|member|override|registry|profile|patch|features)\\b"
 		},
 		"manifest-field-keys": {
 			"name": "support.type.property-name.beskid.proj",
-			"match": "\\b(?:name|version|root|root_namespace|kind|entry|source|path|url|rev|resolver)\\b"
+			"match": "\\b(?:name|version|root|root_namespace|kind|entry|source|path|url|rev|resolver|features|default_features|optional|package|branch|tag|registry|authors|edition|license|description|repository|homepage|documentation|readme|keywords|categories|exclude|include|publish)\\b"
 		},
 		"manifest-enums": {
 			"name": "support.constant.manifest.beskid.proj",
-			"match": "\\b(?:App|Lib|Test|path|git|registry|v1)\\b"
+			"match": "\\b(?:App|Lib|Test|Bin|Example|Bench|path|git|registry|v1|v2)\\b"
 		},
 		"numbers": {
 			"name": "constant.numeric.beskid.proj",
