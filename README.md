@@ -38,8 +38,8 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `.bproj` for the active editor |
 | `beskid.cli.path` | `beskid` | CLI binary for fetch, lock, build, and tasks |
-| `beskid.cli.releaseTag` | `cli-latest` | GitHub release tag for **Install CLI** |
-| `beskid.lsp.releaseTag` | `lsp-latest` | GitHub release tag for **Install LSP** |
+| `beskid.cli.releaseTag` | `cli-stable` | GitHub release tag for **Install CLI** |
+| `beskid.lsp.releaseTag` | `lsp-stable` | GitHub release tag for **Install LSP** |
 | `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP on activate when missing |
 | `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once after first bootstrap |
 | `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | Registry base URL |
@@ -96,8 +96,8 @@ This repo is the **`beskid_vscode` submodule** in the aggregate [beskid](https:/
 
 On activate (unless auto-install is disabled, dev mode is on, or `beskid.lsp.server.path` is set):
 
-1. Managed CLI at `~/.beskid/bin/beskid` (from GitHub `cli-latest`)
-2. Managed LSP at `~/.beskid/bin/beskid_lsp` (from GitHub `lsp-latest`)
+1. Managed CLI at `~/.beskid/bin/beskid` (from GitHub `cli-stable` / `cli-unstable`)
+2. Managed LSP at `~/.beskid/bin/beskid_lsp` (from GitHub `lsp-stable` / `lsp-unstable`)
 3. `beskid fetch` for open manifests when `beskid.toolchain.autoFetchDependencies` is enabled
 4. Start the language server
 

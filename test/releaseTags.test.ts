@@ -17,6 +17,11 @@ describe("normalizeCliReleaseTag", () => {
 		expect(normalizeCliReleaseTag("v0.1.77")).toBe("cli-v0.1.77");
 	});
 
+	test("accepts explicit aliases", () => {
+		expect(normalizeCliReleaseTag("stable")).toBe("cli-stable");
+		expect(normalizeCliReleaseTag("unstable")).toBe("cli-unstable");
+	});
+
 	test("defaults empty to rolling tag", () => {
 		expect(normalizeCliReleaseTag("")).toBe("cli-stable");
 		expect(normalizeCliReleaseTag("   ")).toBe("cli-stable");
@@ -32,6 +37,11 @@ describe("normalizeLspReleaseTag", () => {
 	test("maps bare semver to pinned GitHub tag", () => {
 		expect(normalizeLspReleaseTag("0.1.77")).toBe("lsp-v0.1.77");
 		expect(normalizeLspReleaseTag("v0.1.77")).toBe("lsp-v0.1.77");
+	});
+
+	test("accepts explicit aliases", () => {
+		expect(normalizeLspReleaseTag("stable")).toBe("lsp-stable");
+		expect(normalizeLspReleaseTag("unstable")).toBe("lsp-unstable");
 	});
 });
 
