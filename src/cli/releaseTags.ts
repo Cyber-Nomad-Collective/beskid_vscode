@@ -2,8 +2,8 @@ const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/;
 
 export function normalizeCliReleaseTag(tag: string): string {
 	const trimmed = tag.trim();
-	if (!trimmed || trimmed === "cli-latest") {
-		return "cli-latest";
+	if (!trimmed || trimmed === "cli-stable") {
+		return "cli-stable";
 	}
 	if (trimmed.startsWith("cli-v")) {
 		return trimmed;
@@ -17,8 +17,8 @@ export function normalizeCliReleaseTag(tag: string): string {
 
 export function normalizeLspReleaseTag(tag: string): string {
 	const trimmed = tag.trim();
-	if (!trimmed || trimmed === "lsp-latest") {
-		return "lsp-latest";
+	if (!trimmed || trimmed === "lsp-stable") {
+		return "lsp-stable";
 	}
 	if (trimmed.startsWith("lsp-v")) {
 		return trimmed;

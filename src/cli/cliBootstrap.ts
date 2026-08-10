@@ -57,7 +57,7 @@ async function verifyCliSupportsLsp(
 	if (!(await cliSupportsLsp(cliPath))) {
 		throw new Error(
 			`Installed CLI does not support 'beskid lsp' (exit ${result.exitCode}). ` +
-				"Download a current CLI release (default tag: cli-latest) or point beskid.cli.path at a local build.",
+				"Download a current CLI release (default tag: cli-stable) or point beskid.cli.path at a local build.",
 		);
 	}
 }
@@ -145,7 +145,7 @@ async function installManagedLsp(
 }
 
 /**
- * Ensures managed CLI and LSP binaries (GitHub `cli-latest` / `lsp-latest` by default),
+ * Ensures managed CLI and LSP binaries (GitHub `cli-stable` / `lsp-stable` by default),
  * optionally fetches workspace dependencies once, and verifies the toolchain before LSP starts.
  */
 export async function bootstrapBeskidToolchain(

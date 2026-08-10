@@ -55,11 +55,11 @@ export function cliReleaseDownloadUrl(
 	releaseTag: string,
 	assetName: string,
 ): string {
-	const tag = releaseTag.trim() || "cli-latest";
+	const tag = releaseTag.trim() || "cli-stable";
 	return `https://github.com/${CLI_GITHUB_REPO}/releases/download/${tag}/${assetName}`;
 }
 
 export function cliVersionUrl(releaseTag: string): string {
-	const tag = releaseTag.trim() || "cli-latest";
+	const tag = releaseTag.trim() || "cli-stable";
 	return `https://github.com/${CLI_GITHUB_REPO}/releases/download/${tag}/cli-version.txt`;
 }

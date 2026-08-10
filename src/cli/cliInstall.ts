@@ -47,7 +47,7 @@ export async function installBeskidCli(
 	outputChannel: vscode.OutputChannel,
 	releaseTag = readCliReleaseTag(),
 ): Promise<CliInstallResult> {
-	const tag = releaseTag.trim() || "cli-latest";
+	const tag = releaseTag.trim() || "cli-stable";
 	const asset = resolveCliPlatformAsset();
 	if (!asset) {
 		throw new Error(

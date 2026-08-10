@@ -30,11 +30,11 @@ describe("resolveCliPlatformAsset", () => {
 
 describe("release URLs", () => {
 	test("uses GitHub release download layout", () => {
-		expect(cliReleaseDownloadUrl("cli-latest", "beskid-darwin-arm64")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/cli-latest/beskid-darwin-arm64",
+		expect(cliReleaseDownloadUrl("cli-stable", "beskid-darwin-arm64")).toBe(
+			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/cli-stable/beskid-darwin-arm64",
 		);
-		expect(cliVersionUrl("cli-latest")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/cli-latest/cli-version.txt",
+		expect(cliVersionUrl("cli-stable")).toBe(
+			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/cli-stable/cli-version.txt",
 		);
 	});
 });

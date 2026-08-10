@@ -8,7 +8,7 @@ import {
 
 describe("normalizeCliReleaseTag", () => {
 	test("keeps rolling and pinned tags", () => {
-		expect(normalizeCliReleaseTag("cli-latest")).toBe("cli-latest");
+		expect(normalizeCliReleaseTag("cli-stable")).toBe("cli-stable");
 		expect(normalizeCliReleaseTag("cli-v0.1.77")).toBe("cli-v0.1.77");
 	});
 
@@ -18,14 +18,14 @@ describe("normalizeCliReleaseTag", () => {
 	});
 
 	test("defaults empty to rolling tag", () => {
-		expect(normalizeCliReleaseTag("")).toBe("cli-latest");
-		expect(normalizeCliReleaseTag("   ")).toBe("cli-latest");
+		expect(normalizeCliReleaseTag("")).toBe("cli-stable");
+		expect(normalizeCliReleaseTag("   ")).toBe("cli-stable");
 	});
 });
 
 describe("normalizeLspReleaseTag", () => {
 	test("keeps rolling and pinned tags", () => {
-		expect(normalizeLspReleaseTag("lsp-latest")).toBe("lsp-latest");
+		expect(normalizeLspReleaseTag("lsp-stable")).toBe("lsp-stable");
 		expect(normalizeLspReleaseTag("lsp-v0.1.77")).toBe("lsp-v0.1.77");
 	});
 

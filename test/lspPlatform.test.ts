@@ -30,11 +30,11 @@ describe("resolveLspPlatformAsset", () => {
 
 describe("LSP release URLs", () => {
 	test("uses GitHub release download layout", () => {
-		expect(lspReleaseDownloadUrl("lsp-latest", "beskid_lsp-darwin-arm64")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-latest/beskid_lsp-darwin-arm64",
+		expect(lspReleaseDownloadUrl("lsp-stable", "beskid_lsp-darwin-arm64")).toBe(
+			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-stable/beskid_lsp-darwin-arm64",
 		);
-		expect(lspVersionUrl("lsp-latest")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-latest/lsp-version.txt",
+		expect(lspVersionUrl("lsp-stable")).toBe(
+			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-stable/lsp-version.txt",
 		);
 	});
 });

@@ -60,11 +60,11 @@ export function lspReleaseDownloadUrl(
 	releaseTag: string,
 	assetName: string,
 ): string {
-	const tag = releaseTag.trim() || "lsp-latest";
+	const tag = releaseTag.trim() || "lsp-stable";
 	return `https://github.com/${CLI_GITHUB_REPO}/releases/download/${tag}/${assetName}`;
 }
 
 export function lspVersionUrl(releaseTag: string): string {
-	const tag = releaseTag.trim() || "lsp-latest";
+	const tag = releaseTag.trim() || "lsp-stable";
 	return `https://github.com/${CLI_GITHUB_REPO}/releases/download/${tag}/lsp-version.txt`;
 }

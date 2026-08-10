@@ -47,7 +47,7 @@ export async function installBeskidLsp(
 	outputChannel: vscode.OutputChannel,
 	releaseTag = readLspReleaseTag(),
 ): Promise<LspInstallResult> {
-	const tag = releaseTag.trim() || "lsp-latest";
+	const tag = releaseTag.trim() || "lsp-stable";
 	const asset = resolveLspPlatformAsset();
 	if (!asset) {
 		throw new Error(

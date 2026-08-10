@@ -56,7 +56,7 @@ export function readCliReleaseTag(): string {
 	const configured =
 		vscode.workspace
 			.getConfiguration("beskid")
-			.get<string>("cli.releaseTag", "cli-latest") || "cli-latest";
+			.get<string>("cli.releaseTag", "cli-stable") || "cli-stable";
 	return normalizeCliReleaseTag(configured);
 }
 
@@ -64,7 +64,7 @@ export function readLspReleaseTag(): string {
 	const configured =
 		vscode.workspace
 			.getConfiguration("beskid.lsp")
-			.get<string>("releaseTag", "lsp-latest") || "lsp-latest";
+			.get<string>("releaseTag", "lsp-stable") || "lsp-stable";
 	return normalizeLspReleaseTag(configured);
 }
 

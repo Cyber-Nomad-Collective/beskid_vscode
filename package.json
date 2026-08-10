@@ -577,8 +577,8 @@
 					},
 					"beskid.lsp.releaseTag": {
 						"type": "string",
-						"default": "lsp-latest",
-						"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tag `lsp-latest`, a pinned release tag such as `lsp-v0.1.0`, or a bare semver (`v0.1.0` / `0.1.0`)."
+						"default": "lsp-stable",
+						"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tags `lsp-stable` or `lsp-unstable`, or a pinned release tag such as `lsp-v0.1.0` / bare semver (`v0.1.0` / `0.1.0`)."
 					},
 					"beskid.lsp.server.preferBundled": {
 						"type": "boolean",
@@ -648,8 +648,8 @@
 					},
 					"beskid.cli.releaseTag": {
 						"type": "string",
-						"default": "cli-latest",
-						"markdownDescription": "GitHub release tag for CLI binary download. Accepts `cli-latest`, a pinned release tag (`cli-v0.1.0`), or a bare semver (`v0.1.0` / `0.1.0`)."
+						"default": "cli-stable",
+						"markdownDescription": "GitHub release tag for CLI binary download. Accepts rolling tags `cli-stable` or `cli-unstable`, or a pinned release tag (`cli-v0.1.0` / bare semver `v0.1.0` / `0.1.0`)."
 					},
 					"beskid.toolchain.autoFetchDependencies": {
 						"type": "boolean",
