@@ -3,6 +3,7 @@ import { join } from "node:path";
 import * as vscode from "vscode";
 import { readCliReleaseTag } from "../config/workspaceSettings.js";
 import { appendToolchainFailure } from "./cliErrors.js";
+import { resolveCliReleaseTag } from "./releaseTags.js";
 import {
 	cliReleaseDownloadUrl,
 	cliVersionUrl,
@@ -47,7 +48,6 @@ export async function installBeskidCli(
 	outputChannel: vscode.OutputChannel,
 	releaseTag = readCliReleaseTag(),
 ): Promise<CliInstallResult> {
-	const tag = releaseTag.trim() || "cli-stable";
 	const asset = resolveCliPlatformAsset();
 	if (!asset) {
 		throw new Error(
@@ -55,6 +55,7 @@ export async function installBeskidCli(
 				"Published builds cover Linux x86_64, macOS Apple Silicon, and Windows x86_64.",
 		);
 	}
+	const tag = await resolveCliReleaseTag(releaseTag);
 
 	const versionUrl = cliVersionUrl(tag);
 	const downloadUrl = cliReleaseDownloadUrl(tag, asset.releaseAsset);

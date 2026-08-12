@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type * as vscode from "vscode";
 import { readLspReleaseTag } from "../config/workspaceSettings.js";
 import { appendToolchainFailure } from "./cliErrors.js";
+import { resolveLspReleaseTag } from "./releaseTags.js";
 import {
 	defaultLspInstallDir,
 	lspReleaseDownloadUrl,
@@ -47,7 +48,6 @@ export async function installBeskidLsp(
 	outputChannel: vscode.OutputChannel,
 	releaseTag = readLspReleaseTag(),
 ): Promise<LspInstallResult> {
-	const tag = releaseTag.trim() || "lsp-stable";
 	const asset = resolveLspPlatformAsset();
 	if (!asset) {
 		throw new Error(
@@ -55,6 +55,7 @@ export async function installBeskidLsp(
 				"Published LSP builds cover Linux x86_64, macOS Apple Silicon, and Windows x86_64.",
 		);
 	}
+	const tag = await resolveLspReleaseTag(releaseTag);
 
 	const versionUrl = lspVersionUrl(tag);
 	const downloadUrl = lspReleaseDownloadUrl(tag, asset.releaseAsset);

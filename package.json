@@ -575,11 +575,11 @@
 						],
 						"markdownDescription": "Arguments passed to `#beskid.lsp.server.command#` in dev mode."
 					},
-					"beskid.lsp.releaseTag": {
-						"type": "string",
-						"default": "lsp-stable",
-						"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tags `lsp-stable` or `lsp-unstable`, or a pinned release tag such as `lsp-v0.1.0` / bare semver (`v0.1.0` / `0.1.0`)."
-					},
+						"beskid.lsp.releaseTag": {
+							"type": "string",
+							"default": "lsp-stable",
+							"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tags `lsp-stable` / `lsp-unstable` or legacy `lsp-latest` (migrated to `lsp-v*`), or a pinned release tag such as `lsp-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
+						},
 					"beskid.lsp.server.preferBundled": {
 						"type": "boolean",
 						"default": true,
@@ -646,11 +646,11 @@
 						"default": "beskid",
 						"markdownDescription": "Path to the Beskid CLI executable. The default `beskid` resolves to `~/.beskid/bin/beskid` after running **Install CLI**. Set an absolute path to override."
 					},
-					"beskid.cli.releaseTag": {
-						"type": "string",
-						"default": "cli-stable",
-						"markdownDescription": "GitHub release tag for CLI binary download. Accepts rolling tags `cli-stable` or `cli-unstable`, or a pinned release tag (`cli-v0.1.0` / bare semver `v0.1.0` / `0.1.0`)."
-					},
+						"beskid.cli.releaseTag": {
+							"type": "string",
+							"default": "cli-stable",
+							"markdownDescription": "GitHub release tag for CLI binary download. Accepts the rolling tags `cli-stable` / `cli-unstable` or legacy `cli-latest` (migrated to `cli-v*`), or a pinned release tag such as `cli-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
+						},
 					"beskid.toolchain.autoFetchDependencies": {
 						"type": "boolean",
 						"default": true,
