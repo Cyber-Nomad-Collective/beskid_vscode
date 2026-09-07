@@ -681,10 +681,12 @@
 		],
 		"configurationDefaults": {
 			"[beskid]": {
-				"editor.defaultFormatter": "beskid.beskid-vscode"
+				"editor.defaultFormatter": "beskid.beskid-vscode",
+				"editor.formatOnSave": true
 			},
 			"[beskid-manifest]": {
-				"editor.defaultFormatter": "beskid.beskid-vscode"
+				"editor.defaultFormatter": "beskid.beskid-vscode",
+				"editor.formatOnSave": true
 			}
 		}
 	},
