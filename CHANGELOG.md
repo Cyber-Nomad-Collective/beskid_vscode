@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Build standalone VS Code packages with an exact-version language server,
+  reject package, lockfile, or binary version drift, and name VSIX artifacts by
+  version and platform so stale packages cannot be mistaken for current ones.
+
 ### Changed
 
 - Align the extension authoring and lockfile identity with the canonical Beskid

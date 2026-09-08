@@ -3,7 +3,14 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  bundleExactHostLsp,
+  clearVsixArtifacts,
+  versionedVsixName,
+} from "./exact-release-bundle.mjs";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = join(root, "..");
 
 function run(command, env = {}) {
   execSync(command, {
@@ -13,16 +20,22 @@ function run(command, env = {}) {
   });
 }
 
-mkdirSync(join(root, "dist"), { recursive: true });
+const distRoot = join(root, "dist");
+mkdirSync(distRoot, { recursive: true });
+clearVsixArtifacts(distRoot);
 
-run("node scripts/bundle-lsp-host.mjs");
+const { platformKey, version } = bundleExactHostLsp({ extensionRoot: root, repoRoot });
+const vsixName = versionedVsixName(version, platformKey);
+const vsixPath = join("dist", vsixName);
 run("bun run build");
 run("npm prune --omit=dev");
 
 try {
-  run("bunx @vscode/vsce package --out dist/beskid.vsix", {
+  run(`bunx @vscode/vsce package --out ${vsixPath}`, {
     BESKID_VSCODE_SKIP_PREBUILD: "1",
   });
 } finally {
   run("bun install");
 }
+
+console.log(`Created ${vsixPath}`);

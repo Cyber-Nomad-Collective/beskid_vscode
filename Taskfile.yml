@@ -54,4 +54,3 @@ tasks:
     dir: '{{.EXT_DIR}}'
     cmds:
       - node scripts/package-vsix.mjs
-      - echo "Created dist/beskid.vsix"
