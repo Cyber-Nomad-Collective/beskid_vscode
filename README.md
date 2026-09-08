@@ -104,3 +104,9 @@ On activate (unless auto-install is disabled, dev mode is on, or `beskid.lsp.ser
 Override order when starting LSP: explicit `beskid.lsp.server.path` → managed LSP → VSIX-bundled binary (`beskid.lsp.server.preferBundled`) → managed CLI `beskid lsp` → local compiler build.
 
 Progress appears in the status bar and **Beskid LSP** output channel. Use **Beskid: Setup Toolchain** to retry after failure.
+
+## License
+
+Beskid-owned source in this repository is licensed under the
+[Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for bundled third-party
+attributions.

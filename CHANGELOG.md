@@ -11,4 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Align the extension authoring and lockfile identity with the canonical Beskid
   0.4 toolchain version used by the Zed extension, CLI, and release pipeline.
+- License the extension under Apache-2.0 and preserve notices for the bundled
+  Mermaid dependency graph.
 - Enable the Beskid language-server formatter automatically when saving Beskid source and manifest files.
