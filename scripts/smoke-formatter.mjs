@@ -11,22 +11,29 @@ const languageClientSource = readFileSync(
 	"utf8",
 );
 
-for (const language of ["[beskid]", "[beskid-manifest]"]) {
-	const settings = pkg?.contributes?.configurationDefaults?.[language];
-	if (settings?.["editor.defaultFormatter"] !== "beskid.beskid-vscode") {
-		throw new Error(
-			`expected ${language} editor.defaultFormatter to be 'beskid.beskid-vscode', got ${String(settings?.["editor.defaultFormatter"])}`,
-		);
-	}
+const sourceSettings = pkg?.contributes?.configurationDefaults?.["[beskid]"];
+if (sourceSettings?.["editor.defaultFormatter"] !== "beskid.beskid-vscode") {
+	throw new Error("expected [beskid] to use the Beskid formatter");
+}
+if (sourceSettings?.["editor.formatOnSave"] !== true) {
+	throw new Error("expected [beskid] format-on-save to be enabled");
+}
 
-	if (settings?.["editor.formatOnSave"] !== true) {
-		throw new Error(
-			`expected ${language} editor.formatOnSave to be true, got ${String(settings?.["editor.formatOnSave"])}`,
-		);
+for (const language of ["[beskid]", "[beskid-manifest]", "[bsol]"]) {
+	const settings = pkg?.contributes?.configurationDefaults?.[language];
+	if (settings?.["editor.semanticHighlighting.enabled"] !== true) {
+		throw new Error(`expected ${language} semantic highlighting to be enabled`);
 	}
 }
 
-for (const pattern of ["**/*.bd", "**/*.bproj", "**/*.bws"]) {
+for (const language of ["[beskid-manifest]", "[bsol]"]) {
+	const settings = pkg?.contributes?.configurationDefaults?.[language];
+	if ("editor.defaultFormatter" in settings || "editor.formatOnSave" in settings) {
+		throw new Error(`expected ${language} not to advertise unsupported formatting`);
+	}
+}
+
+for (const pattern of ["**/*.bd", "**/*.bproj", "**/*.bws", "**/*.bsol"]) {
 	if (!languageClientSource.includes(`pattern: \"${pattern}\"`)) {
 		throw new Error(
 			`expected language-client document selector to include ${pattern} files`,
