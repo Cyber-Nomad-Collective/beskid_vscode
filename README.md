@@ -4,7 +4,10 @@ Language support for [Beskid](https://beskid-lang.org): syntax highlighting, Int
 
 ## Features
 
-- **Language support** — `.bd` source and BSOL manifests (`.bproj`, `.bws`) with LSP diagnostics, completion, hover, go-to-definition, and formatting
+- **Language support** — `.bd` source with diagnostics, completion, hover,
+  go-to-definition, and formatting; BSOL manifests (`.bproj`, `.bws`) and
+  standalone `.bsol` configuration with one shared grammar plus LSP
+  diagnostics, completion, hover, and semantic highlighting
 - **Projects sidebar** — workspaces (`.bws`) as containers; expand a member to see targets, dependencies, and source folders in one tree
 - **Graph Explorer** — interactive Mermaid dependency/module/host graphs in a webview panel (command palette: **Beskid: Show Project Graph**)
 - **Packages** — local lockfile dependencies; browse the public [pckg](https://pckg.beskid-lang.org) registry in a document panel
@@ -72,9 +75,12 @@ bun install
 bun run build
 bun run lint
 bun run test:unit
-bun run test:integration   # first run downloads VS Code into .vscode-test/
+bun run test:integration   # builds the sibling compiler LSP and downloads VS Code on first run
 bun run test:all
 ```
+
+For a standalone `beskid_vscode` checkout, set `BESKID_TEST_LSP_PATH` to an
+already-built `beskid_lsp` binary before running the integration suite.
 
 Press **F5** to launch an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first.
 
@@ -82,7 +88,7 @@ When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collect
 
 ### Manual smoke
 
-1. Open a folder with `.bws` / `.bproj` manifests and start the Extension Development Host (**F5**).
+1. Open a folder with `.bws` / `.bproj` manifests or a standalone `.bsol` configuration and start the Extension Development Host (**F5**).
 2. **Projects** lists the workspace; expand a member to see targets, dependencies, and sources.
 3. Click the status-bar **Beskid** item — the Status panel opens above the status bar (not a new editor tab).
 4. **Packages** → **Browse registry…** — public catalog without an API key.

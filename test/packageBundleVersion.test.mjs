@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { chmodSync, copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
 	bundleExactHostLsp,
@@ -41,10 +40,6 @@ function repoFixture() {
 	fixtures.push(repoRoot);
 	const validatorDir = join(repoRoot, "scripts", "ci");
 	mkdirSync(validatorDir, { recursive: true });
-	copyFileSync(
-		fileURLToPath(new URL("../../scripts/ci/release-version.mjs", import.meta.url)),
-		join(validatorDir, "release-version.mjs"),
-	);
 	writeFileSync(
 		join(validatorDir, "resolve-editor-authoring-version.mjs"),
 		"#!/usr/bin/env node\nconsole.log('0.4.598');\n",
