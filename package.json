@@ -2,7 +2,7 @@
 	"name": "beskid-vscode",
 	"displayName": "Beskid",
 	"description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
-	"version": "0.4.0",
+	"version": "0.4.598",
 	"publisher": "beskid",
 	"license": "Apache-2.0",
 	"icon": "icon.png",
@@ -491,6 +491,17 @@
 					".bws"
 				],
 				"configuration": "./beskid-proj-language-configuration.json"
+			},
+			{
+				"id": "bsol",
+				"aliases": [
+					"Beskid BSOL",
+					"bsol"
+				],
+				"extensions": [
+					".bsol"
+				],
+				"configuration": "./beskid-proj-language-configuration.json"
 			}
 		],
 		"grammars": [
@@ -501,6 +512,11 @@
 			},
 			{
 				"language": "beskid-manifest",
+				"scopeName": "source.beskid.proj",
+				"path": "./syntaxes/beskid-proj.tmLanguage.json"
+			},
+			{
+				"language": "bsol",
 				"scopeName": "source.beskid.proj",
 				"path": "./syntaxes/beskid-proj.tmLanguage.json"
 			}
@@ -575,11 +591,11 @@
 						],
 						"markdownDescription": "Arguments passed to `#beskid.lsp.server.command#` in dev mode."
 					},
-						"beskid.lsp.releaseTag": {
-							"type": "string",
-							"default": "lsp-stable",
-							"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tags `lsp-stable` / `lsp-unstable` or legacy `lsp-latest` (migrated to `lsp-v*`), or a pinned release tag such as `lsp-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
-						},
+					"beskid.lsp.releaseTag": {
+						"type": "string",
+						"default": "lsp-stable",
+						"markdownDescription": "GitHub release tag for LSP binary download. Accepts the rolling tags `lsp-stable` / `lsp-unstable` or legacy `lsp-latest` (migrated to `lsp-v*`), or a pinned release tag such as `lsp-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
+					},
 					"beskid.lsp.server.preferBundled": {
 						"type": "boolean",
 						"default": true,
@@ -646,11 +662,11 @@
 						"default": "beskid",
 						"markdownDescription": "Path to the Beskid CLI executable. The default `beskid` resolves to `~/.beskid/bin/beskid` after running **Install CLI**. Set an absolute path to override."
 					},
-						"beskid.cli.releaseTag": {
-							"type": "string",
-							"default": "cli-stable",
-							"markdownDescription": "GitHub release tag for CLI binary download. Accepts the rolling tags `cli-stable` / `cli-unstable` or legacy `cli-latest` (migrated to `cli-v*`), or a pinned release tag such as `cli-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
-						},
+					"beskid.cli.releaseTag": {
+						"type": "string",
+						"default": "cli-stable",
+						"markdownDescription": "GitHub release tag for CLI binary download. Accepts the rolling tags `cli-stable` / `cli-unstable` or legacy `cli-latest` (migrated to `cli-v*`), or a pinned release tag such as `cli-v0.4.0` / bare semver (`v0.4.0` / `0.4.0`)."
+					},
 					"beskid.toolchain.autoFetchDependencies": {
 						"type": "boolean",
 						"default": true,
@@ -682,11 +698,14 @@
 		"configurationDefaults": {
 			"[beskid]": {
 				"editor.defaultFormatter": "beskid.beskid-vscode",
-				"editor.formatOnSave": true
+				"editor.formatOnSave": true,
+				"editor.semanticHighlighting.enabled": true
 			},
 			"[beskid-manifest]": {
-				"editor.defaultFormatter": "beskid.beskid-vscode",
-				"editor.formatOnSave": true
+				"editor.semanticHighlighting.enabled": true
+			},
+			"[bsol]": {
+				"editor.semanticHighlighting.enabled": true
 			}
 		}
 	},
@@ -709,7 +728,6 @@
 	},
 	"dependencies": {
 		"marked": "^15.0.12",
-		"mermaid": "^11.12.0",
 		"vscode-languageclient": "^9.0.1",
 		"vscode-languageserver-protocol": "3.17.5"
 	},
@@ -717,10 +735,13 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.6.0",
 		"@types/vscode": "1.88.0",
-		"@vscode/test-electron": "^2.5.2",
+		"@vscode/test-electron": "^3.1.0",
 		"glob": "^13.0.0",
+		"mermaid": "^11.12.0",
 		"mocha": "^11.7.5",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3",
+		"vscode-oniguruma": "^2.0.1",
+		"vscode-textmate": "^9.3.2"
 	},
 	"trustedDependencies": [
 		"@vscode/vsce-sign"

@@ -30,6 +30,7 @@ export function buildBeskidClientOptions(
 			{ scheme: "file", language: "beskid", pattern: "**/*.bd" },
 			{ scheme: "file", language: "beskid-manifest", pattern: "**/*.bproj" },
 			{ scheme: "file", language: "beskid-manifest", pattern: "**/*.bws" },
+			{ scheme: "file", language: "bsol", pattern: "**/*.bsol" },
 		],
 		synchronize: {
 			configurationSection: ["beskid.lsp", "beskid"],

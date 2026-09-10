@@ -1,9 +1,15 @@
 src/**
-tsconfig.json
+tsconfig*.json
 .vscode/**
 .cursor/**
 .gitignore
+bunfig.toml
+bun.lock
 bun.lockb
+package-lock.json
+scripts/**
 test/**
+out/test/**
+out/**/*.map
 example.bd
 Taskfile.yml
