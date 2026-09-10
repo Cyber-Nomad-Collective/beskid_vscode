@@ -2,7 +2,7 @@
 	"name": "beskid-vscode",
 	"displayName": "Beskid",
 	"description": "Beskid language support for VS Code with bundled cross-platform LSP binaries and optional dev mode.",
-	"version": "0.4.598",
+	"version": "0.4.0",
 	"publisher": "beskid",
 	"license": "Apache-2.0",
 	"icon": "icon.png",
