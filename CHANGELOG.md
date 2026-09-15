@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace extension and activity icons with Ridge and use the matching package-registry mark.
+
 - Align the extension authoring and lockfile identity with the canonical Beskid
   0.4 toolchain version used by the Zed extension, CLI, and release pipeline.
 - License the extension under Apache-2.0 and preserve notices for the bundled

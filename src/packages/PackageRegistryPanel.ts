@@ -195,7 +195,7 @@ export class PackageRegistryPanel extends WebviewPanelHost {
 			this.panel && this.extensionUri
 				? this.panel.webview
 						.asWebviewUri(
-							vscode.Uri.joinPath(this.extensionUri, "media", "beskid-logo.svg"),
+							vscode.Uri.joinPath(this.extensionUri, "media", "beskid-pckg.svg"),
 						)
 						.toString()
 				: undefined;
