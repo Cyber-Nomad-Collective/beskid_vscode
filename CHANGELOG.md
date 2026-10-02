@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Prepare the extension package and lockfile identity for the corrected Beskid
+  0.5.2 native release; verified replacement LSP payloads remain required before
+  packaging or publication.
 - Align the extension package and lockfile identity with the Beskid 0.5.1 release.
 - Package platform-specific VSIX files from verified native release evidence
   without rebuilding the compiler; reject stale digests and mixed server payloads.
