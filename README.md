@@ -96,7 +96,9 @@ When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collect
 
 ## Publishing and repository layout
 
-This repo is the **`beskid_vscode` submodule** in the aggregate [beskid](https://github.com/Cyber-Nomad-Collective/beskid) monorepo. Open VSX publishing runs from the superrepo workflow `publish-open-vsx.yml` (builds `beskid_lsp`, bundles platform binaries under `server/`, packages the VSIX). Bundled LSP payloads under `server/` are not committed locally.
+This repo is the **`beskid_vscode` submodule** in the aggregate [beskid](https://github.com/Cyber-Nomad-Collective/beskid) monorepo. Prepare maintained release packages from verified native evidence using `node scripts/ci/package-editor-release.mjs <platform> <native-evidence-root> <native-root-commit>` in the aggregate root. Platforms are `linux-x64`, `darwin-arm64`, and `win32-x64`; the evidence root contains the corresponding `linux`, `macos`, or `windows` directory and complete checksum inventory. This packages the exact verified LSP without rebuilding compiler sources. Stage one platform per clean editor checkout. Bundled LSP payloads under `server/` are not committed locally.
+
+The resulting versioned VSIX can be submitted to both Visual Studio Marketplace and Open VSX using their maintained publisher accounts. Package preparation has no registry side effects. The historical `open-vsx-publish.sh` native-build path is not the verified-evidence release entrypoint.
 
 ## Language server resolution
 

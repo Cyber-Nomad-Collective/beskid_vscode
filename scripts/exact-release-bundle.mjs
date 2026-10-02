@@ -1,8 +1,10 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
 	chmodSync,
 	copyFileSync,
 	existsSync,
+	lstatSync,
 	mkdirSync,
 	readFileSync,
 	readdirSync,
@@ -75,6 +77,27 @@ export function resolveHost(platform = process.platform, arch = process.arch) {
 
 export function versionedVsixName(version, platformKey) {
 	return `beskid-vscode-${version}-${platformKey}.vsix`;
+}
+
+// Release packaging receives these values only after the aggregate evidence
+// validator has checked the native build's version, target, and source pins.
+export function bundleVerifiedReleaseLsp({ extensionRoot, repoRoot, platformKey, artifactPath, sha256, version }) {
+	const packageVersion = resolvePackageReleaseVersion(extensionRoot, repoRoot);
+	if (version !== packageVersion) throw new Error("verified LSP release version does not match editor authoring version");
+	const [platform, arch] = platformKey.split("-");
+	const host = resolveHost(platform, arch);
+	const stats = lstatSync(artifactPath);
+	if (!stats.isFile() || stats.isSymbolicLink()) throw new Error("verified LSP must be a regular file");
+	if (!/^[a-f0-9]{64}$/.test(sha256 ?? "")) throw new Error("verified LSP requires its SHA256 digest");
+	const bytes = readFileSync(artifactPath);
+	if (createHash("sha256").update(bytes).digest("hex") !== sha256) throw new Error("verified LSP checksum mismatch");
+	const destinationDir = join(extensionRoot, "server", platformKey);
+	mkdirSync(destinationDir, { recursive: true });
+	const destination = join(destinationDir, host.binaryName);
+	copyFileSync(artifactPath, destination);
+	if (createHash("sha256").update(readFileSync(destination)).digest("hex") !== sha256) throw new Error("staged LSP checksum mismatch");
+	if (platform !== "win32") chmodSync(destination, 0o755);
+	return { destination, platformKey, version };
 }
 
 export function clearVsixArtifacts(distRoot) {

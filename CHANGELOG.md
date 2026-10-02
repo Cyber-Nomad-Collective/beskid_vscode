@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Align the extension package and lockfile identity with the Beskid 0.5.1 release.
+- Package platform-specific VSIX files from verified native release evidence
+  without rebuilding the compiler; reject stale digests and mixed server payloads.
+
 - Replace extension and activity icons with Ridge and use the matching package-registry mark.
 
 - Align the extension authoring and lockfile identity with the canonical Beskid

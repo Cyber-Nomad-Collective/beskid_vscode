@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
 	bundleExactHostLsp,
+	bundleVerifiedReleaseLsp,
 	clearVsixArtifacts,
 	resolveHost,
 	resolvePackageReleaseVersion,
@@ -48,6 +50,20 @@ function repoFixture() {
 }
 
 describe("exact VS Code release bundle", () => {
+	test("stages checksum-verified native evidence without running a release build", () => {
+		const extensionRoot = extensionFixture();
+		const repoRoot = repoFixture();
+		const artifactPath = join(repoRoot, "windows-lsp.exe");
+		writeFileSync(artifactPath, "native Windows payload");
+		const sha256 = createHash("sha256").update(readFileSync(artifactPath)).digest("hex");
+		const options = { extensionRoot, repoRoot, platformKey: "win32-x64", artifactPath, sha256, version: "0.4.598" };
+		const staged = bundleVerifiedReleaseLsp(options);
+		expect(readFileSync(staged.destination, "utf8")).toBe("native Windows payload");
+		expect(() => bundleVerifiedReleaseLsp({ ...options, version: "0.5.1" })).toThrow("version");
+		writeFileSync(artifactPath, "tampered payload");
+		expect(() => bundleVerifiedReleaseLsp(options)).toThrow("checksum mismatch");
+	});
+
 	test("rejects package and lock version drift", () => {
 		const extensionRoot = extensionFixture({ rootLockVersion: "0.4.597" });
 		expect(() => resolvePackageReleaseVersion(extensionRoot)).toThrow(
