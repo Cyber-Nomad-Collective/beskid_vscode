@@ -5,7 +5,7 @@ import {
 	readAutoFetchDependencies,
 	resolveCliExecutablePath,
 } from "../config/workspaceSettings.js";
-import { cliSupportsLsp } from "./cliCapabilities.js";
+import { negotiateCliCapabilities } from "./cliCapabilities.js";
 import { defaultLspInstallPath } from "./lspPlatform.js";
 import {
 	onboardingProgressMessage,
@@ -43,8 +43,8 @@ export async function assessToolchainNeeds(
 	const lspMissing = !existsSync(lspPath);
 	const cliMissing = !cliPath;
 	let cliNeedsUpgrade = false;
-	if (cliPath && lspMissing) {
-		cliNeedsUpgrade = !(await cliSupportsLsp(cliPath));
+	if (cliPath) {
+		cliNeedsUpgrade = !(await negotiateCliCapabilities(cliPath)).compatible;
 	}
 
 	const downloading = cliMissing || lspMissing || cliNeedsUpgrade;

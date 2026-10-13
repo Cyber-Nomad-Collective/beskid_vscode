@@ -1,11 +1,12 @@
 import type { Executable } from "vscode-languageclient/node";
+import { isCliLspLaunch } from "../cli/cliCommandSurface.js";
 import type {
 	LspLaunchSnapshot,
 	LspLaunchSource,
 } from "../runtime/lspRuntimeTypes.js";
 
 function inferSource(command: string, args: string[]): LspLaunchSource {
-	if (args.includes("lsp")) {
+	if (isCliLspLaunch(args)) {
 		return "cli";
 	}
 	if (command === "cargo" || args.includes("beskid_lsp")) {
@@ -28,6 +29,6 @@ export function launchSnapshotFromExecutable(
 		args,
 		cwd,
 		source: inferSource(command, args),
-		binaryPath: args.includes("lsp") ? command : command,
+		binaryPath: command,
 	};
 }

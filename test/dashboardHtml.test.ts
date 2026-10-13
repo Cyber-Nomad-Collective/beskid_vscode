@@ -48,7 +48,7 @@ describe("renderDashboardHtml", () => {
 				focusedProjectUri: "file:///tmp/demo/demo.bproj",
 				launch: {
 					command: "/usr/local/bin/beskid_lsp",
-					args: ["lsp"],
+					args: [],
 					binaryPath: "/usr/local/bin/beskid_lsp",
 					source: "explicit",
 				},

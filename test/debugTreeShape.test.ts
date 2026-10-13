@@ -36,13 +36,13 @@ describe("debugTreeShape", () => {
 				launch: {
 					source: "cli",
 					command: "/bin/beskid",
-					args: ["lsp"],
+					args: ["dev", "lsp"],
 					cwd: "/repo",
 					binaryPath: "/bin/beskid",
 				},
 			}),
 		);
 		expect(rows.find((r) => r.label === "Source")?.value).toBe("cli");
-		expect(rows.find((r) => r.label === "Args")?.value).toBe("lsp");
+		expect(rows.find((r) => r.label === "Args")?.value).toBe("dev lsp");
 	});
 });

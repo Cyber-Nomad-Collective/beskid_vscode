@@ -176,11 +176,11 @@
 			},
 			{
 				"command": "beskid.cli.fetch",
-				"title": "Beskid: CLI Fetch"
+				"title": "Beskid: CLI Fetch (dev project fetch)"
 			},
 			{
 				"command": "beskid.cli.lock",
-				"title": "Beskid: CLI Lock"
+				"title": "Beskid: CLI Lock (dev project lock)"
 			},
 			{
 				"command": "beskid.cli.build",
@@ -191,8 +191,8 @@
 				"title": "Beskid: CLI Test"
 			},
 			{
-				"command": "beskid.cli.analyze",
-				"title": "Beskid: CLI Analyze"
+				"command": "beskid.cli.check",
+				"title": "Beskid: CLI Check"
 			},
 			{
 				"command": "beskid.lsp.openLogs",
@@ -222,7 +222,7 @@
 				"properties": {
 					"projectPath": {
 						"type": "string",
-						"description": "Project root or .bproj manifest path"
+						"description": "Project directory, or a .bproj manifest passed as --project"
 					}
 				}
 			},
@@ -232,7 +232,7 @@
 				"properties": {
 					"projectPath": {
 						"type": "string",
-						"description": "Project root or .bproj manifest path"
+						"description": "Project directory, or a .bproj manifest passed as --project"
 					}
 				}
 			},
@@ -242,7 +242,7 @@
 				"properties": {
 					"projectPath": {
 						"type": "string",
-						"description": "Project root or .bproj manifest path"
+						"description": "Project directory, or a .bproj manifest passed as --project"
 					}
 				}
 			},
@@ -252,17 +252,17 @@
 				"properties": {
 					"projectPath": {
 						"type": "string",
-						"description": "Project root or .bproj manifest path"
+						"description": "Project directory, or a .bproj manifest passed as --project"
 					}
 				}
 			},
 			{
-				"type": "beskid-analyze",
+				"type": "beskid-check",
 				"required": [],
 				"properties": {
 					"projectPath": {
 						"type": "string",
-						"description": "Project root or .bproj manifest path"
+						"description": "Project directory, or a .bproj manifest passed as --project"
 					}
 				}
 			}
@@ -670,7 +670,7 @@
 					"beskid.toolchain.autoFetchDependencies": {
 						"type": "boolean",
 						"default": true,
-						"markdownDescription": "Run `beskid fetch` for discovered project manifests during the first toolchain bootstrap."
+						"markdownDescription": "Run `beskid dev project fetch` for discovered project manifests during the first toolchain bootstrap (`--project <bproj>` for project manifests)."
 					},
 					"beskid.toolchain.autoInstallOnLaunch": {
 						"type": "boolean",

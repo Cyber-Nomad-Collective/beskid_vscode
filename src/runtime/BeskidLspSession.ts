@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { isCliLspLaunch } from "../cli/cliCommandSurface.js";
 import { NotificationType, State } from "vscode-languageclient";
 import type { LanguageClient } from "vscode-languageclient/node";
 import {
@@ -146,7 +147,7 @@ export class BeskidLspSession {
 		if (!launch) {
 			return;
 		}
-		const cliPath = launch.args.includes("lsp")
+		const cliPath = isCliLspLaunch(launch.args)
 			? launch.command
 			: launch.binaryPath;
 		const cliVersion = await probeCliVersion(cliPath);

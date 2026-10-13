@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import type { Executable } from "vscode-languageclient/node";
-import { cliSupportsLsp } from "../cli/cliCapabilities.js";
+import { negotiateCliCapabilities } from "../cli/cliCapabilities.js";
+import { CLI_LSP_ARGS } from "../cli/cliCommandSurface.js";
 import { shouldAutoInstallToolchainOnLaunch } from "../cli/ensureToolchainOnLaunch.js";
 import { defaultLspInstallPath } from "../cli/lspPlatform.js";
 import {
@@ -129,10 +130,26 @@ export async function resolveLspServerLaunch(
 		return sameLaunch(executable(bundledBinary, [], options));
 	}
 
-	const cliPath =
-		resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
-	if (cliPath && (await cliSupportsLsp(cliPath))) {
-		return sameLaunch(executable(cliPath, ["lsp"], options));
+	let cliGuidance: string | undefined;
+	const compatibleCli = async (
+		candidate: string | undefined,
+	): Promise<string | undefined> => {
+		if (!candidate) {
+			return undefined;
+		}
+		const compatibility = await negotiateCliCapabilities(candidate);
+		if (compatibility.compatible) {
+			return candidate;
+		}
+		cliGuidance = compatibility.guidance;
+		return undefined;
+	};
+
+	const cliPath = await compatibleCli(
+		resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot),
+	);
+	if (cliPath) {
+		return sameLaunch(executable(cliPath, [...CLI_LSP_ARGS], options));
 	}
 
 	if (!devMode && shouldAutoInstallToolchainOnLaunch()) {
@@ -142,10 +159,11 @@ export async function resolveLspServerLaunch(
 		if (managedAfterBootstrap) {
 			return sameLaunch(executable(managedAfterBootstrap, [], options));
 		}
-		const cliAfterBootstrap =
-			resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot);
-		if (cliAfterBootstrap && (await cliSupportsLsp(cliAfterBootstrap))) {
-			return sameLaunch(executable(cliAfterBootstrap, ["lsp"], options));
+		const cliAfterBootstrap = await compatibleCli(
+			resolveCliExecutablePath() ?? resolveLocalCompilerCli(compilerRoot),
+		);
+		if (cliAfterBootstrap) {
+			return sameLaunch(executable(cliAfterBootstrap, [...CLI_LSP_ARGS], options));
 		}
 	}
 
@@ -163,7 +181,8 @@ export async function resolveLspServerLaunch(
 		const message =
 			`Beskid language server could not be started for ${platformKey}. ` +
 			"Run **Beskid: Install LSP** or **Beskid: Setup toolchain**, set `beskid.lsp.server.path`, " +
-			"or enable `beskid.lsp.server.devMode`.";
+			"or enable `beskid.lsp.server.devMode`." +
+			(cliGuidance ? ` ${cliGuidance}` : "");
 		void vscode.window.showErrorMessage(message);
 		throw new Error(message);
 	}

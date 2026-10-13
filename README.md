@@ -13,7 +13,7 @@ Language support for [Beskid](https://beskid-lang.org): syntax highlighting, Int
 - **Packages** — local lockfile dependencies; browse the public [pckg](https://pckg.beskid-lang.org) registry in a document panel
 - **Status dashboard** — click the status-bar **Beskid** item to open the Status panel (LSP health, toolchain, fetch/lock, common actions)
 - **Symbol documentation** — open book docs from hover (“View documentation”) or **Beskid: Open Symbol Documentation**
-- **CLI integration** — fetch, lock, build, test, and analyze via the command palette and task provider
+- **CLI integration** — `check`, `build`, `test`, and `dev project fetch|lock` via the command palette and task provider; requires the Beskid 0.6 CLI
 - **Automatic toolchain** — downloads CLI and LSP from GitHub releases on first launch (configurable)
 
 Cross-module IntelliSense requires a resolved project context (same `.bproj` / `Project.lock` layout the CLI uses for builds).
@@ -22,7 +22,7 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 
 1. Install the extension from Open VSX (or run from source — see [Development](#development)).
 2. Open a folder containing a `.bws` workspace manifest or a `.bproj` project manifest.
-3. On first activate, the extension installs the Beskid CLI and LSP if needed and runs `beskid fetch`.
+3. On first activate, the extension installs the Beskid CLI and LSP if needed and runs `beskid dev project fetch`.
 4. Click **Beskid** in the status bar for the quick panel, or open the **Beskid** activity bar for Projects and Packages.
 
 ## Sidebar views
@@ -40,11 +40,11 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `.bproj` for the active editor |
-| `beskid.cli.path` | `beskid` | CLI binary for fetch, lock, build, and tasks |
+| `beskid.cli.path` | `beskid` | CLI binary for check, build, test, fetch, lock, and tasks (Beskid 0.6 or later) |
 | `beskid.cli.releaseTag` | `cli-stable` | GitHub release tag for **Install CLI**. Supports `cli-stable`/`cli-unstable`, and migrates legacy `cli-latest` to pinned `cli-v*` releases. |
 | `beskid.lsp.releaseTag` | `lsp-stable` | GitHub release tag for **Install LSP**. Supports `lsp-stable`/`lsp-unstable`, and migrates legacy `lsp-latest` to pinned `lsp-v*` releases. |
 | `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP on activate when missing |
-| `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid fetch` once after first bootstrap |
+| `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid dev project fetch` once after first bootstrap |
 | `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | Registry base URL |
 | `beskid.pckg.apiKey` | *(empty)* | API key for private packages (public browse works without a key) |
 | `beskid.debug.enabled` | `false` | Show the Debug sidebar view |
@@ -106,10 +106,14 @@ On activate (unless auto-install is disabled, dev mode is on, or `beskid.lsp.ser
 
 1. Managed CLI at `~/.beskid/bin/beskid` (from GitHub `cli-stable` / `cli-unstable`, with legacy `cli-latest` migration)
 2. Managed LSP at `~/.beskid/bin/beskid_lsp` (from GitHub `lsp-stable` / `lsp-unstable`, with legacy `lsp-latest` migration)
-3. `beskid fetch` for open manifests when `beskid.toolchain.autoFetchDependencies` is enabled
+3. `beskid dev project fetch` for open manifests when `beskid.toolchain.autoFetchDependencies` is enabled
 4. Start the language server
 
-Override order when starting LSP: explicit `beskid.lsp.server.path` → managed LSP → VSIX-bundled binary (`beskid.lsp.server.preferBundled`) → managed CLI `beskid lsp` → local compiler build.
+Override order when starting LSP: explicit `beskid.lsp.server.path` → managed LSP → VSIX-bundled binary (`beskid.lsp.server.preferBundled`) → managed CLI `beskid dev lsp` → local compiler build.
+
+The extension negotiates the CLI command surface with `beskid dev capabilities --json` before it runs the CLI. A CLI that does not answer, or that does not list `check`, `build`, `test`, `dev lsp`, and `dev project`, is rejected with upgrade guidance: run `beskid toolchain update` or install Beskid 0.6. Commands from Beskid 0.5 and earlier (`analyze`, `lsp`, `fetch`, `lock`, `pckg`) are never invoked.
+
+Project operations pass `--project <bproj>` when a project manifest is focused. Tasks of type `beskid-fetch`, `beskid-lock`, `beskid-build`, `beskid-test`, and `beskid-check` accept `projectPath` as a project directory or a `.bproj` manifest.
 
 Progress appears in the status bar and **Beskid LSP** output channel. Use **Beskid: Setup Toolchain** to retry after failure.
 

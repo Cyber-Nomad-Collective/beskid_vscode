@@ -1,18 +1,19 @@
 import { spawn } from "node:child_process";
 import { dirname } from "node:path";
-import type { ExtensionContext } from "vscode";
 import * as vscode from "vscode";
 import { readCliPath } from "../config/workspaceSettings.js";
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
+import { describeIncompatibility, negotiateCliCapabilities } from "./cliCapabilities.js";
+import {
+	type BeskidCliOperation,
+	cliOperationArgs,
+	cliOperationLabel,
+	isProjectManifestPath,
+} from "./cliCommandSurface.js";
 
-export type BeskidCliSubcommand =
-	| "fetch"
-	| "lock"
-	| "build"
-	| "test"
-	| "analyze";
+export type { BeskidCliOperation } from "./cliCommandSurface.js";
 
-export type CliRunPhase = BeskidCliSubcommand;
+export type CliRunPhase = BeskidCliOperation;
 
 export type CliRunOptions = {
 	subcommand: CliRunPhase;
@@ -38,6 +39,25 @@ function projectRoot(projectUri: vscode.Uri | undefined): string | undefined {
 	return focusedProjectCwd(projectUri);
 }
 
+function showCliNotFound(): void {
+	void vscode.window
+		.showErrorMessage(
+			"Beskid CLI not found on PATH. Download the latest release?",
+			"Download CLI",
+			"Open settings",
+		)
+		.then((choice) => {
+			if (choice === "Download CLI") {
+				void vscode.commands.executeCommand("beskid.cli.install");
+			} else if (choice === "Open settings") {
+				void vscode.commands.executeCommand(
+					"workbench.action.openSettings",
+					"beskid.cli.path",
+				);
+			}
+		});
+}
+
 export async function runBeskidCli(
 	outputChannel: vscode.OutputChannel,
 	options: CliRunOptions,
@@ -48,8 +68,41 @@ export async function runBeskidCli(
 		return 1;
 	}
 	const cli = readCliPath();
-	const args = [options.subcommand, ...(options.extraArgs ?? [])];
-	options.onPhase?.(options.subcommand, true, `${cli} ${options.subcommand}…`);
+	const compatibility = await negotiateCliCapabilities(cli);
+	if (!compatibility.compatible) {
+		if (compatibility.spawnError?.code === "ENOENT") {
+			outputChannel.appendLine(String(compatibility.spawnError));
+			showCliNotFound();
+			return 1;
+		}
+		outputChannel.appendLine(
+			`[Beskid CLI] ${describeIncompatibility(compatibility)}`,
+		);
+		outputChannel.show(true);
+		void vscode.window
+			.showErrorMessage(compatibility.guidance, "Install CLI", "Open settings")
+			.then((choice) => {
+				if (choice === "Install CLI") {
+					void vscode.commands.executeCommand("beskid.cli.install");
+				} else if (choice === "Open settings") {
+					void vscode.commands.executeCommand(
+						"workbench.action.openSettings",
+						"beskid.cli.path",
+					);
+				}
+			});
+		return 1;
+	}
+	const manifest = isProjectManifestPath(options.projectUri?.fsPath)
+		? options.projectUri?.fsPath
+		: undefined;
+	const args = cliOperationArgs(
+		options.subcommand,
+		manifest,
+		options.extraArgs ?? [],
+	);
+	const label = cliOperationLabel(options.subcommand);
+	options.onPhase?.(options.subcommand, true, `${cli} ${label}…`);
 	outputChannel.appendLine(`$ ${cli} ${args.join(" ")} (cwd: ${cwd})`);
 	outputChannel.show(true);
 
@@ -69,12 +122,12 @@ export async function runBeskidCli(
 			const exitCode = code ?? 1;
 			if (exitCode !== 0) {
 				outputChannel.appendLine(
-					`[Beskid CLI] ${options.subcommand} failed with exit code ${exitCode}. See output above.`,
+					`[Beskid CLI] ${label} failed with exit code ${exitCode}. See output above.`,
 				);
 				outputChannel.show(true);
 				void vscode.window
 					.showErrorMessage(
-						`Beskid ${options.subcommand} failed (exit ${exitCode}). See Beskid LSP output for details.`,
+						`Beskid ${label} failed (exit ${exitCode}). See Beskid LSP output for details.`,
 						"Open Output",
 					)
 					.then((choice) => {
@@ -84,7 +137,7 @@ export async function runBeskidCli(
 					});
 			} else {
 				void vscode.window.showInformationMessage(
-					`Beskid ${options.subcommand} completed.`,
+					`Beskid ${label} completed.`,
 				);
 			}
 			resolve(exitCode);
@@ -94,22 +147,7 @@ export async function runBeskidCli(
 			outputChannel.appendLine(String(err));
 			const errno = err as NodeJS.ErrnoException;
 			if (errno.code === "ENOENT") {
-				void vscode.window
-					.showErrorMessage(
-						"Beskid CLI not found on PATH. Download the latest release?",
-						"Download CLI",
-						"Open settings",
-					)
-					.then((choice) => {
-						if (choice === "Download CLI") {
-							void vscode.commands.executeCommand("beskid.cli.install");
-						} else if (choice === "Open settings") {
-							void vscode.commands.executeCommand(
-								"workbench.action.openSettings",
-								"beskid.cli.path",
-							);
-						}
-					});
+				showCliNotFound();
 			} else {
 				void vscode.window.showErrorMessage(
 					`Failed to run Beskid CLI: ${err.message}`,
@@ -136,31 +174,4 @@ export async function resolveRegistryBaseUrl(
 		}
 	}
 	return fallback().replace(/\/$/, "");
-}
-
-export function registerCliCommands(
-	context: ExtensionContext,
-	outputChannel: vscode.OutputChannel,
-	getFocusedProjectUri: () => vscode.Uri | undefined,
-	onPhase?: (
-		phase: BeskidActivityPhase,
-		active: boolean,
-		detail?: string,
-	) => void,
-): void {
-	const run = (subcommand: BeskidCliSubcommand) => async () => {
-		await runBeskidCli(outputChannel, {
-			subcommand,
-			projectUri: getFocusedProjectUri(),
-			onPhase,
-		});
-	};
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand("beskid.cli.fetch", run("fetch")),
-		vscode.commands.registerCommand("beskid.cli.lock", run("lock")),
-		vscode.commands.registerCommand("beskid.cli.build", run("build")),
-		vscode.commands.registerCommand("beskid.cli.test", run("test")),
-		vscode.commands.registerCommand("beskid.cli.analyze", run("analyze")),
-	);
 }

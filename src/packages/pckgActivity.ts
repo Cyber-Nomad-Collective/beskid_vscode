@@ -1,6 +1,6 @@
 export type PckgActivityPhase = "search" | "details" | "fetch" | "lock";
 
-export type CliActivityPhase = "build" | "test" | "analyze";
+export type CliActivityPhase = "build" | "test" | "check";
 
 export type BeskidActivityPhase =
 	| PckgActivityPhase

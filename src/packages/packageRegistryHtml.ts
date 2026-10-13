@@ -71,14 +71,14 @@ function renderDetailActions(details: PackageDetails, baseUrl: string): string {
 		const shortName = details.package.shortName ?? name.split(".").pop() ?? name;
 		actions.push(
 			actionButton(
-				`data-copy="beskid new install ${name}"`,
+				`data-copy="beskid package template install ${escapeHtml(name)}"`,
 				registryIcons.copy,
 				"Copy install command",
 			),
 			actionButton(
-				`data-copy="beskid new ${shortName}"`,
+				`data-copy="beskid new my-app --template ${escapeHtml(shortName)}"`,
 				registryIcons.copy,
-				`Copy: beskid new ${escapeHtml(shortName)}`,
+				`Copy: beskid new my-app --template ${escapeHtml(shortName)}`,
 			),
 		);
 	} else if (kind === "library") {
@@ -93,9 +93,9 @@ function renderDetailActions(details: PackageDetails, baseUrl: string): string {
 		const ver = details.latestVersion ?? details.versions[0]?.version ?? "latest";
 		actions.push(
 			actionButton(
-				`data-copy="beskid pckg download ${name}@${ver}"`,
+				`data-copy="beskid add ${escapeHtml(name)}@${escapeHtml(ver)}"`,
 				registryIcons.copy,
-				"Copy download command",
+				"Copy add command",
 			),
 		);
 	}

@@ -33,7 +33,7 @@ const PCKG_PHASE_LABELS: Record<BeskidActivityPhase, string> = {
 	lock: "Running lock…",
 	build: "Running build…",
 	test: "Running test…",
-	analyze: "Running analyze…",
+	check: "Running check…",
 };
 
 function formatScanPart(scan: LspScanSnapshot): string {

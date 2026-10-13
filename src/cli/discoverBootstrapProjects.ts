@@ -4,7 +4,7 @@ import {
 	discoverProjectFileFromPath,
 } from "../workspace/manifestPath.js";
 
-/** Manifest paths to run `beskid fetch` against on first toolchain bootstrap. */
+/** Manifest paths to run `beskid dev project fetch` against on first toolchain bootstrap. */
 export async function discoverBootstrapProjects(): Promise<vscode.Uri[]> {
 	const folders = vscode.workspace.workspaceFolders;
 	if (!folders?.length) {

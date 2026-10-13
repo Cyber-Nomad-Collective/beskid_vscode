@@ -7,7 +7,12 @@ import {
 	readLspReleaseTag,
 	resolveCliExecutablePath,
 } from "../config/workspaceSettings.js";
-import { cliSupportsLsp } from "./cliCapabilities.js";
+import {
+	clearCliCapabilityCache,
+	describeIncompatibility,
+	negotiateCliCapabilities,
+} from "./cliCapabilities.js";
+import { cliOperationArgs } from "./cliCommandSurface.js";
 import { appendToolchainFailure, formatToolchainError } from "./cliErrors.js";
 import { type CliInstallResult, installBeskidCli } from "./cliInstall.js";
 import { resolveCliPlatformAsset } from "./cliPlatform.js";
@@ -39,27 +44,21 @@ export type CliBootstrapResult = {
 
 import { readAutoFetchDependencies } from "../config/workspaceSettings.js";
 
-async function verifyCliSupportsLsp(
+/** Fails closed with upgrade guidance unless the CLI negotiates the 0.6 surface. */
+async function verifyCliSurface(
 	cliPath: string,
 	outputChannel: vscode.OutputChannel,
 ): Promise<void> {
 	outputChannel.appendLine(
-		`[Beskid toolchain] Verifying ${cliPath} supports 'lsp'…`,
+		`[Beskid toolchain] Negotiating capabilities of ${cliPath}…`,
 	);
-	const result = await runCliProcess(cliPath, ["lsp", "--help"]);
-	appendCliProcessLog(
-		outputChannel,
-		cliPath,
-		["lsp", "--help"],
-		undefined,
-		result,
-	);
-	if (!(await cliSupportsLsp(cliPath))) {
-		throw new Error(
-			`Installed CLI does not support 'beskid lsp' (exit ${result.exitCode}). ` +
-				"Download a current CLI release (default tag: cli-stable) or point beskid.cli.path at a local build.",
-		);
+	const compatibility = await negotiateCliCapabilities(cliPath);
+	if (!compatibility.compatible) {
+		throw new Error(describeIncompatibility(compatibility));
 	}
+	outputChannel.appendLine(
+		`[Beskid toolchain] CLI ${compatibility.document.cliVersion || "(unknown version)"} supports the 0.6 command surface.`,
+	);
 }
 
 async function runProjectFetch(
@@ -72,16 +71,9 @@ async function runProjectFetch(
 	outputChannel.appendLine(
 		`[Beskid toolchain] Fetching dependencies for ${manifest}`,
 	);
-	const result = await runCliProcess(cliPath, ["fetch", "--project", manifest], {
-		cwd,
-	});
-	appendCliProcessLog(
-		outputChannel,
-		cliPath,
-		["fetch", "--project", manifest],
-		cwd,
-		result,
-	);
+	const args = cliOperationArgs("fetch", manifest);
+	const result = await runCliProcess(cliPath, args, { cwd });
+	appendCliProcessLog(outputChannel, cliPath, args, cwd, result);
 	return result.exitCode;
 }
 
@@ -171,20 +163,26 @@ export async function bootstrapBeskidToolchain(
 			outputChannel.appendLine(
 				`[Beskid toolchain] Installed Beskid CLI ${install.version} → ${install.path}`,
 			);
-		} else if (!(await cliSupportsLsp(cliPath))) {
-			progress?.onDownloading?.();
-			outputChannel.appendLine(
-				`[Beskid toolchain] CLI at ${cliPath} is too old for 'beskid lsp'; upgrading from ${cliReleaseTag}…`,
-			);
-			install = await installManagedCli(outputChannel, cliReleaseTag);
-			cliPath = install.path;
-			installed = true;
-			outputChannel.appendLine(
-				`[Beskid toolchain] Upgraded Beskid CLI to ${install.version} → ${install.path}`,
-			);
 		} else {
-			outputChannel.appendLine(`[Beskid toolchain] Using CLI at ${cliPath}`);
+			const compatibility = await negotiateCliCapabilities(cliPath);
+			if (!compatibility.compatible) {
+				progress?.onDownloading?.();
+				outputChannel.appendLine(
+					`[Beskid toolchain] ${describeIncompatibility(compatibility)}`,
+				);
+				outputChannel.appendLine(
+					`[Beskid toolchain] Installing managed CLI from ${cliReleaseTag}…`,
+				);
+				install = await installManagedCli(outputChannel, cliReleaseTag);
+				cliPath = install.path;
+				installed = true;
+				clearCliCapabilityCache();
+				outputChannel.appendLine(
+					`[Beskid toolchain] Upgraded Beskid CLI to ${install.version} → ${install.path}`,
+				);
+			}
 		}
+		outputChannel.appendLine(`[Beskid toolchain] Using CLI at ${cliPath}`);
 
 		if (!existsSync(cliPath)) {
 			throw new Error(`CLI path does not exist: ${cliPath}`);
@@ -201,21 +199,7 @@ export async function bootstrapBeskidToolchain(
 			outputChannel.appendLine(`[Beskid toolchain] Using LSP at ${lspPath}`);
 		}
 
-		const verifiedCliPath = context.globalState.get<string>(
-			"beskid.toolchain.verifiedCliPath",
-		);
-		const hasManagedLsp = existsSync(lspPath);
-		if (!hasManagedLsp && verifiedCliPath !== cliPath) {
-			await verifyCliSupportsLsp(cliPath, outputChannel);
-			await context.globalState.update(
-				"beskid.toolchain.verifiedCliPath",
-				cliPath,
-			);
-		} else if (hasManagedLsp) {
-			outputChannel.appendLine(
-				"[Beskid toolchain] Managed LSP present; skipping CLI 'lsp' probe.",
-			);
-		}
+		await verifyCliSurface(cliPath, outputChannel);
 
 		let fetchAttempted = false;
 		const fetchFailures: { project: string; exitCode: number }[] = [];
