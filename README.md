@@ -42,7 +42,7 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `.bproj` for the active editor |
 | `beskid.cli.path` | `beskid` | CLI binary for check, build, test, fetch, lock, and tasks (Beskid 0.6 or later) |
 | `beskid.cli.releaseTag` | `cli-stable` | GitHub release tag for **Install CLI**. Supports `cli-stable`/`cli-unstable`, and migrates legacy `cli-latest` to pinned `cli-v*` releases. |
-| `beskid.lsp.releaseTag` | `lsp-stable` | GitHub release tag for **Install LSP**. Supports `lsp-stable`/`lsp-unstable`, and migrates legacy `lsp-latest` to pinned `lsp-v*` releases. |
+| `beskid.lsp.releaseTag` | `lsp-stable` | Release tag passed to `beskid dev lsp install --release-tag` by **Install LSP**. Supports `lsp-stable`/`lsp-unstable`, and migrates legacy `lsp-latest` to pinned `lsp-v*` releases. |
 | `beskid.toolchain.autoInstallOnLaunch` | `true` | Download CLI/LSP on activate when missing |
 | `beskid.toolchain.autoFetchDependencies` | `true` | Run `beskid dev project fetch` once after first bootstrap |
 | `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | Registry base URL |
@@ -105,7 +105,7 @@ The resulting versioned VSIX can be submitted to both Visual Studio Marketplace 
 On activate (unless auto-install is disabled, dev mode is on, or `beskid.lsp.server.path` is set):
 
 1. Managed CLI at `~/.beskid/bin/beskid` (from GitHub `cli-stable` / `cli-unstable`, with legacy `cli-latest` migration)
-2. Managed LSP at `~/.beskid/bin/beskid_lsp` (from GitHub `lsp-stable` / `lsp-unstable`, with legacy `lsp-latest` migration)
+2. Managed LSP at `~/.beskid/bin/beskid_lsp`, installed by the CLI with `beskid dev lsp install --release-tag <tag>` (`lsp-stable` / `lsp-unstable`, with legacy `lsp-latest` migration); the extension does not download the language server itself
 3. `beskid dev project fetch` for open manifests when `beskid.toolchain.autoFetchDependencies` is enabled
 4. Start the language server
 

@@ -10,6 +10,7 @@ import type { ToolchainBootstrapProgress } from "./cliBootstrap.js";
 import { bootstrapBeskidToolchain } from "./cliBootstrap.js";
 import { installBeskidCli } from "./cliInstall.js";
 import { installBeskidLsp } from "./lspInstall.js";
+import { readCliPath, readLspReleaseTag } from "../config/workspaceSettings.js";
 
 export type CliServiceOptions = {
 	context: ExtensionContext;
@@ -71,8 +72,12 @@ export class CliService {
 					cancellable: false,
 				},
 				async (progress) => {
-					progress.report({ message: "Downloading latest LSP release…" });
-					return installBeskidLsp(this.options.outputChannel);
+					progress.report({ message: "Running beskid dev lsp install…" });
+					return installBeskidLsp(
+						readCliPath(),
+						this.options.outputChannel,
+						readLspReleaseTag(),
+					);
 				},
 			);
 			void vscode.window
@@ -86,9 +91,15 @@ export class CliService {
 					}
 				});
 		} catch (error) {
-			void vscode.window.showErrorMessage(
-				`Failed to install Beskid LSP. See Beskid LSP output.`,
-			);
+			const message = error instanceof Error ? error.message : String(error);
+			this.options.outputChannel.appendLine(`[Beskid LSP install] ${message}`);
+			void vscode.window
+				.showErrorMessage(`Failed to install Beskid LSP: ${message}`, "Open Output")
+				.then((choice) => {
+					if (choice === "Open Output") {
+						this.options.outputChannel.show(true);
+					}
+				});
 			throw error;
 		}
 	}

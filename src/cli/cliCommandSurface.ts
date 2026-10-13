@@ -11,6 +11,12 @@ import { dirname } from "node:path";
 /** Language server over stdio: `beskid dev lsp`. */
 export const CLI_LSP_ARGS: readonly string[] = ["dev", "lsp"];
 
+/** Managed language server install: `beskid dev lsp install [--release-tag <tag>]`. */
+export function cliLspInstallArgs(releaseTag?: string): string[] {
+	const tag = releaseTag?.trim();
+	return [...CLI_LSP_ARGS, "install", ...(tag ? ["--release-tag", tag] : [])];
+}
+
 /** Capability negotiation: `beskid dev capabilities --json`. */
 export const CLI_CAPABILITIES_ARGS: readonly string[] = [
 	"dev",

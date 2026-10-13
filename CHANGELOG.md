@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-13
+
 ### Added
 
 - Add standalone `.bsol` language registration backed by the same native LSP
@@ -32,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that fails the command or does not list the commands the extension uses, with
   upgrade guidance (`beskid toolchain update` or install Beskid 0.6). The
   `lsp --help` probes are removed.
+- Set the extension version to 0.6.0 to match the Beskid 0.6 toolchain.
+- Install the managed language server with
+  `beskid dev lsp install --release-tag <tag>` from **Beskid: Install LSP** and
+  first-launch setup, gated on capability negotiation, with CLI output and
+  errors shown in the Beskid LSP output channel.
 - Launch the CLI-hosted language server with `beskid dev lsp`, and run
   dependency fetch and lock with `beskid dev project fetch` and
   `beskid dev project lock`.
@@ -65,3 +72,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove all invocations of retired 0.5 CLI spellings (`analyze`, `lsp`,
   `fetch`, `lock`, `pckg download`, `new install`). There is no fallback.
+- Remove the extension's direct language-server download from GitHub
+  releases; the CLI installs the language server.

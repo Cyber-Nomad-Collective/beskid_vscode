@@ -1,8 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
 	defaultLspInstallPath,
-	lspReleaseDownloadUrl,
-	lspVersionUrl,
 	resolveLspPlatformAsset,
 } from "../src/cli/lspPlatform.js";
 
@@ -25,17 +23,6 @@ describe("resolveLspPlatformAsset", () => {
 	test("rejects unsupported platforms", () => {
 		expect(resolveLspPlatformAsset("darwin", "x64")).toBeUndefined();
 		expect(resolveLspPlatformAsset("linux", "arm64")).toBeUndefined();
-	});
-});
-
-describe("LSP release URLs", () => {
-	test("uses GitHub release download layout", () => {
-		expect(lspReleaseDownloadUrl("lsp-stable", "beskid_lsp-darwin-arm64")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-stable/beskid_lsp-darwin-arm64",
-		);
-		expect(lspVersionUrl("lsp-stable")).toBe(
-			"https://github.com/Cyber-Nomad-Collective/beskid_compiler/releases/download/lsp-stable/lsp-version.txt",
-		);
 	});
 });
 

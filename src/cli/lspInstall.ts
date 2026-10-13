@@ -1,42 +1,13 @@
-import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import type * as vscode from "vscode";
-import { readLspReleaseTag } from "../config/workspaceSettings.js";
-import { appendToolchainFailure } from "./cliErrors.js";
-import { resolveLspReleaseTag } from "./releaseTags.js";
+import { existsSync } from "node:fs";
 import {
-	defaultLspInstallDir,
-	lspReleaseDownloadUrl,
-	lspVersionUrl,
-	resolveLspPlatformAsset,
-} from "./lspPlatform.js";
-
-async function fetchText(url: string): Promise<string> {
-	let response: Response;
-	try {
-		response = await fetch(url);
-	} catch (error) {
-		throw new Error(`Network error fetching ${url}`, { cause: error });
-	}
-	if (!response.ok) {
-		throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
-	}
-	return (await response.text()).trim();
-}
-
-async function downloadFile(url: string, destPath: string): Promise<void> {
-	let response: Response;
-	try {
-		response = await fetch(url);
-	} catch (error) {
-		throw new Error(`Network error downloading ${url}`, { cause: error });
-	}
-	if (!response.ok) {
-		throw new Error(`HTTP ${response.status} ${response.statusText} for ${url}`);
-	}
-	mkdirSync(join(destPath, ".."), { recursive: true });
-	writeFileSync(destPath, Buffer.from(await response.arrayBuffer()));
-}
+	type CliProcessRunner,
+	describeIncompatibility,
+	negotiateCliCapabilities,
+} from "./cliCapabilities.js";
+import { cliLspInstallArgs } from "./cliCommandSurface.js";
+import { appendCliProcessLog, runCliProcess } from "./cliProcess.js";
+import { defaultLspInstallPath } from "./lspPlatform.js";
+import { resolveLspReleaseTag } from "./releaseTags.js";
 
 export type LspInstallResult = {
 	path: string;
@@ -44,51 +15,71 @@ export type LspInstallResult = {
 	releaseTag: string;
 };
 
+export type LspInstallOutput = {
+	appendLine: (line: string) => void;
+	show?: (preserveFocus?: boolean) => void;
+};
+
+export type LspInstallDeps = {
+	run: CliProcessRunner;
+	resolveTag: (tag: string) => Promise<string>;
+	installPath: () => string;
+	exists: (path: string) => boolean;
+};
+
+const DEFAULT_DEPS: LspInstallDeps = {
+	run: runCliProcess,
+	resolveTag: resolveLspReleaseTag,
+	installPath: () => defaultLspInstallPath(),
+	exists: existsSync,
+};
+
+const INSTALLED_LINE = /Installed Beskid LSP (\S+) \(([^)]+)\)/;
+
+/**
+ * Installs the managed language server through the CLI:
+ * `beskid dev lsp install --release-tag <tag>`. Fails closed with upgrade
+ * guidance when the CLI does not negotiate the 0.6 surface; the extension
+ * never downloads the language server itself.
+ */
 export async function installBeskidLsp(
-	outputChannel: vscode.OutputChannel,
-	releaseTag = readLspReleaseTag(),
+	cliPath: string,
+	outputChannel: LspInstallOutput,
+	releaseTag: string,
+	deps: Partial<LspInstallDeps> = {},
 ): Promise<LspInstallResult> {
-	const asset = resolveLspPlatformAsset();
-	if (!asset) {
+	const { run, resolveTag, installPath, exists } = { ...DEFAULT_DEPS, ...deps };
+
+	const compatibility = await negotiateCliCapabilities(cliPath, deps.run);
+	if (!compatibility.compatible) {
+		const message = describeIncompatibility(compatibility);
+		outputChannel.appendLine(`[Beskid toolchain] ${message}`);
+		throw new Error(message);
+	}
+
+	const tag = await resolveTag(releaseTag);
+	const args = cliLspInstallArgs(tag);
+	outputChannel.show?.(true);
+	const result = await run(cliPath, args);
+	appendCliProcessLog(outputChannel, cliPath, args, undefined, result);
+	if (result.exitCode !== 0) {
+		const stderr = result.stderr.trim();
 		throw new Error(
-			`Unsupported platform: ${process.platform}-${process.arch}. ` +
-				"Published LSP builds cover Linux x86_64, macOS Apple Silicon, and Windows x86_64.",
+			`\`beskid ${args.join(" ")}\` failed (exit ${result.exitCode})` +
+				(stderr ? `: ${stderr}` : "."),
 		);
 	}
-	const tag = await resolveLspReleaseTag(releaseTag);
 
-	const versionUrl = lspVersionUrl(tag);
-	const downloadUrl = lspReleaseDownloadUrl(tag, asset.releaseAsset);
-	const installPath = join(defaultLspInstallDir(), asset.installFileName);
-
-	try {
-		outputChannel.appendLine(`Fetching LSP version from ${versionUrl}`);
-		const version = await fetchText(versionUrl);
-		if (!version) {
-			throw new Error(`lsp-version.txt from ${versionUrl} was empty.`);
-		}
-
-		outputChannel.appendLine(`Downloading ${downloadUrl}`);
-		outputChannel.appendLine(
-			`Installing Beskid LSP ${version} (${tag}) to ${installPath}`,
+	const path = installPath();
+	if (!exists(path)) {
+		throw new Error(
+			`\`beskid ${args.join(" ")}\` succeeded but ${path} does not exist.`,
 		);
-		outputChannel.show(true);
-
-		await downloadFile(downloadUrl, installPath);
-		if (process.platform !== "win32") {
-			chmodSync(installPath, 0o755);
-		}
-
-		return { path: installPath, version, releaseTag: tag };
-	} catch (error) {
-		const detail = appendToolchainFailure(outputChannel, "LSP download", error, {
-			"release tag": tag,
-			"version url": versionUrl,
-			"download url": downloadUrl,
-			"install path": installPath,
-			platform: `${process.platform}-${process.arch}`,
-			asset: asset.releaseAsset,
-		});
-		throw new Error(detail);
 	}
+	const installed = INSTALLED_LINE.exec(result.stdout);
+	return {
+		path,
+		version: installed?.[1] ?? "unknown",
+		releaseTag: installed?.[2] ?? tag,
+	};
 }

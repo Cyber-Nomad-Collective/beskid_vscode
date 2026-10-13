@@ -120,12 +120,13 @@ async function installManagedCli(
 }
 
 async function installManagedLsp(
+	cliPath: string,
 	outputChannel: vscode.OutputChannel,
 	releaseTag: string,
 ): Promise<LspInstallResult> {
 	const asset = resolveLspPlatformAsset();
 	outputChannel.appendLine(
-		"[Beskid toolchain] Installing LSP from GitHub release…",
+		"[Beskid toolchain] Installing LSP with `beskid dev lsp install`…",
 	);
 	outputChannel.appendLine(`  release tag: ${releaseTag}`);
 	outputChannel.appendLine(`  platform: ${process.platform}-${process.arch}`);
@@ -133,7 +134,7 @@ async function installManagedLsp(
 		outputChannel.appendLine(`  asset: ${asset.releaseAsset}`);
 	}
 	outputChannel.show(true);
-	return installBeskidLsp(outputChannel, releaseTag);
+	return installBeskidLsp(cliPath, outputChannel, releaseTag);
 }
 
 /**
@@ -188,9 +189,11 @@ export async function bootstrapBeskidToolchain(
 			throw new Error(`CLI path does not exist: ${cliPath}`);
 		}
 
+		await verifyCliSurface(cliPath, outputChannel);
+
 		if (!existsSync(lspPath)) {
 			progress?.onDownloading?.();
-			lspInstall = await installManagedLsp(outputChannel, lspReleaseTag);
+			lspInstall = await installManagedLsp(cliPath, outputChannel, lspReleaseTag);
 			lspInstalled = true;
 			outputChannel.appendLine(
 				`[Beskid toolchain] Installed Beskid LSP ${lspInstall.version} → ${lspInstall.path}`,
@@ -198,8 +201,6 @@ export async function bootstrapBeskidToolchain(
 		} else {
 			outputChannel.appendLine(`[Beskid toolchain] Using LSP at ${lspPath}`);
 		}
-
-		await verifyCliSurface(cliPath, outputChannel);
 
 		let fetchAttempted = false;
 		const fetchFailures: { project: string; exitCode: number }[] = [];
