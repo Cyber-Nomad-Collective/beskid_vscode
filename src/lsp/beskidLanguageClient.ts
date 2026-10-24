@@ -14,11 +14,7 @@ import {
 } from "./clientHooks.js";
 import { launchSnapshotFromExecutable } from "./launchSnapshot.js";
 import { lspExecuteCommand } from "./lspExecuteCommand.js";
-import {
-	type LspInstallCli,
-	type LspLaunchProgress,
-	resolveLspServerLaunch,
-} from "./resolveLspServerLaunch.js";
+import { resolveLspServerLaunch } from "./resolveLspServerLaunch.js";
 
 export function buildBeskidClientOptions(
 	outputChannel: vscode.OutputChannel,
@@ -50,17 +46,10 @@ export async function createBeskidLanguageClient(
 	context: vscode.ExtensionContext,
 	outputChannel: vscode.OutputChannel,
 	focusedProjectUri: vscode.Uri | undefined,
-	installCli: LspInstallCli,
-	launchProgress: LspLaunchProgress | undefined,
 	runtime: LspRuntimeState,
 	hooks?: BeskidClientHooks,
 ): Promise<LanguageClient> {
-	const serverOptions = await resolveLspServerLaunch(
-		context,
-		focusedProjectUri,
-		installCli,
-		launchProgress,
-	);
+	const serverOptions = await resolveLspServerLaunch(context, focusedProjectUri);
 	runtime.setLaunch(launchSnapshotFromExecutable(serverOptions.run));
 	return new LanguageClient(
 		"beskidLanguageServer",

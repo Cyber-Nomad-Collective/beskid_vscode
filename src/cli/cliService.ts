@@ -6,11 +6,7 @@ import {
 	focusedProjectCwd,
 	runBeskidCli,
 } from "./beskidCliRunner.js";
-import type { ToolchainBootstrapProgress } from "./cliBootstrap.js";
-import { bootstrapBeskidToolchain } from "./cliBootstrap.js";
-import { installBeskidCli } from "./cliInstall.js";
-import { installBeskidLsp } from "./lspInstall.js";
-import { readCliPath, readLspReleaseTag } from "../config/workspaceSettings.js";
+import { migrateLockTargetPath } from "./migrateLock.js";
 
 export type CliServiceOptions = {
 	context: ExtensionContext;
@@ -42,13 +38,6 @@ export class CliService {
 		const run = (subcommand: BeskidCliOperation) => () => this.run(subcommand);
 
 		this.options.context.subscriptions.push(
-			vscode.commands.registerCommand("beskid.cli.install", () => this.install()),
-			vscode.commands.registerCommand("beskid.lsp.install", () =>
-				this.installLsp(),
-			),
-			vscode.commands.registerCommand("beskid.cli.bootstrap", () =>
-				this.bootstrap(true),
-			),
 			vscode.commands.registerCommand("beskid.cli.fetch", run("fetch")),
 			vscode.commands.registerCommand("beskid.cli.lock", run("lock")),
 			vscode.commands.registerCommand("beskid.cli.build", run("build")),
@@ -56,6 +45,9 @@ export class CliService {
 			vscode.commands.registerCommand("beskid.cli.check", run("check")),
 			vscode.commands.registerCommand("beskid.packages.fetch", run("fetch")),
 			vscode.commands.registerCommand("beskid.packages.lock", run("lock")),
+			vscode.commands.registerCommand("beskid.migrateLock", (target?: unknown) =>
+				this.migrateLock(target),
+			),
 		);
 	}
 
@@ -63,109 +55,24 @@ export class CliService {
 		return focusedProjectCwd(this.options.getFocusedProjectUri());
 	}
 
-	async installLsp(): Promise<void> {
-		try {
-			const result = await vscode.window.withProgress(
-				{
-					location: vscode.ProgressLocation.Notification,
-					title: "Installing Beskid LSP",
-					cancellable: false,
-				},
-				async (progress) => {
-					progress.report({ message: "Running beskid dev lsp install…" });
-					return installBeskidLsp(
-						readCliPath(),
-						this.options.outputChannel,
-						readLspReleaseTag(),
-					);
-				},
-			);
-			void vscode.window
-				.showInformationMessage(
-					`Beskid LSP ${result.version} installed to ${result.path}.`,
-					"Restart LSP",
-				)
-				.then((choice) => {
-					if (choice === "Restart LSP") {
-						void vscode.commands.executeCommand("beskid.lsp.restart");
-					}
-				});
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			this.options.outputChannel.appendLine(`[Beskid LSP install] ${message}`);
-			void vscode.window
-				.showErrorMessage(`Failed to install Beskid LSP: ${message}`, "Open Output")
-				.then((choice) => {
-					if (choice === "Open Output") {
-						this.options.outputChannel.show(true);
-					}
-				});
-			throw error;
+	/**
+	 * "Migrate lock file" quick fix. The server offers it for a version 1
+	 * `Project.lock`; migrating means re-resolving with `beskid dev project lock`,
+	 * which writes the current lock format. Then the workspace refreshes.
+	 */
+	async migrateLock(target?: unknown): Promise<number> {
+		const path = migrateLockTargetPath(target);
+		const projectUri = path
+			? vscode.Uri.file(path)
+			: this.options.getFocusedProjectUri();
+		const exitCode = await runBeskidCli(this.options.outputChannel, {
+			subcommand: "lock",
+			projectUri,
+			onPhase: this.options.onPhase,
+		});
+		if (exitCode === 0) {
+			await vscode.commands.executeCommand("beskid.refreshWorkspace");
 		}
-	}
-
-	async install(): Promise<void> {
-		try {
-			const result = await vscode.window.withProgress(
-				{
-					location: vscode.ProgressLocation.Notification,
-					title: "Installing Beskid CLI",
-					cancellable: false,
-				},
-				async (progress) => {
-					progress.report({ message: "Downloading latest release…" });
-					return installBeskidCli(this.options.outputChannel);
-				},
-			);
-			void vscode.window.showInformationMessage(
-				`Beskid CLI ${result.version} installed to ${result.path}.`,
-			);
-		} catch (error) {
-			const _message = error instanceof Error ? error.message : String(error);
-			void vscode.window.showErrorMessage(
-				`Failed to install Beskid CLI. See Beskid LSP output.`,
-			);
-			throw error;
-		}
-	}
-
-	/** Download CLI and LSP (if needed), verify toolchain, and fetch workspace deps on first launch. */
-	async ensureInstalled(progress?: ToolchainBootstrapProgress): Promise<string> {
-		const result = await bootstrapBeskidToolchain(
-			this.options.context,
-			this.options.outputChannel,
-			progress,
-		);
-		return result.cliPath;
-	}
-
-	async bootstrap(force = false): Promise<void> {
-		if (force) {
-			await this.options.context.globalState.update(
-				"beskid.toolchain.bootstrapped",
-				false,
-			);
-		}
-		try {
-			await vscode.window.withProgress(
-				{
-					location: vscode.ProgressLocation.Notification,
-					title: "Beskid toolchain",
-					cancellable: false,
-				},
-				async (progress) => {
-					progress.report({ message: "Setting up CLI and dependencies…" });
-					await bootstrapBeskidToolchain(
-						this.options.context,
-						this.options.outputChannel,
-					);
-				},
-			);
-			void vscode.window.showInformationMessage(
-				"Beskid toolchain setup completed.",
-			);
-		} catch {
-			// bootstrapBeskidToolchain already logged and notified
-		}
+		return exitCode;
 	}
 }

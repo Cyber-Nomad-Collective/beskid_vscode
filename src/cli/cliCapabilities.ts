@@ -10,6 +10,8 @@ import { type CliProcessResult, runCliProcess } from "./cliProcess.js";
 export type CliCapabilityDocument = {
 	schemaVersion: number;
 	cliVersion: string;
+	/** Runtime ABI of the toolchain; absent when the CLI predates the field. */
+	runtimeAbi?: number;
 	commands: string[];
 	devCommands: string[];
 	outputSchemas: unknown[];
@@ -78,6 +80,9 @@ export function parseCliCapabilities(
 	return {
 		schemaVersion: SUPPORTED_SCHEMA_VERSION,
 		cliVersion: typeof record.cliVersion === "string" ? record.cliVersion : "",
+		...(Number.isInteger(record.runtimeAbi)
+			? { runtimeAbi: record.runtimeAbi as number }
+			: {}),
 		commands,
 		devCommands: stringArray(record.devCommands) ?? [],
 		outputSchemas: Array.isArray(record.outputSchemas)

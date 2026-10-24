@@ -108,7 +108,7 @@ export function renderDashboardBodyHtml(
   <div class="card">
     <div class="actions">
       <button class="primary" data-command="beskid.lsp.restart">Restart LSP</button>
-      <button data-command="beskid.cli.bootstrap">Setup toolchain</button>
+      <button data-command="beskid.toolchain.removeStale">Remove stale toolchain</button>
       <button data-command="beskid.packages.open">Browse packages</button>
       <button data-command="beskid.refreshWorkspace">Refresh workspace</button>
       <button data-command="beskid.lsp.openLogs">Open logs</button>

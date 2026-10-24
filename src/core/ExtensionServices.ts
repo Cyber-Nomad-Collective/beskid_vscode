@@ -10,11 +10,7 @@ import {
 } from "../activation/registerViews.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
-import {
-	assessToolchainNeeds,
-	onboardingProgressMessage,
-	shouldAutoInstallToolchainOnLaunch,
-} from "../cli/ensureToolchainOnLaunch.js";
+import { registerToolchainCommands } from "../cli/toolchain.js";
 import { registerCommands } from "../commands/registerCommands.js";
 import { registerCoreCommands } from "../commands/registerCoreCommands.js";
 import { readDashboardOpenOnActivate } from "../config/workspaceSettings.js";
@@ -78,7 +74,6 @@ export class ExtensionServices {
 			this.outputChannel,
 			this.runtime,
 			() => this.focus.getFocusedProject(),
-			(progress) => this.cli.ensureInstalled(progress),
 			{
 				onRefreshWorkspaceUi: async () => {
 					this.packageProvider.clearCaches();
@@ -190,6 +185,7 @@ export class ExtensionServices {
 			{ dispose: () => this.status.dispose() },
 		);
 		registerCommands(this.context, this);
+		registerToolchainCommands(this.context, this.outputChannel);
 		registerBeskidTaskProvider(this.context);
 		this.cli.registerCommands();
 		registerExtensionWatchers(this.context, this.refresh, () => {
@@ -203,7 +199,6 @@ export class ExtensionServices {
 		this.context.subscriptions.push(
 			this.focus.registerAutoSelect(() => this.session.getClient(), this.refresh),
 		);
-		await this.ensureToolchainForLaunch();
 		await this.session.start();
 		const { workspaces } = await this.lspApi.listWorkspaces();
 		this.workspaceProjUri = workspaces[0]?.uri;
@@ -226,48 +221,16 @@ export class ExtensionServices {
 		await this.session.stop();
 	}
 
-	private async ensureToolchainForLaunch(): Promise<void> {
-		if (!shouldAutoInstallToolchainOnLaunch()) {
-			this.outputChannel.appendLine(
-				"[Beskid] Automatic toolchain install skipped (dev mode, explicit server path, or setting disabled).",
-			);
-			return;
-		}
-
-		const assessment = await assessToolchainNeeds(this.context);
-		if (!assessment.requiresBootstrap) {
-			this.outputChannel.appendLine("[Beskid] Toolchain ready.");
-			return;
-		}
-
-		this.runtime.setPhase(
-			assessment.downloading ? "downloading" : "bootstrapping",
-		);
-		await vscode.window.withProgress(
-			{
-				location: vscode.ProgressLocation.Notification,
-				title: "Beskid",
-				cancellable: false,
-			},
-			async (progress) => {
-				progress.report({ message: onboardingProgressMessage(assessment) });
-				await this.cli.ensureInstalled({
-					onDownloading: () => this.runtime.setPhase("downloading"),
-					onBootstrapping: () => this.runtime.setPhase("bootstrapping"),
-				});
-			},
-		);
-	}
-
 	async showQuickActions(): Promise<void> {
 		const selected = await vscode.window.showQuickPick(
 			[
 				{ label: "Show project graph", command: "beskid.showGraph" },
 				{ label: "Open quick panel", command: "beskid.modal.open" },
 				{ label: "Browse packages", command: "beskid.packages.open" },
-				{ label: "Setup toolchain", command: "beskid.cli.bootstrap" },
-				{ label: "Install CLI", command: "beskid.cli.install" },
-				{ label: "Install LSP", command: "beskid.lsp.install" },
+				{
+					label: "Remove stale toolchain",
+					command: "beskid.toolchain.removeStale",
+				},
 				{ label: "Start LSP", command: "beskid.lsp.start" },
 				{ label: "Stop LSP", command: "beskid.lsp.stop" },
 				{ label: "Restart LSP", command: "beskid.lsp.restart" },

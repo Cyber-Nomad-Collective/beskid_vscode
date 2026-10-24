@@ -7,9 +7,7 @@ import type { LspRuntimeState } from "./LspRuntimeState.js";
 const LSP_RESTART_KEYS = [
 	"beskid.lsp.server.path",
 	"beskid.lsp.server.devMode",
-	"beskid.lsp.server.preferBundled",
 	"beskid.cli.path",
-	"beskid.cli.releaseTag",
 ] as const;
 
 export function registerRuntimeConfiguration(

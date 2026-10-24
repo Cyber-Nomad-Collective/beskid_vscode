@@ -193,3 +193,12 @@ describe("parseCliCapabilities", () => {
 		).toBeUndefined();
 	});
 });
+
+describe("runtimeAbi", () => {
+	test("is parsed when present and absent otherwise", () => {
+		const base = { schemaVersion: 1, cliVersion: "0.6.7", commands: [], devCommands: [] };
+		expect(parseCliCapabilities(JSON.stringify({ ...base, runtimeAbi: 5 }))?.runtimeAbi).toBe(5);
+		expect(parseCliCapabilities(JSON.stringify(base))?.runtimeAbi).toBeUndefined();
+		expect(parseCliCapabilities(JSON.stringify({ ...base, runtimeAbi: "5" }))?.runtimeAbi).toBeUndefined();
+	});
+});

@@ -64,13 +64,8 @@ export type LspRuntimeSnapshot = {
 
 export type LspSettingsFlags = {
 	devMode: boolean;
-	preferBundled: boolean;
 	explicitServerPath: string;
-	lspReleaseTag: string;
 	configuredCliPath: string;
-	cliReleaseTag: string;
-	autoFetchDependencies: boolean;
-	autoInstallOnLaunch: boolean;
 	autoSelectFromEditor: boolean;
 	logLevel: string;
 	logServerOutput: boolean;

@@ -51,7 +51,6 @@ async function main(): Promise<void> {
 			`${JSON.stringify(
 				{
 					"beskid.lsp.server.path": lspPath,
-					"beskid.toolchain.autoInstallOnLaunch": false,
 				},
 				null,
 				2,

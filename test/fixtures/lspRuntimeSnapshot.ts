@@ -5,12 +5,8 @@ import type {
 
 export const defaultLspSettingsFlags = (): LspSettingsFlags => ({
 	devMode: false,
-	preferBundled: false,
 	explicitServerPath: "",
-	lspReleaseTag: "lsp-stable",
 	configuredCliPath: "beskid",
-	cliReleaseTag: "cli-stable",
-	autoFetchDependencies: true,
 	autoSelectFromEditor: true,
 	logLevel: "info",
 	logServerOutput: true,

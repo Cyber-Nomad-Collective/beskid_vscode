@@ -8,11 +8,11 @@ import {
 	sendFocusedProjectConfiguration,
 } from "../lsp/beskidLanguageClient.js";
 import type { BeskidClientHooks } from "../lsp/clientHooks.js";
+import {
+	CRASH_REPORT_METHOD,
+	CrashReportNotifier,
+} from "../lsp/crashReports.js";
 import { probeCliVersion } from "../lsp/probeCliVersion.js";
-import type {
-	LspInstallCli,
-	LspLaunchProgress,
-} from "../lsp/resolveLspServerLaunch.js";
 import type { BeskidStatusParams } from "../status/beskidStatusTypes.js";
 import type { LspRuntimeState } from "./LspRuntimeState.js";
 
@@ -20,7 +20,17 @@ const BeskidStatusNotification = new NotificationType<BeskidStatusParams>(
 	"beskid/status",
 );
 
+const BeskidCrashReportNotification = new NotificationType<unknown>(
+	CRASH_REPORT_METHOD,
+);
+
 export class BeskidLspSession {
+	private readonly crashReports = new CrashReportNotifier({
+		showError: (message, ...actions) =>
+			vscode.window.showErrorMessage(message, ...actions),
+		openFile: async (path) =>
+			vscode.window.showTextDocument(await vscode.workspace.openTextDocument(path)),
+	});
 	private client: LanguageClient | undefined;
 	private clientStateDisposable: vscode.Disposable | undefined;
 	private onClientReady: (() => void | Promise<void>) | undefined;
@@ -30,7 +40,6 @@ export class BeskidLspSession {
 		private readonly outputChannel: vscode.OutputChannel,
 		private readonly runtime: LspRuntimeState,
 		private readonly getFocusedProject: () => vscode.Uri | undefined,
-		private readonly installCli: LspInstallCli,
 		private readonly clientHooks?: BeskidClientHooks,
 	) {}
 
@@ -48,23 +57,20 @@ export class BeskidLspSession {
 		}
 
 		this.runtime.setPhase("starting");
-		const launchProgress: LspLaunchProgress = {
-			onDownloading: () => this.runtime.setPhase("downloading"),
-			onBootstrapping: () => this.runtime.setPhase("bootstrapping"),
-		};
-
 		const client = await createBeskidLanguageClient(
 			this.context,
 			this.outputChannel,
 			this.getFocusedProject(),
-			(progress) => this.installCli(progress ?? launchProgress),
-			launchProgress,
 			this.runtime,
 			this.clientHooks,
 		);
 
 		client.onNotification(BeskidStatusNotification, (params) => {
 			this.runtime.applyLspNotification(params);
+		});
+
+		client.onNotification(BeskidCrashReportNotification, (params) => {
+			void this.crashReports.handle(params);
 		});
 
 		this.client = client;

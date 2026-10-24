@@ -20,19 +20,8 @@ function readSettingsFlags(): LspSettingsFlags {
 	const lsp = vscode.workspace.getConfiguration("beskid.lsp");
 		return {
 			devMode: lsp.get<boolean>("server.devMode", false),
-			preferBundled: lsp.get<boolean>("server.preferBundled", false),
 			explicitServerPath: lsp.get<string>("server.path", "").trim(),
-			lspReleaseTag: lsp.get<string>("releaseTag", "lsp-stable"),
 			configuredCliPath: beskid.get<string>("cli.path", "beskid"),
-			cliReleaseTag: beskid.get<string>("cli.releaseTag", "cli-stable"),
-		autoFetchDependencies: beskid.get<boolean>(
-			"toolchain.autoFetchDependencies",
-			true,
-		),
-		autoInstallOnLaunch: beskid.get<boolean>(
-			"toolchain.autoInstallOnLaunch",
-			true,
-		),
 		autoSelectFromEditor: beskid.get<boolean>(
 			"project.autoSelectFromEditor",
 			true,

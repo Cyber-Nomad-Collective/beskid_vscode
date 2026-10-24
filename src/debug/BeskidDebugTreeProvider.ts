@@ -108,13 +108,8 @@ function settingsChildren(snapshot: LspRuntimeSnapshot): DebugTreeItem[] {
 	const flags = snapshot.settingsFlags;
 	return [
 		leaf("devMode", String(flags.devMode)),
-		leaf("preferBundled", String(flags.preferBundled)),
-		leaf("lsp.releaseTag", flags.lspReleaseTag),
 		leaf("explicitServerPath", flags.explicitServerPath || "(empty)"),
 		leaf("cli.path", flags.configuredCliPath),
-		leaf("cli.releaseTag", flags.cliReleaseTag),
-		leaf("autoFetchDependencies", String(flags.autoFetchDependencies)),
-		leaf("autoInstallOnLaunch", String(flags.autoInstallOnLaunch)),
 		leaf("autoSelectFromEditor", String(flags.autoSelectFromEditor)),
 		leaf("log.level", flags.logLevel),
 		leaf("log.serverOutput", String(flags.logServerOutput)),

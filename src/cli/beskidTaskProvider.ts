@@ -1,19 +1,14 @@
 import * as vscode from "vscode";
-import { readCliPath } from "../config/workspaceSettings.js";
-import { negotiateCliCapabilities } from "./cliCapabilities.js";
 import {
-	type BeskidCliOperation,
-	cliOperationLabel,
-	cliTaskInvocation,
-} from "./cliCommandSurface.js";
+	BESKID_TASK_TYPES,
+	taskBelongsToProvider,
+	taskSpecsForType,
+} from "./beskidTaskTypes.js";
+import { negotiateCliCapabilities } from "./cliCapabilities.js";
+import { type BeskidCliOperation, cliTaskInvocation } from "./cliCommandSurface.js";
+import { resolveCli } from "./toolchain.js";
 
-export const BESKID_TASK_TYPES: Record<string, BeskidCliOperation> = {
-	"beskid-fetch": "fetch",
-	"beskid-lock": "lock",
-	"beskid-build": "build",
-	"beskid-test": "test",
-	"beskid-check": "check",
-};
+export { BESKID_TASK_TYPES };
 
 const WORKSPACE_FOLDER = "${workspaceFolder}";
 
@@ -39,43 +34,53 @@ function createTask(
 }
 
 /** Resolves the CLI only when it negotiates the 0.6 surface; otherwise reports upgrade guidance. */
-async function compatibleCli(): Promise<string | undefined> {
-	const cli = readCliPath();
+async function compatibleCli(notify: boolean): Promise<string | undefined> {
+	const selected = await resolveCli();
+	if (selected.source === "none") {
+		if (notify) {
+			void vscode.window.showErrorMessage(selected.reason);
+		}
+		return undefined;
+	}
+	const cli = selected.cliPath;
 	const compatibility = await negotiateCliCapabilities(cli);
 	if (compatibility.compatible) {
 		return cli;
 	}
-	void vscode.window.showErrorMessage(compatibility.guidance);
+	if (notify) {
+		void vscode.window.showErrorMessage(compatibility.guidance);
+	}
 	return undefined;
 }
 
-export function registerBeskidTaskProvider(
-	context: vscode.ExtensionContext,
-): void {
-	const provider: vscode.TaskProvider = {
+function providerFor(type: string): vscode.TaskProvider {
+	return {
 		provideTasks: async () => {
-			const cli = await compatibleCli();
+			const specs = taskSpecsForType(type, WORKSPACE_FOLDER);
+			if (specs.length === 0) {
+				return [];
+			}
+			const cli = await compatibleCli(false);
 			if (!cli) {
 				return [];
 			}
 			const folder = vscode.workspace.workspaceFolders?.[0];
-			return Object.entries(BESKID_TASK_TYPES).map(([type, operation]) =>
+			return specs.map((spec) =>
 				createTask(
 					cli,
-					{ type, projectPath: WORKSPACE_FOLDER },
-					operation,
+					spec.definition,
+					spec.operation,
 					folder ?? vscode.TaskScope.Workspace,
-					`Beskid ${cliOperationLabel(operation)}`,
+					spec.name,
 				),
 			);
 		},
 		resolveTask: async (task: vscode.Task) => {
-			const type = task.definition.type as string | undefined;
-			const operation = type ? BESKID_TASK_TYPES[type] : undefined;
-			if (!operation) {
+			const taskType = task.definition.type as string | undefined;
+			if (!taskBelongsToProvider(type, taskType)) {
 				return undefined;
 			}
-			const cli = await compatibleCli();
+			const cli = await compatibleCli(true);
 			if (!cli) {
 				return undefined;
 			}
@@ -83,14 +88,21 @@ export function registerBeskidTaskProvider(
 			return createTask(
 				cli,
 				task.definition,
-				operation,
+				BESKID_TASK_TYPES[type],
 				task.scope ?? folder ?? vscode.TaskScope.Workspace,
 				task.name,
 			);
 		},
 	};
+}
 
+/** One provider per task type; each returns only tasks of its own type. */
+export function registerBeskidTaskProvider(
+	context: vscode.ExtensionContext,
+): void {
 	for (const type of Object.keys(BESKID_TASK_TYPES)) {
-		context.subscriptions.push(vscode.tasks.registerTaskProvider(type, provider));
+		context.subscriptions.push(
+			vscode.tasks.registerTaskProvider(type, providerFor(type)),
+		);
 	}
 }

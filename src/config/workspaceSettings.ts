@@ -1,26 +1,4 @@
-import { existsSync } from "node:fs";
 import * as vscode from "vscode";
-import { defaultCliInstallPath } from "../cli/cliPlatform.js";
-import {
-	normalizeCliReleaseTag,
-	normalizeLspReleaseTag,
-} from "../cli/releaseTags.js";
-
-export function resolveCliExecutablePath(): string | undefined {
-	const configured =
-		vscode.workspace
-			.getConfiguration("beskid")
-			.get<string>("cli.path", "beskid") || "beskid";
-	if (configured !== "beskid") {
-		return existsSync(configured) ? configured : undefined;
-	}
-	const managed = defaultCliInstallPath();
-	return existsSync(managed) ? managed : undefined;
-}
-
-export function readCliPath(): string {
-	return resolveCliExecutablePath() ?? "beskid";
-}
 
 export function readPckgBaseUrl(): string {
 	return (
@@ -52,22 +30,6 @@ export function lspDocumentationEnv(): Record<string, string> {
 	};
 }
 
-export function readCliReleaseTag(): string {
-	const configured =
-		vscode.workspace
-			.getConfiguration("beskid")
-			.get<string>("cli.releaseTag", "cli-stable") || "cli-stable";
-	return normalizeCliReleaseTag(configured);
-}
-
-export function readLspReleaseTag(): string {
-	const configured =
-		vscode.workspace
-			.getConfiguration("beskid.lsp")
-			.get<string>("releaseTag", "lsp-stable") || "lsp-stable";
-	return normalizeLspReleaseTag(configured);
-}
-
 export function readAutoSelectFromEditor(): boolean {
 	return (
 		vscode.workspace
@@ -95,22 +57,6 @@ export function readDashboardOpenOnActivate(): boolean {
 		vscode.workspace
 			.getConfiguration("beskid")
 			.get<boolean>("dashboard.openOnActivate", false) ?? false
-	);
-}
-
-export function readAutoInstallOnLaunch(): boolean {
-	return (
-		vscode.workspace
-			.getConfiguration("beskid")
-			.get<boolean>("toolchain.autoInstallOnLaunch", true) ?? true
-	);
-}
-
-export function readAutoFetchDependencies(): boolean {
-	return (
-		vscode.workspace
-			.getConfiguration("beskid")
-			.get<boolean>("toolchain.autoFetchDependencies", true) ?? true
 	);
 }
 

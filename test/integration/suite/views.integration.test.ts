@@ -54,7 +54,7 @@ suite("Beskid commands", () => {
 			"beskid.packages.open",
 			"beskid.revealInProjectsTree",
 			"beskid.lsp.quickActions",
-			"beskid.cli.bootstrap",
+			"beskid.toolchain.removeStale",
 			"beskid.lsp.restart",
 			"beskid.openSymbolDocumentation",
 		]) {
