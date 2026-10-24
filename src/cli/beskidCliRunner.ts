@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import * as vscode from "vscode";
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
 import { describeIncompatibility, negotiateCliCapabilities } from "./cliCapabilities.js";
+import { clearTestDiagnostics, publishTestDiagnostics } from "./testDiagnostics.js";
 import { resolveCli } from "./toolchain.js";
 import {
 	type BeskidCliOperation,
@@ -95,11 +96,17 @@ export async function runBeskidCli(
 	const manifest = isProjectManifestPath(options.projectUri?.fsPath)
 		? options.projectUri?.fsPath
 		: undefined;
+	// `test` runs with --json so failures can be shown as diagnostics at their location.
+	const isTest = options.subcommand === "test";
 	const args = cliOperationArgs(
 		options.subcommand,
 		manifest,
-		options.extraArgs ?? [],
+		isTest ? [...(options.extraArgs ?? []), "--json"] : (options.extraArgs ?? []),
 	);
+	if (isTest) {
+		clearTestDiagnostics();
+	}
+	let jsonStdout = "";
 	const label = cliOperationLabel(options.subcommand);
 	options.onPhase?.(options.subcommand, true, `${cli} ${label}…`);
 	outputChannel.appendLine(`$ ${cli} ${args.join(" ")} (cwd: ${cwd})`);
@@ -110,14 +117,29 @@ export async function runBeskidCli(
 			cwd,
 			shell: process.platform === "win32",
 		});
-		child.stdout.on("data", (chunk: Buffer) =>
-			outputChannel.append(chunk.toString()),
-		);
+		child.stdout.on("data", (chunk: Buffer) => {
+			if (isTest) {
+				jsonStdout += chunk.toString();
+			} else {
+				outputChannel.append(chunk.toString());
+			}
+		});
 		child.stderr.on("data", (chunk: Buffer) =>
 			outputChannel.append(chunk.toString()),
 		);
-		child.on("close", (code) => {
+		child.on("close", async (code) => {
 			options.onPhase?.(options.subcommand, false);
+			if (isTest) {
+				const shown = await publishTestDiagnostics(jsonStdout, cwd);
+				for (const item of shown) {
+					outputChannel.appendLine(
+						`FAIL ${item.file}:${item.line}:${item.column}\n  ${item.message.replace(/\n/g, "\n  ")}`,
+					);
+				}
+				if (shown.length === 0) {
+					outputChannel.append(jsonStdout);
+				}
+			}
 			const exitCode = code ?? 1;
 			if (exitCode !== 0) {
 				outputChannel.appendLine(

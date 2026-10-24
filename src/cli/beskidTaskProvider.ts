@@ -6,6 +6,7 @@ import {
 } from "./beskidTaskTypes.js";
 import { negotiateCliCapabilities } from "./cliCapabilities.js";
 import { type BeskidCliOperation, cliTaskInvocation } from "./cliCommandSurface.js";
+import { testExecution } from "./testTask.js";
 import { resolveCli } from "./toolchain.js";
 
 export { BESKID_TASK_TYPES };
@@ -24,6 +25,15 @@ function createTask(
 		definition.projectPath as string | undefined,
 		WORKSPACE_FOLDER,
 	);
+	if (operation === "test") {
+		return new vscode.Task(
+			definition,
+			scope,
+			name,
+			"beskid",
+			testExecution(cli, invocation.args, invocation.cwd),
+		);
+	}
 	return new vscode.Task(
 		definition,
 		scope,

@@ -10,6 +10,7 @@ import {
 } from "../activation/registerViews.js";
 import { registerBeskidTaskProvider } from "../cli/beskidTaskProvider.js";
 import { CliService } from "../cli/cliService.js";
+import { registerTestDiagnostics } from "../cli/testDiagnostics.js";
 import { registerToolchainCommands } from "../cli/toolchain.js";
 import { registerCommands } from "../commands/registerCommands.js";
 import { registerCoreCommands } from "../commands/registerCoreCommands.js";
@@ -186,6 +187,7 @@ export class ExtensionServices {
 		);
 		registerCommands(this.context, this);
 		registerToolchainCommands(this.context, this.outputChannel);
+		registerTestDiagnostics(this.context);
 		registerBeskidTaskProvider(this.context);
 		this.cli.registerCommands();
 		registerExtensionWatchers(this.context, this.refresh, () => {
