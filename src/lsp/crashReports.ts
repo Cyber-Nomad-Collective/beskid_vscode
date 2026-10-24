@@ -1,6 +1,7 @@
 /**
  * Server crash reports. The server catches a panic per request or notification,
- * writes `~/.beskid/crash/lsp-<time>.txt` and sends `beskid/crashReport`.
+ * writes `~/.beskid/crash/lsp-<time>.txt` and sends `beskid/crashReport`
+ * with `{ reportPath, summary, method }`.
  * The extension shows one notification per distinct report. Pure module.
  */
 
@@ -13,11 +14,11 @@ export function parseCrashReport(params: unknown): CrashReport | undefined {
 	if (!params || typeof params !== "object") {
 		return undefined;
 	}
-	const { path, summary } = params as Record<string, unknown>;
-	if (typeof path !== "string" || path.length === 0) {
+	const { reportPath, summary } = params as Record<string, unknown>;
+	if (typeof reportPath !== "string" || reportPath.length === 0) {
 		return undefined;
 	}
-	return { path, summary: typeof summary === "string" ? summary : "" };
+	return { path: reportPath, summary: typeof summary === "string" ? summary : "" };
 }
 
 export type CrashReportUi = {

@@ -27,21 +27,21 @@ describe("beskid/crashReport", () => {
 	});
 
 	test("parses the payload and rejects malformed ones", () => {
-		expect(parseCrashReport({ path: "/c/a.txt", summary: "boom" })).toEqual({
+		expect(parseCrashReport({ reportPath: "/c/a.txt", summary: "boom" })).toEqual({
 			path: "/c/a.txt",
 			summary: "boom",
 		});
-		expect(parseCrashReport({ summary: "x" })).toBeUndefined();
+		expect(parseCrashReport({ summary: "x", path: "/p" })).toBeUndefined();
 		expect(parseCrashReport(null)).toBeUndefined();
-		expect(parseCrashReport({ path: "" })).toBeUndefined();
+		expect(parseCrashReport({ reportPath: "" })).toBeUndefined();
 	});
 
 	test("one notification per report, with an Open report action", async () => {
 		const { notifier, shown, opened } = harness(OPEN_REPORT_ACTION);
-		const report = { path: "/c/lsp-1.txt", summary: "panic in hover" };
+		const report = { reportPath: "/c/lsp-1.txt", summary: "panic in hover" };
 		expect(await notifier.handle(report)).toBe(true);
 		expect(await notifier.handle(report)).toBe(false);
-		expect(await notifier.handle({ path: "/c/lsp-2.txt", summary: "again" })).toBe(true);
+		expect(await notifier.handle({ reportPath: "/c/lsp-2.txt", summary: "again" })).toBe(true);
 		expect(shown.length).toBe(2);
 		expect(shown[0].actions).toEqual([OPEN_REPORT_ACTION]);
 		expect(shown[0].message).toContain("panic in hover");
@@ -50,7 +50,7 @@ describe("beskid/crashReport", () => {
 
 	test("dismissing the notification opens nothing", async () => {
 		const { notifier, opened } = harness(undefined);
-		await notifier.handle({ path: "/c/lsp-3.txt", summary: "" });
+		await notifier.handle({ reportPath: "/c/lsp-3.txt", summary: "" });
 		expect(opened).toEqual([]);
 	});
 
@@ -61,6 +61,6 @@ describe("beskid/crashReport", () => {
 				throw new Error("ENOENT");
 			},
 		});
-		expect(await notifier.handle({ path: "/gone", summary: "" })).toBe(true);
+		expect(await notifier.handle({ reportPath: "/gone", summary: "" })).toBe(true);
 	});
 });
