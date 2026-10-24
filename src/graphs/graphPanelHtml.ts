@@ -83,7 +83,7 @@ export function renderGraphPanelHtml(
   </header>
   <div id="warnings" hidden></div>
   <div id="viewport"><div id="diagram"></div></div>
-  <script>window.__GRAPH_STATE__ = ${payload};</script>
+  <script type="application/json" id="graph-state">${payload}</script>
   <script src="${mermaidScriptUri}"></script>
   <script src="${panelScriptUri}"></script>
 </body>

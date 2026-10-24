@@ -1,6 +1,7 @@
 (() => {
 	const vscode = acquireVsCodeApi();
-	const state = window.__GRAPH_STATE__;
+	// The webview CSP allows only file scripts, so the state arrives as a JSON data block.
+	const state = JSON.parse(document.getElementById("graph-state").textContent);
 	const kindSelect = document.getElementById("kind");
 	const refreshBtn = document.getElementById("refresh");
 	const warningsEl = document.getElementById("warnings");
