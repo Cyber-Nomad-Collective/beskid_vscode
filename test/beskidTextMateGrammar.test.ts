@@ -84,4 +84,9 @@ describe("Beskid TextMate grammar", () => {
 			expect(scopesFor(`n ${op} 2;`, op)).toContain("keyword.operator.beskid");
 		}
 	});
+
+	test("the conditional and try question marks are operators", () => {
+		expect(scopesFor("i32 a = c ? 1 : 2;", "?")).toContain("keyword.operator.beskid");
+		expect(scopesFor("i32 a = x? - 1;", "?")).toContain("keyword.operator.beskid");
+	});
 });
