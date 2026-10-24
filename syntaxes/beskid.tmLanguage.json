@@ -5,6 +5,7 @@
 	"patterns": [
 		{ "include": "#comments" },
 		{ "include": "#strings" },
+		{ "include": "#characters" },
 		{ "include": "#numbers" },
 		{ "include": "#keywords" },
 		{ "include": "#types" },
@@ -47,6 +48,23 @@
 				}
 			]
 		},
+		"characters": {
+			"name": "string.quoted.single.beskid",
+			"begin": "'(?=\\\\|[^'\\n])",
+			"beginCaptures": {
+				"0": { "name": "punctuation.definition.string.begin.beskid" }
+			},
+			"end": "'|(?=\\n)",
+			"endCaptures": {
+				"0": { "name": "punctuation.definition.string.end.beskid" }
+			},
+			"patterns": [
+				{
+					"name": "constant.character.escape.beskid",
+					"match": "\\\\(?:[nrt\\\\'0]|u\\{[0-9A-Fa-f]{1,6}\\})"
+				}
+			]
+		},
 		"strings": {
 			"name": "string.quoted.double.beskid",
 			"begin": "\"",
@@ -60,7 +78,7 @@
 			"patterns": [
 				{
 					"name": "constant.character.escape.beskid",
-					"match": "\\\\(?:[nrt\\\\\"0]|x[0-9A-Fa-f]{2}|u\\{[0-9A-Fa-f_]+\\})"
+					"match": "\\\\(?:[nrt\\\\\"0]|\\$\\{|u\\{[0-9A-Fa-f]{1,6}\\})"
 				},
 				{
 					"name": "constant.other.interpolation.beskid",
@@ -164,7 +182,7 @@
 		},
 		"operators": {
 			"name": "keyword.operator.beskid",
-			"match": "===|!==|==|!=|<=|>=|&&|\\|\\||<<|>>|[+\\-*/%<>=!&|^]|=>|\\+=|-="
+			"match": "===|!==|==|!=|<=|>=|&&|\\|\\||<<|>>|=>|[+\\-*/%]=|[+\\-*/%<>=!&|^]"
 		}
 	}
 }
