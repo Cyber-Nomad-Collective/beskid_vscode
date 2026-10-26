@@ -4,8 +4,6 @@ import type { BeskidStatusParams } from "../status/beskidStatusTypes.js";
 /** Canonical LSP lifecycle phase for status bar, dashboard, and debug views. */
 export type LspRuntimePhase =
 	| "idle"
-	| "bootstrapping"
-	| "downloading"
 	| "starting"
 	| "running"
 	| "scanning"

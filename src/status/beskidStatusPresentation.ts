@@ -18,8 +18,6 @@ export type BeskidStatusSnapshot = {
 };
 
 const RUNTIME_PHASE_LABEL: Partial<Record<LspRuntimePhase, string>> = {
-	bootstrapping: "Setting up toolchain…",
-	downloading: "Downloading…",
 	starting: "Starting…",
 	error: "Error",
 	stopped: "Stopped",
@@ -91,11 +89,7 @@ export function deriveBeskidStatusPresentation(
 		const label =
 			RUNTIME_PHASE_LABEL[snapshot.runtimePhase] ?? snapshot.runtimePhase;
 		const icon =
-			snapshot.runtimePhase === "error"
-				? "$(error)"
-				: snapshot.runtimePhase === "downloading"
-					? "$(cloud-download)"
-					: "$(sync~spin)";
+			snapshot.runtimePhase === "error" ? "$(error)" : "$(sync~spin)";
 		text =
 			parts.length > 0
 				? `${icon} Beskid: ${joined}`

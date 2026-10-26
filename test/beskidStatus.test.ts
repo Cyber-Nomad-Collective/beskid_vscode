@@ -22,6 +22,11 @@ describe("deriveBeskidStatusPresentation", () => {
 		expect(text).toBe("$(zap) Beskid LSP: Running");
 	});
 
+	test("starting shows a spinner with the Starting label", () => {
+		const { text } = deriveBeskidStatusPresentation({ ...idle, runtimePhase: "starting" });
+		expect(text).toBe("$(sync~spin) Beskid LSP: Starting…");
+	});
+
 	test("stopped after start shows Stopped", () => {
 		const { text } = deriveBeskidStatusPresentation({
 			...idle,

@@ -53,11 +53,10 @@ describe("phaseAfterSetClientRunning", () => {
 		expect(phaseAfterSetClientRunning("idle", true, false)).toBe("running");
 	});
 
-	test("stop after start yields stopped unless bootstrapping", () => {
+	test("stop after start yields stopped unless in error", () => {
 		expect(phaseAfterSetClientRunning("running", false, true)).toBe("stopped");
-		expect(
-			phaseAfterSetClientRunning("bootstrapping", false, true),
-		).toBeUndefined();
+		expect(phaseAfterSetClientRunning("starting", false, true)).toBe("stopped");
+		expect(phaseAfterSetClientRunning("error", false, true)).toBeUndefined();
 	});
 
 	test("does not clobber scanning or error on start", () => {

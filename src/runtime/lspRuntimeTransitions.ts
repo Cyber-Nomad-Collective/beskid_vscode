@@ -50,12 +50,5 @@ export function phaseAfterSetClientRunning(
 	if (!clientStartedOnce) {
 		return undefined;
 	}
-	if (
-		currentPhase !== "error" &&
-		currentPhase !== "downloading" &&
-		currentPhase !== "bootstrapping"
-	) {
-		return "stopped";
-	}
-	return undefined;
+	return currentPhase === "error" ? undefined : "stopped";
 }

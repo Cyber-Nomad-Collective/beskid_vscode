@@ -16,12 +16,6 @@ import {
 	themeIcon,
 } from "./tree/treeItemHelpers.js";
 
-const STARTING_PHASES = new Set<LspRuntimePhase>([
-	"starting",
-	"downloading",
-	"bootstrapping",
-]);
-
 function truncateMessage(message: string, max = 120): string {
 	const trimmed = message.trim();
 	if (trimmed.length <= max) {
@@ -132,7 +126,7 @@ export class ProjectsTreeProvider
 		}
 
 		const phase = this.getRuntimePhase?.() ?? "idle";
-		if (STARTING_PHASES.has(phase)) {
+		if (phase === "starting") {
 			const item = new ProjectsTreeItem(
 				"info",
 				"Language server starting…",
