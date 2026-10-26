@@ -646,7 +646,7 @@
 					"beskid.cli.path": {
 						"type": "string",
 						"default": "",
-						"markdownDescription": "Path to the Beskid CLI. When empty the extension uses the CLI of the same toolchain as the language server, then `beskid` on `PATH` only when its version and runtime ABI match the extension."
+						"markdownDescription": "Path to the Beskid CLI. When empty the extension uses the CLI of the same toolchain as the language server, then `~/.beskid/bin/beskid` when it matches the extension, then `beskid` on `PATH` only when its version and runtime ABI match the extension."
 					}
 				}
 			},

@@ -77,6 +77,18 @@ describe("selectServer order", () => {
 		);
 		expect(result.source).toBe("bundled");
 		expect(result.stale).toBeUndefined();
+		expect(result.managedCliPath).toBe(managedCli);
+	});
+
+	test("bundled server gets no managed CLI when the managed toolchain is stale", async () => {
+		const d = deps([managedServer, managedCli], {
+			[managedCli]: { version: "0.6.6", runtimeAbi: 5 },
+		});
+		const result = await selectServer(
+			{ ...base, bundledServerPath: "/ext/server/beskid_lsp" },
+			d,
+		);
+		expect(result.managedCliPath).toBeUndefined();
 	});
 
 	test("managed toolchain is used only when version and ABI match", async () => {
@@ -154,6 +166,34 @@ describe("selectCli order", () => {
 			deps([]),
 		);
 		expect(result).toEqual({ source: "toolchain", cliPath: "/e/beskid" });
+	});
+
+	test("then the matching managed CLI for the bundled server, before PATH", async () => {
+		const d = deps([], { beskid: { version: "0.6.7", runtimeAbi: 5 } });
+		const result = await selectCli(
+			{
+				expected,
+				explicitCliPath: undefined,
+				server: { source: "bundled", serverPath: "/e/beskid_lsp", managedCliPath: managedCli },
+				pathCommand: "beskid",
+			},
+			d,
+		);
+		expect(result).toEqual({ source: "managed", cliPath: managedCli });
+		expect(d.probed).toEqual([]);
+	});
+
+	test("bundled server selected end to end uses the managed CLI", async () => {
+		const d = deps([managedServer, managedCli], {
+			[managedCli]: { version: "0.6.7", runtimeAbi: 5 },
+			beskid: { version: "0.6.7", runtimeAbi: 5 },
+		});
+		const server = await selectServer({ ...base, bundledServerPath: "/ext/server/beskid_lsp" }, d);
+		const cli = await selectCli(
+			{ expected, explicitCliPath: undefined, server, pathCommand: "beskid" },
+			d,
+		);
+		expect(cli).toEqual({ source: "managed", cliPath: managedCli });
 	});
 
 	test("then PATH, only when the version and ABI match", async () => {

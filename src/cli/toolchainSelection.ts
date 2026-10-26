@@ -66,6 +66,12 @@ export type ServerSelection = {
 	serverPath?: string;
 	/** CLI that belongs to the same toolchain as the selected server. */
 	siblingCliPath?: string;
+	/**
+	 * `~/.beskid/bin/beskid` when the managed toolchain there reports the
+	 * expected version and runtime ABI. The bundled server ships without a CLI,
+	 * so this is the CLI that belongs to it.
+	 */
+	managedCliPath?: string;
 	stale?: StaleToolchain;
 };
 
@@ -102,7 +108,12 @@ export async function selectServer(
 	}
 	if (input.bundledServerPath) {
 		return withStale(
-			{ source: "bundled", serverPath: input.bundledServerPath, ...sibling(input.bundledServerPath, platform, deps) },
+			{
+				source: "bundled",
+				serverPath: input.bundledServerPath,
+				...sibling(input.bundledServerPath, platform, deps),
+				...(managedMatches ? { managedCliPath: managedCli } : {}),
+			},
 			stale,
 		);
 	}
@@ -138,10 +149,13 @@ export type CliSelectionInput = {
 };
 
 export type CliSelection =
-	| { source: "explicit" | "toolchain" | "path"; cliPath: string }
+	| { source: "explicit" | "toolchain" | "managed" | "path"; cliPath: string }
 	| { source: "none"; reason: string };
 
-/** CLI order: setting, the CLI of the server's toolchain, then PATH only when its version matches. */
+/**
+ * CLI order: setting, the CLI of the server's toolchain, the matching managed
+ * CLI for the bundled server, then PATH only when its version matches.
+ */
 export async function selectCli(
 	input: CliSelectionInput,
 	deps: ToolchainDeps,
@@ -151,6 +165,9 @@ export async function selectCli(
 	}
 	if (input.server.siblingCliPath) {
 		return { source: "toolchain", cliPath: input.server.siblingCliPath };
+	}
+	if (input.server.source === "bundled" && input.server.managedCliPath) {
+		return { source: "managed", cliPath: input.server.managedCliPath };
 	}
 	const found = await deps.probe(input.pathCommand);
 	if (identitiesMatch(input.expected, found)) {

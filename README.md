@@ -40,7 +40,7 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `beskid.project.autoSelectFromEditor` | `true` | Focus the nearest `.bproj` for the active editor |
-| `beskid.cli.path` | *(empty)* | CLI for check, build, test, fetch, lock, and tasks. Empty: the CLI of the server's toolchain, then `beskid` on `PATH` when its version and runtime ABI match |
+| `beskid.cli.path` | *(empty)* | CLI for check, build, test, fetch, lock, and tasks. Empty: the CLI of the server's toolchain, then the matching `~/.beskid/bin/beskid`, then `beskid` on `PATH` when its version and runtime ABI match |
 | `beskid.pckg.baseUrl` | `https://pckg.beskid-lang.org` | Registry base URL |
 | `beskid.pckg.apiKey` | *(empty)* | API key for private packages (public browse works without a key) |
 | `beskid.debug.enabled` | `false` | Show the Debug sidebar view |
@@ -106,7 +106,7 @@ The extension never downloads a toolchain and never calls `beskid-up`. Server or
 3. `~/.beskid/bin/beskid_lsp`, only when `~/.beskid/bin/beskid dev capabilities` reports the same version and runtime ABI as this extension. Otherwise the extension ignores it and warns, with a **Remove stale toolchain** action.
 4. With `beskid.lsp.server.devMode` or a sibling compiler checkout: a local build.
 
-CLI order: `beskid.cli.path`, then the `beskid` next to the selected server, then `beskid` on `PATH` when its version and runtime ABI match.
+CLI order: `beskid.cli.path`, then the `beskid` next to the selected server, then (for the bundled server) `~/.beskid/bin/beskid` when it reports the same version and runtime ABI as this extension, then `beskid` on `PATH` when its version and runtime ABI match.
 
 The extension negotiates the CLI command surface with `beskid dev capabilities --json` before it runs the CLI. A CLI that does not answer, or that does not list `check`, `build`, `test`, `dev lsp`, and `dev project`, is rejected with upgrade guidance: run `beskid toolchain update` or install Beskid 0.6. Commands from Beskid 0.5 and earlier (`analyze`, `lsp`, `fetch`, `lock`, `pckg`) are never invoked.
 
