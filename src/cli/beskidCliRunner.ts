@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawnCli } from "./cliSpawn.js";
 import { dirname } from "node:path";
 import * as vscode from "vscode";
 import type { BeskidActivityPhase } from "../packages/pckgActivity.js";
@@ -113,10 +113,8 @@ export async function runBeskidCli(
 	outputChannel.show(true);
 
 	return new Promise((resolve) => {
-		const child = spawn(cli, args, {
-			cwd,
-			shell: process.platform === "win32",
-		});
+		const child = spawnCli(cli, args, { cwd });
+		let settled = false;
 		child.stdout.on("data", (chunk: Buffer) => {
 			if (isTest) {
 				jsonStdout += chunk.toString();
@@ -127,7 +125,11 @@ export async function runBeskidCli(
 		child.stderr.on("data", (chunk: Buffer) =>
 			outputChannel.append(chunk.toString()),
 		);
-		child.on("close", async (code) => {
+		child.on("close", (code) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
 			options.onPhase?.(options.subcommand, false);
 			if (isTest) {
 				const shown = publishTestDiagnostics(jsonStdout, cwd);
@@ -164,6 +166,10 @@ export async function runBeskidCli(
 			resolve(exitCode);
 		});
 		child.on("error", (err) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
 			options.onPhase?.(options.subcommand, false);
 			outputChannel.appendLine(String(err));
 			const errno = err as NodeJS.ErrnoException;

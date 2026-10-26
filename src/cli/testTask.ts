@@ -1,6 +1,7 @@
-import { spawn } from "node:child_process";
 import * as vscode from "vscode";
+import { spawnCli } from "./cliSpawn.js";
 import { clearTestDiagnostics, publishTestDiagnostics } from "./testDiagnostics.js";
+import { followTestRun, type TestRun } from "./testRun.js";
 
 const WORKSPACE_FOLDER = "${workspaceFolder}";
 
@@ -17,6 +18,7 @@ export function testExecution(
 		const writeEmitter = new vscode.EventEmitter<string>();
 		const closeEmitter = new vscode.EventEmitter<number>();
 		const crlf = (text: string) => text.replace(/\r?\n/g, "\r\n");
+		let run: TestRun | undefined;
 		return {
 			onDidWrite: writeEmitter.event,
 			onDidClose: closeEmitter.event,
@@ -28,35 +30,26 @@ export function testExecution(
 				clearTestDiagnostics();
 				const fullArgs = [...args, "--json"];
 				writeEmitter.fire(crlf(`> ${cli} ${fullArgs.join(" ")}\n`));
-				let stdout = "";
-				const child = spawn(cli, fullArgs, {
-					cwd,
-					shell: process.platform === "win32",
-				});
-				child.stdout.on("data", (chunk: Buffer) => {
-					stdout += chunk.toString();
-				});
-				child.stderr.on("data", (chunk: Buffer) =>
-					writeEmitter.fire(crlf(chunk.toString())),
-				);
-				child.on("error", (error) => {
-					writeEmitter.fire(crlf(`${error.message}\n`));
-					closeEmitter.fire(1);
-				});
-				child.on("close", async (code) => {
-					const shown = publishTestDiagnostics(stdout, cwd);
-					if (shown.length === 0) {
-						writeEmitter.fire(crlf(stdout));
-					}
-					for (const item of shown) {
-						writeEmitter.fire(
-							crlf(`FAIL ${item.file}:${item.line}:${item.column}\n  ${item.message.replace(/\n/g, "\n  ")}\n`),
-						);
-					}
-					closeEmitter.fire(code ?? 1);
+				run = followTestRun(spawnCli(cli, fullArgs, { cwd }), {
+					write: (text) => writeEmitter.fire(crlf(text)),
+					report: (stdout) => {
+						const shown = publishTestDiagnostics(stdout, cwd);
+						if (shown.length === 0) {
+							writeEmitter.fire(crlf(stdout));
+						}
+						for (const item of shown) {
+							writeEmitter.fire(
+								crlf(`FAIL ${item.file}:${item.line}:${item.column}\n  ${item.message.replace(/\n/g, "\n  ")}\n`),
+							);
+						}
+					},
+					done: (code) => closeEmitter.fire(code),
 				});
 			},
-			close: () => {},
+			close: () => {
+				run?.stop();
+				run = undefined;
+			},
 		};
 	});
 }

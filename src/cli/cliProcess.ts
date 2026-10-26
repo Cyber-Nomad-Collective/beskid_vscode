@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawnCli } from "./cliSpawn.js";
 
 export type CliProcessResult = {
 	exitCode: number;
@@ -20,11 +20,7 @@ export async function runCliProcess(
 		const stdoutChunks: Buffer[] = [];
 		const stderrChunks: Buffer[] = [];
 
-		const child = spawn(command, args, {
-			cwd: options.cwd,
-			env: options.env ?? process.env,
-			shell: process.platform === "win32",
-		});
+		const child = spawnCli(command, args, options);
 
 		child.stdout.on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
 		child.stderr.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
