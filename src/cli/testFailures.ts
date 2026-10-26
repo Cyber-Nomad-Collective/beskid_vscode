@@ -16,9 +16,8 @@ export type TestFailure =
 			expected?: string;
 			actual?: string;
 			location?: TestLocation;
-			locationIsCallSite: boolean;
 	  }
-	| { kind: "crash"; trap?: string; reason: string };
+	| { kind: "crash"; trap?: string; reason: string; location?: TestLocation };
 
 export type FailedTest = {
 	name: string;
@@ -55,7 +54,6 @@ function parseFailure(value: unknown): TestFailure | undefined {
 			expected: str(record.expected),
 			actual: str(record.actual),
 			location: parseLocation(record.location),
-			locationIsCallSite: record.location_is_call_site === true,
 		};
 	}
 	if (record.kind === "crash") {
@@ -63,6 +61,7 @@ function parseFailure(value: unknown): TestFailure | undefined {
 			kind: "crash",
 			trap: str(record.trap),
 			reason: str(record.reason) ?? "test crashed",
+			location: parseLocation(record.location),
 		};
 	}
 	return undefined;
@@ -133,61 +132,34 @@ export function assertionMessage(
 	return lines.join("\n");
 }
 
-export type DeclarationSource = { path: string; text: string };
-
-/** Position of `test <Name>` in the given sources (1-based), or undefined. */
-export function findTestDeclaration(
-	name: string,
-	sources: readonly DeclarationSource[],
-): { file: string; line: number; column: number } | undefined {
-	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const pattern = new RegExp(`^(\\s*)test\\s+(${escaped})\\b`);
-	for (const source of sources) {
-		const lines = source.text.split(/\r?\n/);
-		for (let i = 0; i < lines.length; i += 1) {
-			const match = pattern.exec(lines[i]);
-			if (match) {
-				return { file: source.path, line: i + 1, column: match[1].length + 1 };
-			}
-		}
-	}
-	return undefined;
+function failureMessage(failure: TestFailure): string {
+	return failure.kind === "crash"
+		? `test crashed: ${failure.reason}${failure.trap ? ` (${failure.trap})` : ""}`
+		: assertionMessage(failure);
 }
 
 /**
- * Error diagnostics for failed tests. An assertion is shown at `failure.location`
- * (the Assert call, or the test declaration when the CLI could not find the call);
- * a crash is shown on the test declaration, found in `sources`.
+ * Error diagnostics for failed tests, each at the `failure.location` the CLI
+ * reports (an assertion or a crash). A failure without a location yields no
+ * diagnostic.
  */
 export function testDiagnostics(
 	failed: readonly FailedTest[],
 	baseDir: string,
-	sources: readonly DeclarationSource[],
 ): TestDiagnostic[] {
 	const out: TestDiagnostic[] = [];
 	for (const test of failed) {
 		const failure = test.failure;
-		if (failure?.kind === "assertion" && failure.location) {
-			const { file, line, column } = failure.location;
-			out.push({
-				file: isAbsolute(file) ? file : join(baseDir, file),
-				line,
-				column,
-				message: `${test.name}: ${assertionMessage(failure)}`,
-			});
+		if (!failure?.location) {
 			continue;
 		}
-		const declaration = findTestDeclaration(test.name, sources);
-		if (!declaration) {
-			continue;
-		}
-		const detail =
-			failure?.kind === "crash"
-				? `test crashed: ${failure.reason}${failure.trap ? ` (${failure.trap})` : ""}`
-				: failure?.kind === "assertion"
-					? assertionMessage(failure)
-					: (test.reason ?? "test failed");
-		out.push({ ...declaration, message: `${test.name}: ${detail}` });
+		const { file, line, column } = failure.location;
+		out.push({
+			file: isAbsolute(file) ? file : join(baseDir, file),
+			line,
+			column,
+			message: `${test.name}: ${failureMessage(failure)}`,
+		});
 	}
 	return out;
 }

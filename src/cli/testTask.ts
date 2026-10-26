@@ -44,7 +44,7 @@ export function testExecution(
 					closeEmitter.fire(1);
 				});
 				child.on("close", async (code) => {
-					const shown = await publishTestDiagnostics(stdout, cwd);
+					const shown = publishTestDiagnostics(stdout, cwd);
 					if (shown.length === 0) {
 						writeEmitter.fire(crlf(stdout));
 					}

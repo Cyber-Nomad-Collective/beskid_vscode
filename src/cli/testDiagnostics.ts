@@ -1,8 +1,5 @@
-import { readFileSync } from "node:fs";
 import * as vscode from "vscode";
-import { isExcludedWatchPath } from "../runtime/watchExclusions.js";
 import {
-	type DeclarationSource,
 	parseFailedTests,
 	type TestDiagnostic,
 	testDiagnostics,
@@ -24,34 +21,18 @@ export function clearTestDiagnostics(): void {
 	diagnostics().clear();
 }
 
-async function projectSources(baseDir: string): Promise<DeclarationSource[]> {
-	const uris = await vscode.workspace.findFiles("**/*.bd");
-	const sources: DeclarationSource[] = [];
-	for (const uri of uris) {
-		if (!uri.fsPath.startsWith(baseDir) || isExcludedWatchPath(uri.fsPath)) {
-			continue;
-		}
-		try {
-			sources.push({ path: uri.fsPath, text: readFileSync(uri.fsPath, "utf8") });
-		} catch {
-			// unreadable file: skip
-		}
-	}
-	return sources;
-}
-
 /** Replaces the test diagnostics with those in `stdout` of `beskid test --json`; returns them. */
-export async function publishTestDiagnostics(
+export function publishTestDiagnostics(
 	stdout: string,
 	baseDir: string,
-): Promise<TestDiagnostic[]> {
+): TestDiagnostic[] {
 	const collection = diagnostics();
 	collection.clear();
 	const failed = parseFailedTests(stdout);
 	if (failed.length === 0) {
 		return [];
 	}
-	const found = testDiagnostics(failed, baseDir, await projectSources(baseDir));
+	const found = testDiagnostics(failed, baseDir);
 	const byFile = new Map<string, vscode.Diagnostic[]>();
 	for (const item of found) {
 		const position = new vscode.Position(

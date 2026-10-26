@@ -130,7 +130,7 @@ export async function runBeskidCli(
 		child.on("close", async (code) => {
 			options.onPhase?.(options.subcommand, false);
 			if (isTest) {
-				const shown = await publishTestDiagnostics(jsonStdout, cwd);
+				const shown = publishTestDiagnostics(jsonStdout, cwd);
 				for (const item of shown) {
 					outputChannel.appendLine(
 						`FAIL ${item.file}:${item.line}:${item.column}\n  ${item.message.replace(/\n/g, "\n  ")}`,
