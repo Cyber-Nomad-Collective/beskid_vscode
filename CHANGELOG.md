@@ -15,15 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Resolve the CLI from the setting, then the server's toolchain, then `PATH` when its version matches.
+- Resolve the CLI from the setting, then the server's toolchain, then (for the bundled server) `~/.beskid/bin/beskid` when it reports the same version and runtime ABI, then `PATH` when its version matches.
+- Show `beskid test` failures, assertions and crashes, only at the `failure.location` that the CLI reports. The extension no longer searches project sources for the test declaration.
+- Remove only Beskid extension folders older than the running version. A newer version, or one whose order is not certain, is kept.
+- The release bundle script reads `BESKID_RUNTIME_ABI_VERSION` from the compiler and stops when it is missing, cannot be parsed, or differs from `beskidToolchain.runtimeAbi`.
+- Set the extension version to 0.6.7.
 
 ### Fixed
 
 - Each task provider returns only tasks of its own type, which ends the VS Code log errors about tasks of another type.
+- Start the CLI from an argument list without a shell, so a path with spaces or shell metacharacters reaches it unchanged on Windows.
+- The `beskid-test` task closes once when the process fails to start, and closing its terminal stops the test process.
 
 ### Removed
 
 - The `cli-stable` / `lsp-stable` downloads, **Install CLI**, **Install LSP**, **Setup Toolchain** and their settings. The extension never calls `beskid-up`.
+- The `downloading` and `bootstrapping` runtime phases and their status labels.
+
+### Security
+
+- The extension no longer runs a `compiler/target/release/beskid_lsp` that it finds in or above a workspace folder. Use `beskid.lsp.server.path` or `beskid.lsp.server.devMode` for a local build.
+- **Open report** opens only an `lsp-*.txt` file directly in `~/.beskid/crash`.
 
 ## [0.6.6] - 2026-10-16
 
