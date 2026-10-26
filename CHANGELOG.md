@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Resolve the CLI from the setting, then the server's toolchain, then (for the bundled server) `~/.beskid/bin/beskid` when it reports the same version and runtime ABI, then `PATH` when its version matches.
 - Show `beskid test` failures, assertions and crashes, only at the `failure.location` that the CLI reports. The extension no longer searches project sources for the test declaration.
+- `beskid.cli.path`, every `beskid.lsp.server.*` setting and `beskid.pckg.baseUrl` are machine-scoped: a workspace's `.vscode/settings.json` can no longer point VS Code at a binary or command of its choice, or send the registry key to another server. Set them in user settings.
 - Remove only Beskid extension folders older than the running version. A newer version, or one whose order is not certain, is kept.
 - The release bundle script reads `BESKID_RUNTIME_ABI_VERSION` from the compiler and stops when it is missing, cannot be parsed, or differs from `beskidToolchain.runtimeAbi`.
 - Set the extension version to 0.6.7.

@@ -24,3 +24,32 @@ test("package.json and package-lock.json carry the 0.6.7 release version", async
 	expect(lock.version).toBe(pkg.version);
 	expect(lock.packages[""].version).toBe(pkg.version);
 });
+
+test("settings that choose a program to run, or where the registry key goes, are machine-scoped", () => {
+	// A workspace's `.vscode/settings.json` must not point VS Code at an arbitrary binary or
+	// command, or send the user's registry key elsewhere: VS Code ignores workspace values of
+	// machine-scoped settings.
+	const properties: Record<string, { scope?: string }> = Object.assign(
+		{},
+		...pkg.contributes.configuration.map((section) => section.properties),
+	);
+	const guarded = [
+		"beskid.lsp.server.command",
+		"beskid.lsp.server.args",
+		"beskid.lsp.server.debugArgs",
+		"beskid.lsp.server.devMode",
+		"beskid.lsp.server.path",
+		"beskid.lsp.server.cwd",
+		"beskid.cli.path",
+		"beskid.pckg.baseUrl",
+	];
+	for (const key of guarded) {
+		expect({ key, scope: properties[key]?.scope }).toEqual({ key, scope: "machine" });
+	}
+	// Any later setting that names a program, its arguments or its directory must be guarded too.
+	for (const [key, property] of Object.entries(properties)) {
+		if (/\.(path|command|args|debugArgs|cwd)$/.test(key)) {
+			expect({ key, scope: property.scope }).toEqual({ key, scope: "machine" });
+		}
+	}
+});

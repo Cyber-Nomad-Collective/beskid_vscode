@@ -48,6 +48,8 @@ Cross-module IntelliSense requires a resolved project context (same `.bproj` / `
 
 Additional LSP overrides: `beskid.lsp.server.path`, `beskid.lsp.server.devMode`, and related `beskid.lsp.server.*` keys.
 
+The settings that choose a program to run (`beskid.cli.path` and every `beskid.lsp.server.*` key) and `beskid.pckg.baseUrl` are machine-scoped: set them in your user settings. VS Code ignores them in a workspace's `.vscode/settings.json`, so an opened folder cannot run a binary of its choice or send your registry key elsewhere.
+
 ## Commands (common)
 
 | Command | Description |

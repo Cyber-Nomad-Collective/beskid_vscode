@@ -571,11 +571,13 @@
 				"title": "Beskid › LSP",
 				"properties": {
 					"beskid.lsp.server.command": {
+						"scope": "machine",
 						"type": "string",
 						"default": "cargo",
 						"markdownDescription": "Launch command when `#beskid.lsp.server.devMode#` is enabled. Typically `cargo` (args are specified separately via `#beskid.lsp.server.args#`)."
 					},
 					"beskid.lsp.server.args": {
+						"scope": "machine",
 						"type": "array",
 						"items": {
 							"type": "string"
@@ -588,21 +590,25 @@
 						"markdownDescription": "Arguments passed to `#beskid.lsp.server.command#` in dev mode."
 					},
 					"beskid.lsp.server.devMode": {
+						"scope": "machine",
 						"type": "boolean",
 						"default": false,
 						"markdownDescription": "Build and run the language server via Cargo (`#beskid.lsp.server.command#` + `#beskid.lsp.server.args#`) in `#beskid.lsp.server.cwd#`, which should be the local `compiler` directory. Overrides the bundled and managed binaries, but not `#beskid.lsp.server.path#`."
 					},
 					"beskid.lsp.server.path": {
+						"scope": "machine",
 						"type": "string",
 						"default": "",
 						"markdownDescription": "Absolute path to a Beskid LSP binary. When set, this overrides the bundled server. Leave empty to use the server bundled with the extension, or a matching toolchain in `~/.beskid/bin`."
 					},
 					"beskid.lsp.server.cwd": {
+						"scope": "machine",
 						"type": "string",
 						"default": "",
 						"markdownDescription": "Working directory for the language server process. When empty, the extension uses the focused project directory or the first workspace folder."
 					},
 					"beskid.lsp.server.debugArgs": {
+						"scope": "machine",
 						"type": "array",
 						"items": {
 							"type": "string"
@@ -644,6 +650,7 @@
 				"title": "Beskid › Toolchain",
 				"properties": {
 					"beskid.cli.path": {
+						"scope": "machine",
 						"type": "string",
 						"default": "",
 						"markdownDescription": "Path to the Beskid CLI. When empty the extension uses the CLI of the same toolchain as the language server, then `~/.beskid/bin/beskid` when it matches the extension, then `beskid` on `PATH` only when its version and runtime ABI match the extension."
@@ -654,6 +661,7 @@
 				"title": "Beskid › Packages",
 				"properties": {
 					"beskid.pckg.baseUrl": {
+						"scope": "machine",
 						"type": "string",
 						"default": "https://pckg.beskid-lang.org",
 						"markdownDescription": "Base URL for the Beskid package registry. Used by the Packages tree and dashboard."
