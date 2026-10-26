@@ -16,7 +16,6 @@ export type LspLaunchSource =
 	| "explicit"
 	| "cli"
 	| "bundled"
-	| "compiler-release"
 	| "dev-cargo";
 
 export type LspLaunchSnapshot = {

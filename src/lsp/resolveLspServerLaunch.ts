@@ -4,20 +4,8 @@ import * as vscode from "vscode";
 import type { Executable } from "vscode-languageclient/node";
 import { resolveServerSelection } from "../cli/toolchain.js";
 import { lspDocumentationEnv } from "../config/workspaceSettings.js";
-import {
-	platformArchKey,
-	resolveCompilerReleaseBinary,
-	resolveCompilerWorkspaceRoot,
-} from "./serverBinary.js";
-
-function resolveCompilerWorkspaceRootFromContext(
-	context: ExtensionContext,
-): string | undefined {
-	return resolveCompilerWorkspaceRoot(
-		context.extensionPath,
-		vscode.workspace.workspaceFolders,
-	);
-}
+import { planLspLaunch } from "./lspLaunchPlan.js";
+import { platformArchKey } from "./serverBinary.js";
 
 function serverCwd(selectedProjectUri: vscode.Uri | undefined): {
 	cwd?: string;
@@ -56,25 +44,15 @@ export async function resolveLspServerLaunch(
 ): Promise<{ run: Executable; debug: Executable }> {
 	const config = vscode.workspace.getConfiguration("beskid.lsp");
 	const options = serverCwd(selectedProjectUri);
-	const compilerRoot = resolveCompilerWorkspaceRootFromContext(context);
 	const devMode = config.get<boolean>("server.devMode", false);
 
 	// Explicit setting, then the bundled server, then a matching ~/.beskid/bin.
 	// Nothing is downloaded and `beskid-up` is never called.
-	const selection = await resolveServerSelection(context);
-	if (selection.serverPath && (selection.source === "explicit" || !devMode)) {
-		return sameLaunch(executable(selection.serverPath, [], options));
+	const plan = planLspLaunch(await resolveServerSelection(context), devMode);
+	if (plan.kind === "binary") {
+		return sameLaunch(executable(plan.serverPath, [], options));
 	}
-
-	const releaseBinary = compilerRoot
-		? resolveCompilerReleaseBinary(compilerRoot)
-		: undefined;
-	if (releaseBinary && !devMode) {
-		const releaseOptions = compilerRoot ? { cwd: compilerRoot } : options;
-		return sameLaunch(executable(releaseBinary, [], releaseOptions));
-	}
-
-	if (!devMode && !compilerRoot) {
+	if (plan.kind === "none") {
 		const platformKey =
 			platformArchKey() ?? `${process.platform}-${process.arch}`;
 		const message =
@@ -93,10 +71,8 @@ export async function resolveLspServerLaunch(
 		"-p",
 		"beskid_lsp",
 	]);
-	const sourceOptions = compilerRoot ? { cwd: compilerRoot } : options;
-
 	return {
-		run: executable(command, args, sourceOptions),
-		debug: executable(command, debugArgs, sourceOptions),
+		run: executable(command, args, options),
+		debug: executable(command, debugArgs, options),
 	};
 }

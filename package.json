@@ -590,7 +590,7 @@
 					"beskid.lsp.server.devMode": {
 						"type": "boolean",
 						"default": false,
-						"markdownDescription": "Build and run the language server from a local compiler workspace via Cargo (`#beskid.lsp.server.command#` + `#beskid.lsp.server.args#`). Overrides the bundled and managed binaries, but not `#beskid.lsp.server.path#`."
+						"markdownDescription": "Build and run the language server via Cargo (`#beskid.lsp.server.command#` + `#beskid.lsp.server.args#`) in `#beskid.lsp.server.cwd#`, which should be the local `compiler` directory. Overrides the bundled and managed binaries, but not `#beskid.lsp.server.path#`."
 					},
 					"beskid.lsp.server.path": {
 						"type": "string",

@@ -1,9 +1,5 @@
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-
-export interface WorkspaceFolderRef {
-	uri: { fsPath: string };
-}
+import { join } from "node:path";
 
 export function platformArchKey(): string | undefined {
 	const platform = process.platform;
@@ -53,52 +49,4 @@ export function resolveBundledServerBinaryAt(
 		}
 	}
 	return undefined;
-}
-
-export function resolveCompilerWorkspaceRoot(
-	extensionPath: string,
-	workspaceFolders: readonly WorkspaceFolderRef[] | undefined,
-): string | undefined {
-	const candidates: string[] = [join(extensionPath, "..", "compiler")];
-
-	for (const folder of workspaceFolders ?? []) {
-		const fsPath = folder.uri.fsPath;
-		if (!fsPath) {
-			continue;
-		}
-		let dir = fsPath;
-		for (let depth = 0; depth < 6; depth += 1) {
-			candidates.push(join(dir, "compiler"));
-			const parent = dirname(dir);
-			if (parent === dir) {
-				break;
-			}
-			dir = parent;
-		}
-	}
-
-	const seen = new Set<string>();
-	for (const candidate of candidates) {
-		if (seen.has(candidate)) {
-			continue;
-		}
-		seen.add(candidate);
-		if (existsSync(join(candidate, "Cargo.toml"))) {
-			return candidate;
-		}
-	}
-
-	return undefined;
-}
-
-export function resolveCompilerReleaseBinary(
-	compilerRoot: string,
-): string | undefined {
-	const releasePath = join(
-		compilerRoot,
-		"target",
-		"release",
-		compilerBinaryName(),
-	);
-	return existsSync(releasePath) ? releasePath : undefined;
 }

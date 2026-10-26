@@ -1,19 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { fileURLToPath } from "node:url";
 import {
 	bundledPlatformArchKeys,
 	platformArchKey,
 	resolveBundledServerBinaryAt,
-	resolveCompilerReleaseBinary,
-	resolveCompilerWorkspaceRoot,
 } from "../src/lsp/serverBinary.js";
 
 describe("serverBinary", () => {
-	const extensionPath = fileURLToPath(new URL("../", import.meta.url)).replace(
-		/[\\/]test[\\/]?$/,
-		"",
-	);
-
 	test("platformArchKey returns a supported host key", () => {
 		const key = platformArchKey();
 		expect(key).toBeDefined();
@@ -40,21 +32,13 @@ describe("serverBinary", () => {
 		expect(resolveBundledServerBinaryAt(extensionPath, keys)).toBeUndefined();
 	});
 
-	test("resolveCompilerWorkspaceRoot finds sibling compiler checkout", () => {
-		const root = resolveCompilerWorkspaceRoot(extensionPath, undefined);
-		expect(root).toBeDefined();
-		expect(root).toMatch(/[\\/]compiler$/);
-	});
-
-	test("resolveCompilerReleaseBinary returns release binary when present", () => {
-		const compilerRoot = resolveCompilerWorkspaceRoot(extensionPath, undefined);
-		if (!compilerRoot) {
-			return;
-		}
-		const releaseBinary = resolveCompilerReleaseBinary(compilerRoot);
-		if (!releaseBinary) {
-			return;
-		}
-		expect(releaseBinary.endsWith("beskid_lsp")).toBe(true);
+	test("no longer offers compiler checkout discovery", async () => {
+		const exports = await import("../src/lsp/serverBinary.js");
+		expect(Object.keys(exports).sort()).toEqual([
+			"bundledPlatformArchKeys",
+			"compilerBinaryName",
+			"platformArchKey",
+			"resolveBundledServerBinaryAt",
+		]);
 	});
 });

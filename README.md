@@ -81,7 +81,7 @@ already-built `beskid_lsp` binary before running the integration suite.
 
 Press **F5** to launch an Extension Development Host. The launch config bundles the host LSP binary and compiles TypeScript first.
 
-When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collective/beskid), the extension can use a local `compiler/target/release/beskid_lsp` build or `cargo run -p beskid_lsp` if `beskid.lsp.server.devMode` is enabled.
+When developing in the [beskid superrepo](https://github.com/Cyber-Nomad-Collective/beskid), point `beskid.lsp.server.path` at a local `compiler/target/release/beskid_lsp` build, or enable `beskid.lsp.server.devMode` and set `beskid.lsp.server.cwd` to the `compiler` directory to run `cargo run -p beskid_lsp`. The extension never runs a compiler build that it finds near the workspace.
 
 ### Manual smoke
 
@@ -104,7 +104,7 @@ The extension never downloads a toolchain and never calls `beskid-up`. Server or
 1. Explicit `beskid.lsp.server.path`.
 2. The server bundled in the VSIX (`server/<platform>-<arch>/`).
 3. `~/.beskid/bin/beskid_lsp`, only when `~/.beskid/bin/beskid dev capabilities` reports the same version and runtime ABI as this extension. Otherwise the extension ignores it and warns, with a **Remove stale toolchain** action.
-4. With `beskid.lsp.server.devMode` or a sibling compiler checkout: a local build.
+4. With `beskid.lsp.server.devMode`: `beskid.lsp.server.command` and `beskid.lsp.server.args` in `beskid.lsp.server.cwd`.
 
 CLI order: `beskid.cli.path`, then the `beskid` next to the selected server, then (for the bundled server) `~/.beskid/bin/beskid` when it reports the same version and runtime ABI as this extension, then `beskid` on `PATH` when its version and runtime ABI match.
 
