@@ -7,7 +7,9 @@ import { join } from "node:path";
 import {
 	bundleExactHostLsp,
 	bundleVerifiedReleaseLsp,
+	checkRuntimeAbi,
 	clearVsixArtifacts,
+	compilerRuntimeAbiSource,
 	resolveHost,
 	resolvePackageReleaseVersion,
 	versionedVsixName,
@@ -21,10 +23,16 @@ afterEach(() => {
 	}
 });
 
-function extensionFixture({ packageVersion = "0.4.598", lockVersion = packageVersion, rootLockVersion = lockVersion } = {}) {
+function extensionFixture({
+	packageVersion = "0.4.598",
+	lockVersion = packageVersion,
+	rootLockVersion = lockVersion,
+	runtimeAbi = 5,
+} = {}) {
 	const root = mkdtempSync(join(tmpdir(), "beskid-vscode-package-"));
 	fixtures.push(root);
-	writeFileSync(join(root, "package.json"), JSON.stringify({ name: "beskid-vscode", version: packageVersion }));
+	writeFileSync(join(root, "package.json"), JSON.stringify({ name: "beskid-vscode", version: packageVersion, beskidToolchain: { runtimeAbi } }),
+	);
 	writeFileSync(
 		join(root, "package-lock.json"),
 		JSON.stringify({
@@ -37,9 +45,14 @@ function extensionFixture({ packageVersion = "0.4.598", lockVersion = packageVer
 	return root;
 }
 
-function repoFixture() {
+function repoFixture({ abiSource = "pub const BESKID_RUNTIME_ABI_VERSION: u32 = 5;\n" } = {}) {
 	const repoRoot = mkdtempSync(join(tmpdir(), "beskid-vscode-repo-"));
 	fixtures.push(repoRoot);
+	if (abiSource !== null) {
+		const abiPath = compilerRuntimeAbiSource(repoRoot);
+		mkdirSync(join(abiPath, ".."), { recursive: true });
+		writeFileSync(abiPath, abiSource);
+	}
 	const validatorDir = join(repoRoot, "scripts", "ci");
 	mkdirSync(validatorDir, { recursive: true });
 	writeFileSync(
@@ -143,6 +156,57 @@ chmod +x "$PWD/$4"
 				releaseBuilder: builder,
 			}),
 		).toThrow("bundled LSP version mismatch");
+	});
+
+	test("checkRuntimeAbi accepts only an equal, parsable compiler constant", () => {
+		const source = "//! ABI\npub const BESKID_RUNTIME_ABI_VERSION: u32 = 5;\n";
+		expect(checkRuntimeAbi(source, 5)).toBe(5);
+		expect(() => checkRuntimeAbi(source, 4)).toThrow("runtime ABI mismatch");
+		expect(() => checkRuntimeAbi(source, undefined)).toThrow("runtime ABI mismatch");
+		expect(() => checkRuntimeAbi("pub const OTHER: u32 = 5;", 5)).toThrow("could not be parsed");
+		expect(() => checkRuntimeAbi("pub const BESKID_RUNTIME_ABI_VERSION: u32 = five;", 5)).toThrow(
+			"could not be parsed",
+		);
+		expect(() => checkRuntimeAbi(undefined, 5)).toThrow("missing");
+	});
+
+	test("refuses to invoke the release builder when the runtime ABI is missing or differs", () => {
+		const extensionRoot = extensionFixture({ runtimeAbi: 4 });
+		const builder = join(mkdtempSync(join(tmpdir(), "beskid-vscode-builder-")), "builder");
+		fixtures.push(join(builder, ".."));
+		const marker = `${builder}.ran`;
+		writeFileSync(builder, `#!/usr/bin/env bash\ntouch "${marker}"\n`);
+		chmodSync(builder, 0o755);
+		const run = (repoRoot) => () =>
+			bundleExactHostLsp({ extensionRoot, repoRoot, platform: "darwin", arch: "arm64", releaseBuilder: builder });
+
+		expect(run(repoFixture())).toThrow("runtime ABI mismatch");
+		expect(run(repoFixture({ abiSource: null }))).toThrow("runtime ABI source is missing");
+		expect(() => readFileSync(marker)).toThrow();
+	});
+
+	test("verified release staging also checks the runtime ABI", () => {
+		const extensionRoot = extensionFixture({ runtimeAbi: 6 });
+		const repoRoot = repoFixture();
+		const artifactPath = join(repoRoot, "lsp");
+		writeFileSync(artifactPath, "payload");
+		const sha256 = createHash("sha256").update(readFileSync(artifactPath)).digest("hex");
+		expect(() =>
+			bundleVerifiedReleaseLsp({ extensionRoot, repoRoot, platformKey: "linux-x64", artifactPath, sha256, version: "0.4.598" }),
+		).toThrow("runtime ABI mismatch");
+	});
+
+	test("the real compiler constant matches package.json when the aggregate checkout is present", async () => {
+		const extensionRoot = join(import.meta.dir, "..");
+		const source = compilerRuntimeAbiSource(join(extensionRoot, ".."));
+		let text;
+		try {
+			text = readFileSync(source, "utf8");
+		} catch {
+			return;
+		}
+		const pkg = JSON.parse(readFileSync(join(extensionRoot, "package.json"), "utf8"));
+		expect(checkRuntimeAbi(text, pkg.beskidToolchain.runtimeAbi)).toBe(5);
 	});
 
 	test("uses an unambiguous versioned platform artifact name", () => {

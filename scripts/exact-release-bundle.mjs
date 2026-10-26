@@ -60,6 +60,51 @@ export function resolvePackageReleaseVersion(extensionRoot, repoRoot = join(exte
 	return versions[0];
 }
 
+const RUNTIME_ABI_PATTERN = /^\s*pub\s+const\s+BESKID_RUNTIME_ABI_VERSION\s*:\s*u32\s*=\s*(\d+)\s*;/m;
+
+/**
+ * Pure check: the compiler's `BESKID_RUNTIME_ABI_VERSION` (text of
+ * `beskid_abi/src/version.rs`) must equal package.json `beskidToolchain.runtimeAbi`.
+ * Throws when the source is missing, the constant cannot be parsed, or they differ.
+ */
+export function checkRuntimeAbi(versionRsText, packageRuntimeAbi) {
+	if (typeof versionRsText !== "string") {
+		throw new Error("compiler runtime ABI source is missing");
+	}
+	const match = RUNTIME_ABI_PATTERN.exec(versionRsText);
+	if (!match) {
+		throw new Error("compiler runtime ABI constant BESKID_RUNTIME_ABI_VERSION could not be parsed");
+	}
+	const compilerAbi = Number(match[1]);
+	if (!Number.isSafeInteger(compilerAbi)) {
+		throw new Error(`compiler runtime ABI is not an integer: ${match[1]}`);
+	}
+	if (!Number.isSafeInteger(packageRuntimeAbi) || packageRuntimeAbi !== compilerAbi) {
+		throw new Error(
+			`runtime ABI mismatch: compiler BESKID_RUNTIME_ABI_VERSION=${compilerAbi}, ` +
+				`package.json beskidToolchain.runtimeAbi=${packageRuntimeAbi}`,
+		);
+	}
+	return compilerAbi;
+}
+
+export function compilerRuntimeAbiSource(repoRoot) {
+	return join(repoRoot, "compiler", "crates", "beskid_abi", "src", "version.rs");
+}
+
+/** Reads both sides and runs `checkRuntimeAbi`; fails closed. */
+export function verifyCompilerRuntimeAbi(extensionRoot, repoRoot) {
+	const sourcePath = compilerRuntimeAbiSource(repoRoot);
+	let text;
+	try {
+		text = readFileSync(sourcePath, "utf8");
+	} catch {
+		throw new Error(`compiler runtime ABI source is missing at ${sourcePath}`);
+	}
+	const packageJson = readJson(join(extensionRoot, "package.json"));
+	return checkRuntimeAbi(text, packageJson.beskidToolchain?.runtimeAbi);
+}
+
 export function resolveHost(platform = process.platform, arch = process.arch) {
 	const hosts = {
 		"darwin-arm64": { rustTarget: "aarch64-apple-darwin", binaryName: "beskid_lsp" },
@@ -84,6 +129,7 @@ export function versionedVsixName(version, platformKey) {
 export function bundleVerifiedReleaseLsp({ extensionRoot, repoRoot, platformKey, artifactPath, sha256, version }) {
 	const packageVersion = resolvePackageReleaseVersion(extensionRoot, repoRoot);
 	if (version !== packageVersion) throw new Error("verified LSP release version does not match editor authoring version");
+	verifyCompilerRuntimeAbi(extensionRoot, repoRoot);
 	const [platform, arch] = platformKey.split("-");
 	const host = resolveHost(platform, arch);
 	const stats = lstatSync(artifactPath);
@@ -117,6 +163,7 @@ export function bundleExactHostLsp({
 	releaseBuilder = join(repoRoot, "scripts", "ci", "build-release-artifact.sh"),
 }) {
 	const version = resolvePackageReleaseVersion(extensionRoot, repoRoot);
+	verifyCompilerRuntimeAbi(extensionRoot, repoRoot);
 	const { binaryName, platformKey, rustTarget } = resolveHost(platform, arch);
 	if (!existsSync(releaseBuilder)) {
 		throw new Error(`Exact-version release builder not found at ${releaseBuilder}`);
