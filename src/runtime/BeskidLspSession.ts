@@ -11,6 +11,7 @@ import type { BeskidClientHooks } from "../lsp/clientHooks.js";
 import {
 	CRASH_REPORT_METHOD,
 	CrashReportNotifier,
+	defaultCrashDir,
 } from "../lsp/crashReports.js";
 import { probeCliVersion } from "../lsp/probeCliVersion.js";
 import type { BeskidStatusParams } from "../status/beskidStatusTypes.js";
@@ -30,7 +31,7 @@ export class BeskidLspSession {
 			vscode.window.showErrorMessage(message, ...actions),
 		openFile: async (path) =>
 			vscode.window.showTextDocument(await vscode.workspace.openTextDocument(path)),
-	});
+	}, defaultCrashDir());
 	private client: LanguageClient | undefined;
 	private clientStateDisposable: vscode.Disposable | undefined;
 	private onClientReady: (() => void | Promise<void>) | undefined;
