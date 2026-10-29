@@ -58,7 +58,6 @@ The settings that choose a program to run (`beskid.cli.path` and every `beskid.l
 | **Beskid: Browse Packages** | Registry document panel |
 | **Beskid: Select Project** / **Reveal in Projects** | Change or reveal project focus |
 | **Beskid: Remove Stale Toolchain** | Remove a mismatched `~/.beskid/bin` toolchain and old Beskid extension folders, after a confirmation that lists them |
-| **Beskid: Migrate Lock File** | Run `beskid dev project lock` for the project so a version 1 `Project.lock` is rewritten |
 | **Beskid: Refresh Workspace** | Re-sync LSP project graph |
 | **Beskid: Show Project Graph** | Open Graph Explorer (Mermaid dependency/workspace/module views) |
 | **Beskid: Open Symbol Documentation** | Open book page for symbol under cursor |

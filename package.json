@@ -205,10 +205,6 @@
 			{
 				"command": "beskid.toolchain.removeStale",
 				"title": "Beskid: Remove Stale Toolchain"
-			},
-			{
-				"command": "beskid.migrateLock",
-				"title": "Beskid: Migrate Lock File"
 			}
 		],
 		"taskDefinitions": [

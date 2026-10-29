@@ -11,7 +11,6 @@ test("the extension no longer contributes toolchain download commands or setting
 		expect(commands).not.toContain(gone);
 	}
 	expect(commands).toContain("beskid.toolchain.removeStale");
-	expect(commands).toContain("beskid.migrateLock");
 	const keys = pkg.contributes.configuration.flatMap((s) => Object.keys(s.properties));
 	for (const gone of ["beskid.cli.releaseTag", "beskid.lsp.releaseTag", "beskid.toolchain.autoInstallOnLaunch"]) {
 		expect(keys).not.toContain(gone);

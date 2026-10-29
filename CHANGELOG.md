@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Select the toolchain by identity: setting, then the bundled server, then `~/.beskid/bin` only when `beskid dev capabilities` reports the same version and runtime ABI. A mismatch shows a warning with **Remove stale toolchain**, which also offers to remove old Beskid extension folders after a confirmation that lists them.
 - Show one notification per `beskid/crashReport` from the language server, with an **Open report** action.
-- Add **Beskid: Migrate Lock File** (`beskid.migrateLock`).
 
 ### Changed
 
@@ -30,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The **Beskid: Migrate Lock File** command (`beskid.migrateLock`). The language server no longer migrates an old `Project.lock`: it reports E3025, and the user deletes the file and writes a new lock.
 - The `cli-stable` / `lsp-stable` downloads, **Install CLI**, **Install LSP**, **Setup Toolchain** and their settings. The extension never calls `beskid-up`.
 - The `downloading` and `bootstrapping` runtime phases and their status labels.
 
