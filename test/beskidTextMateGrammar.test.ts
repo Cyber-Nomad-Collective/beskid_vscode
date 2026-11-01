@@ -56,6 +56,14 @@ function allTokens(line: string): { text: string; scopes: string[] }[] {
 }
 
 describe("Beskid TextMate grammar", () => {
+	test("numeric literals with the _word and sized suffixes and float exponents are one number", () => {
+		const line = "word w = 8_word; u8 b = 0xff_u8; i64 n = 1_000_i64; f64 e = 1.5e-3_f64;";
+		for (const text of ["8_word", "0xff_u8", "1_000_i64", "1.5e-3_f64"]) {
+			const token = allTokens(line).find((t) => t.text === text);
+			expect(token?.scopes).toContain("constant.numeric.beskid");
+		}
+	});
+
 	test("string escapes n t r 0 u{...} and the quote, backslash and interpolation escapes", () => {
 		const line = String.raw`string s = "\n\t\r\0\u{1F600}\"\\\${";`;
 		const escapes = allTokens(line)
