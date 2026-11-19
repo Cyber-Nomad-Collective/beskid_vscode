@@ -120,6 +120,16 @@ test("keeps the accessor context across comments between tokens", () => {
 	expect(scopesFor(source, "value")).toContain("variable.language.accessor.beskid");
 });
 
+test("highlights observe and contextual always property modifiers", () => {
+	expect(scopesFor("observe counter.Count (old, new) => { };", "observe")).toContain("keyword.other.beskid");
+	for (const declaration of ["always prop i32 Count = 0;", "always i32 Count { get; set; } = 0;"]) {
+		expect(scopesFor(declaration, "always")).toContain("storage.modifier.beskid");
+		expect(scopesFor(declaration, "Count")).toContain("variable.other.property.beskid");
+	}
+	expect(allTokens("i32 observeCount = 0;").some((token) => token.scopes.includes("keyword.other.beskid"))).toBe(false);
+	expect(allTokens("i32 always = 0;").some((token) => token.scopes.includes("storage.modifier.beskid"))).toBe(false);
+});
+
 describe("Beskid TextMate grammar", () => {
 	test("numeric literals with the _word and sized suffixes and float exponents are one number", () => {
 		const line = "word w = 8_word; u8 b = 0xff_u8; i64 n = 1_000_i64; f64 e = 1.5e-3_f64;";

@@ -233,6 +233,50 @@ suite("Beskid properties", () => {
 			);
 		}
 	});
+	test("resolves observed properties and callback parameters", async () => {
+		const extension = vscode.extensions.getExtension("beskid.beskid-vscode");
+		assert.ok(extension);
+		await extension.activate();
+		const uri = vscode.Uri.joinPath(
+			extension.extensionUri, "test", "fixtures", "workspace", "ObservedProperties", "Src", "Main.bd",
+		);
+		const document = await vscode.workspace.openTextDocument(uri);
+		await vscode.window.showTextDocument(document);
+		const source = document.getText();
+		for (const [reference, declaration, name, kind] of [
+			["counter.Count (", "Count = 0", "Count", "property"],
+			["counter.Double (", "Double =>", "Double", "property"],
+			["old;", "old, new", "old", "parameter"],
+			["after - before;", "after) =>", "after", "parameter"],
+			["meter.Current (", "Current { get;", "Current", "property"],
+			["prior;", "prior, next", "prior", "parameter"],
+		] as const) {
+			const start = source.indexOf(reference) + (kind === "property" ? reference.indexOf(".") + 1 : 0);
+			const position = document.positionAt(start);
+			const declarationStart = document.positionAt(source.indexOf(declaration));
+			await waitFor(`definition of observed ${kind} ${name}`, async () => {
+				const locations = await vscode.commands.executeCommand<(vscode.Location | vscode.LocationLink)[]>(
+					"vscode.executeDefinitionProvider", uri, position,
+				);
+				return locations?.some((location) => {
+					const target = "targetUri" in location ? location.targetUri : location.uri;
+					const range = "targetUri" in location ? location.targetSelectionRange : location.range;
+					return target.toString() === uri.toString() && range?.start.isEqual(declarationStart)
+						&& document.getText(range) === name;
+				});
+			});
+			const hovers = await vscode.commands.executeCommand<vscode.Hover[]>("vscode.executeHoverProvider", uri, position);
+			assert.ok(hovers.some((hover) =>
+				hover.range?.start.isEqual(position) && document.getText(hover.range) === name
+				&& hover.contents.some((content) => {
+					const markdown = typeof content === "string" ? content : content.value;
+					return markdown.includes(`**${kind}** \`${name}\``) && markdown.includes("Type \`i64\`");
+				}),
+			), `expected ${name} to have type i64`);
+		}
+		assert.equal(vscode.languages.getDiagnostics(uri).length, 0);
+	});
+
 });
 
 async function waitFor(label: string, probe: () => boolean | undefined | Promise<boolean | undefined>): Promise<void> {

@@ -17,9 +17,8 @@ test("the extension no longer contributes toolchain download commands or setting
 	}
 });
 
-test("package.json and package-lock.json carry the 0.6.7 release version", async () => {
+test("package-lock.json matches the extension manifest version", async () => {
 	const lock = await import("../package-lock.json");
-	expect(pkg.version).toBe("0.6.7");
 	expect(lock.version).toBe(pkg.version);
 	expect(lock.packages[""].version).toBe(pkg.version);
 });

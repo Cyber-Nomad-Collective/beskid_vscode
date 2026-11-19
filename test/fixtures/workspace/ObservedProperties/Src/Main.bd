@@ -1,0 +1,26 @@
+contract Measurement {
+    i64 Current { get; }
+}
+
+type Counter : Measurement {
+    i64 lastChange;
+    always prop i64 Count = 0;
+    i64 Double => Count + Count;
+    pub i64 Current => Double;
+}
+
+i32 Main() {
+    Counter counter = Counter { lastChange: 0 };
+    observe counter.Count (old, new) => {
+        counter.lastChange = new - old;
+    };
+    observe counter.Double (before, after) => {
+        counter.lastChange = after - before;
+    };
+    Measurement meter = counter;
+    observe meter.Current (prior, next) => {
+        counter.lastChange = next - prior;
+    };
+    counter.Count = 3;
+    return 0;
+}

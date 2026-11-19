@@ -126,18 +126,19 @@
 				},
 				{
 					"name": "keyword.other.beskid",
-					"match": "\\b(?:let|const|mod|use|spawn|await|launch|inject|with|init|dispose|startup|code|skip|meta|as|range|new|delete)\\b"
+					"match": "\\b(?:let|const|mod|use|spawn|await|observe|launch|inject|with|init|dispose|startup|code|skip|meta|as|range|new|delete)\\b"
 				}
 			]
 		},
 		"property-declarations": {
 			"patterns": [
 				{
-					"match": "\\b(prop)\\s+([A-Za-z_][A-Za-z0-9_:]*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?==(?!=|>))",
+					"match": "\\b(?:(always)\\s+)?(prop)\\s+([A-Za-z_][A-Za-z0-9_:]*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?==(?!=|>))",
 					"captures": {
 						"1": { "name": "storage.modifier.beskid" },
-						"2": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
-						"3": { "name": "variable.other.property.beskid" }
+						"2": { "name": "storage.modifier.beskid" },
+						"3": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
+						"4": { "name": "variable.other.property.beskid" }
 					}
 				},
 				{
@@ -151,10 +152,11 @@
 		},
 		"accessor-property": {
 			"name": "meta.property.beskid",
-			"begin": "\\b([A-Za-z_][A-Za-z0-9_:.]*(?:<[^{};=]+>)?(?:\\[\\])*)\\s+([A-Za-z_][A-Za-z0-9_]*(?=\\s*\\{\\s*(?:get\\b|set\\b|/\\*|//|$))|[A-Z][A-Za-z0-9_]*(?=\\s*(?://.*)?$))",
+			"begin": "\\b(?:(always)\\s+)?([A-Za-z_][A-Za-z0-9_:.]*(?:<[^{};=]+>)?(?:\\[\\])*)\\s+([A-Za-z_][A-Za-z0-9_]*(?=\\s*\\{\\s*(?:get\\b|set\\b|/\\*|//|$))|[A-Z][A-Za-z0-9_]*(?=\\s*(?://.*)?$))",
 			"beginCaptures": {
-				"1": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
-				"2": { "name": "variable.other.property.beskid" }
+				"1": { "name": "storage.modifier.beskid" },
+				"2": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
+				"3": { "name": "variable.other.property.beskid" }
 			},
 			"end": "(?=[^\\s{])",
 			"applyEndPatternLast": true,
