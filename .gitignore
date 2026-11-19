@@ -4,6 +4,7 @@ out/
 *.vsix
 server/
 .vscode-test/
+test/fixtures/workspace/**/obj/
 
 # Build artifacts
 **/*.trace

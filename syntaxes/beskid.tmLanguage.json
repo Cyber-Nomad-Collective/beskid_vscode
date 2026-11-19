@@ -8,6 +8,8 @@
 		{ "include": "#characters" },
 		{ "include": "#numbers" },
 		{ "include": "#keywords" },
+		{ "include": "#property-declarations" },
+		{ "include": "#accessor-property" },
 		{ "include": "#types" },
 		{ "include": "#constants" },
 		{ "include": "#self-keywords" },
@@ -126,6 +128,96 @@
 					"name": "keyword.other.beskid",
 					"match": "\\b(?:let|const|mod|use|spawn|await|launch|inject|with|init|dispose|startup|code|skip|meta|as|range|new|delete)\\b"
 				}
+			]
+		},
+		"property-declarations": {
+			"patterns": [
+				{
+					"match": "\\b(prop)\\s+([A-Za-z_][A-Za-z0-9_:]*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?==(?!=|>))",
+					"captures": {
+						"1": { "name": "storage.modifier.beskid" },
+						"2": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
+						"3": { "name": "variable.other.property.beskid" }
+					}
+				},
+				{
+					"match": "\\b([A-Za-z_][A-Za-z0-9_:]*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?==>)",
+					"captures": {
+						"1": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
+						"2": { "name": "variable.other.property.beskid" }
+					}
+				}
+			]
+		},
+		"accessor-property": {
+			"name": "meta.property.beskid",
+			"begin": "\\b([A-Za-z_][A-Za-z0-9_:.]*(?:<[^{};=]+>)?(?:\\[\\])*)\\s+([A-Za-z_][A-Za-z0-9_]*(?=\\s*\\{\\s*(?:get\\b|set\\b|/\\*|//|$))|[A-Z][A-Za-z0-9_]*(?=\\s*(?://.*)?$))",
+			"beginCaptures": {
+				"1": { "name": "storage.type.beskid", "patterns": [{ "include": "#types" }] },
+				"2": { "name": "variable.other.property.beskid" }
+			},
+			"end": "(?=[^\\s{])",
+			"applyEndPatternLast": true,
+			"patterns": [
+				{ "include": "#comments" },
+				{
+					"begin": "\\{",
+					"end": "\\}",
+					"patterns": [
+						{ "include": "#comments" },
+						{
+							"begin": "\\b(get)\\b",
+							"beginCaptures": { "1": { "name": "keyword.declaration.accessor.beskid" } },
+							"end": "(?=[^\\s{])",
+							"applyEndPatternLast": true,
+							"patterns": [
+								{ "include": "#comments" },
+								{ "include": "#accessor-getter-body" }
+							]
+						},
+						{
+							"begin": "\\b(set)\\b",
+							"beginCaptures": { "1": { "name": "keyword.declaration.accessor.beskid" } },
+							"end": "(?=[^\\s{])",
+							"applyEndPatternLast": true,
+							"patterns": [
+								{ "include": "#comments" },
+								{ "include": "#accessor-setter-body" }
+							]
+						}
+					]
+				}
+			]
+		},
+		"accessor-qualified-member": {
+			"match": "(?:\\.|::)\\s*(?:field|value)\\b"
+		},
+		"accessor-field": {
+			"name": "variable.language.accessor.beskid",
+			"match": "\\bfield\\b(?!\\s*\\()"
+		},
+		"accessor-getter-body": {
+			"begin": "\\{",
+			"end": "\\}",
+			"patterns": [
+				{ "include": "#accessor-getter-body" },
+				{ "include": "#accessor-qualified-member" },
+				{ "include": "#accessor-field" },
+				{ "include": "$self" }
+			]
+		},
+		"accessor-setter-body": {
+			"begin": "\\{",
+			"end": "\\}",
+			"patterns": [
+				{ "include": "#accessor-setter-body" },
+				{ "include": "#accessor-qualified-member" },
+				{ "include": "#accessor-field" },
+				{
+					"name": "variable.language.accessor.beskid",
+					"match": "\\bvalue\\b(?!\\s*\\()"
+				},
+				{ "include": "$self" }
 			]
 		},
 		"types": {

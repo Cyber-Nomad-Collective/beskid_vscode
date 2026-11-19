@@ -1,0 +1,39 @@
+type Box<T> {
+    T Value {
+        get { return field; }
+        set { field = value; }
+    }
+}
+
+type Item {
+    i32 number;
+}
+
+contract Runner {
+    i32 Run();
+}
+
+type Worker : Runner {
+    i32 result;
+}
+
+impl Worker {
+    pub i32 Run() { return this.result; }
+}
+
+i32 Main() {
+    Box<i64> numbers = Box<i64> { Value: 0 };
+    Box<string> words = Box<string> { Value: "before" };
+    Box<Item> records = Box<Item> { Value: Item { number: 0 } };
+    Runner initial = Worker { result: 11 };
+    Box<Runner> runners = Box<Runner> { Value: initial };
+    numbers.Value = 42;
+    words.Value = "after";
+    records.Value = Item { number: 7 };
+    Item item = records.Value;
+    Runner update = Worker { result: 23 };
+    runners.Value = update;
+    Runner selected = runners.Value;
+    if numbers.Value == 42 && words.Value == "after" && item.number == 7 && selected.Run() == 23 { return 0; }
+    return 1;
+}

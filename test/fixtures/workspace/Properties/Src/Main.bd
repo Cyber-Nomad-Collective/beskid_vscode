@@ -1,0 +1,19 @@
+type Counter {
+    i64 raw;
+    i64 Count {
+        get;
+        set { field = value < 0 ? 0 : value; }
+    } = 0;
+    i64 Limit { get; } = 4;
+    i64 ReadRaw() { return this.raw; }
+    i64 Double => Count + Count;
+}
+
+i32 Main() {
+    Counter counter = Counter { raw: 0 };
+    counter.Count = -1;
+    if counter.Count != 0 { return 1; }
+    counter.Count = 3;
+    if counter.Double == 6 && counter.Count < counter.Limit { return 0; }
+    return 2;
+}
